@@ -36,8 +36,8 @@
   - Implement PostLoad() and Validate() methods
   - _Requirements: 3.1, 3.2, 3.3, 3.5_
 
-- [ ] 3. Implement data table structures
-- [ ] 3.1 Create FDelveDeepMonsterConfig struct
+- [-] 3. Implement data table structures
+- [x] 3.1 Create FDelveDeepMonsterConfig struct
   - Write struct inheriting from FTableRowBase with all monster properties
   - Add display info (name, description), stats (health, damage, speed, armor)
   - Add AI parameters (detection range, attack range, behavior type)
