@@ -684,4 +684,180 @@ namespace DelveDeepConsoleCommands
 		TEXT("Creates example data assets for testing purposes"),
 		FConsoleCommandWithWorldAndArgsDelegate::CreateStatic(&CreateExampleDataCommand)
 	);
+
+	/**
+	 * Console command: DelveDeep.ProfileConfigPerformance
+	 * Runs comprehensive performance profiling and generates a detailed report.
+	 */
+	static void ProfileConfigPerformanceCommand(const TArray<FString>& Args, UWorld* World)
+	{
+		if (!World || !World->GetGameInstance())
+		{
+			UE_LOG(LogDelveDeepConfig, Error, TEXT("DelveDeep.ProfileConfigPerformance: No valid game instance found"));
+			return;
+		}
+
+		UDelveDeepConfigurationManager* ConfigManager = 
+			World->GetGameInstance()->GetSubsystem<UDelveDeepConfigurationManager>();
+
+		if (!ConfigManager)
+		{
+			UE_LOG(LogDelveDeepConfig, Error, TEXT("DelveDeep.ProfileConfigPerformance: Configuration Manager not found"));
+			return;
+		}
+
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("=== Configuration System Performance Profile ==="));
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("\nRunning comprehensive performance tests..."));
+
+		// Get initial stats
+		int32 InitialCacheHits, InitialCacheMisses;
+		float InitialAvgQueryTime;
+		ConfigManager->GetPerformanceStats(InitialCacheHits, InitialCacheMisses, InitialAvgQueryTime);
+
+		// Test 1: Single query performance
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("\n[Test 1] Single Query Performance"));
+		double SingleQueryStart = FPlatformTime::Seconds();
+		const UDelveDeepCharacterData* TestData = ConfigManager->GetCharacterData(FName("DA_Character_Warrior"));
+		double SingleQueryEnd = FPlatformTime::Seconds();
+		double SingleQueryTimeMs = (SingleQueryEnd - SingleQueryStart) * 1000.0;
+		
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("  Single query time: %.4f ms"), SingleQueryTimeMs);
+		if (SingleQueryTimeMs < 1.0)
+		{
+			UE_LOG(LogDelveDeepConfig, Display, TEXT("  ✓ PASS: < 1ms target"));
+		}
+		else
+		{
+			UE_LOG(LogDelveDeepConfig, Warning, TEXT("  ✗ FAIL: Exceeds 1ms target"));
+		}
+
+		// Test 2: Bulk query performance (1000 queries)
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("\n[Test 2] Bulk Query Performance (1000 queries)"));
+		const int32 BulkQueryCount = 1000;
+		TArray<FName> TestNames = {
+			FName("DA_Character_Warrior"),
+			FName("DA_Character_Ranger"),
+			FName("DA_Weapon_Sword"),
+			FName("DA_Ability_Cleave"),
+			FName("DA_Upgrade_HealthBoost")
+		};
+
+		int32 PreBulkHits, PreBulkMisses;
+		float PreBulkAvgTime;
+		ConfigManager->GetPerformanceStats(PreBulkHits, PreBulkMisses, PreBulkAvgTime);
+
+		double BulkQueryStart = FPlatformTime::Seconds();
+		for (int32 i = 0; i < BulkQueryCount; ++i)
+		{
+			FName TestName = TestNames[i % TestNames.Num()];
+			ConfigManager->GetCharacterData(TestName);
+		}
+		double BulkQueryEnd = FPlatformTime::Seconds();
+		double BulkQueryTotalMs = (BulkQueryEnd - BulkQueryStart) * 1000.0;
+		double BulkQueryAvgMs = BulkQueryTotalMs / BulkQueryCount;
+
+		int32 PostBulkHits, PostBulkMisses;
+		float PostBulkAvgTime;
+		ConfigManager->GetPerformanceStats(PostBulkHits, PostBulkMisses, PostBulkAvgTime);
+
+		int32 BulkCacheHits = PostBulkHits - PreBulkHits;
+		int32 BulkCacheMisses = PostBulkMisses - PreBulkMisses;
+		int32 BulkTotalQueries = BulkCacheHits + BulkCacheMisses;
+		float BulkCacheHitRate = BulkTotalQueries > 0 ? 
+			(static_cast<float>(BulkCacheHits) / BulkTotalQueries) * 100.0f : 0.0f;
+
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("  Total time: %.2f ms"), BulkQueryTotalMs);
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("  Average query time: %.4f ms"), BulkQueryAvgMs);
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("  Cache hits: %d"), BulkCacheHits);
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("  Cache misses: %d"), BulkCacheMisses);
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("  Cache hit rate: %.2f%%"), BulkCacheHitRate);
+		
+		if (BulkQueryAvgMs < 1.0)
+		{
+			UE_LOG(LogDelveDeepConfig, Display, TEXT("  ✓ PASS: Average < 1ms target"));
+		}
+		else
+		{
+			UE_LOG(LogDelveDeepConfig, Warning, TEXT("  ✗ FAIL: Average exceeds 1ms target"));
+		}
+
+		// Test 3: Cache hit rate test
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("\n[Test 3] Cache Hit Rate (100 repeated queries)"));
+		const int32 RepeatCount = 100;
+		FName RepeatTestName = FName("DA_Character_Warrior");
+
+		int32 PreRepeatHits, PreRepeatMisses;
+		float PreRepeatAvgTime;
+		ConfigManager->GetPerformanceStats(PreRepeatHits, PreRepeatMisses, PreRepeatAvgTime);
+
+		for (int32 i = 0; i < RepeatCount; ++i)
+		{
+			ConfigManager->GetCharacterData(RepeatTestName);
+		}
+
+		int32 PostRepeatHits, PostRepeatMisses;
+		float PostRepeatAvgTime;
+		ConfigManager->GetPerformanceStats(PostRepeatHits, PostRepeatMisses, PostRepeatAvgTime);
+
+		int32 RepeatCacheHits = PostRepeatHits - PreRepeatHits;
+		int32 RepeatCacheMisses = PostRepeatMisses - PreRepeatMisses;
+		int32 RepeatTotalQueries = RepeatCacheHits + RepeatCacheMisses;
+		float RepeatCacheHitRate = RepeatTotalQueries > 0 ? 
+			(static_cast<float>(RepeatCacheHits) / RepeatTotalQueries) * 100.0f : 0.0f;
+
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("  Cache hits: %d"), RepeatCacheHits);
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("  Cache misses: %d"), RepeatCacheMisses);
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("  Cache hit rate: %.2f%%"), RepeatCacheHitRate);
+		
+		if (RepeatCacheHitRate > 95.0f)
+		{
+			UE_LOG(LogDelveDeepConfig, Display, TEXT("  ✓ PASS: > 95%% target"));
+		}
+		else if (RepeatTotalQueries > 0)
+		{
+			UE_LOG(LogDelveDeepConfig, Warning, TEXT("  ✗ FAIL: Below 95%% target"));
+		}
+		else
+		{
+			UE_LOG(LogDelveDeepConfig, Warning, TEXT("  ⚠ SKIP: No queries tracked (assets may not exist)"));
+		}
+
+		// Test 4: Validation performance
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("\n[Test 4] Validation Performance"));
+		double ValidationStart = FPlatformTime::Seconds();
+		FString ValidationReport;
+		bool bIsValid = ConfigManager->ValidateAllData(ValidationReport);
+		double ValidationEnd = FPlatformTime::Seconds();
+		double ValidationTimeMs = (ValidationEnd - ValidationStart) * 1000.0;
+
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("  Validation time: %.2f ms"), ValidationTimeMs);
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("  Validation result: %s"), bIsValid ? TEXT("Valid") : TEXT("Has Issues"));
+		
+		if (ValidationTimeMs < 100.0)
+		{
+			UE_LOG(LogDelveDeepConfig, Display, TEXT("  ✓ PASS: < 100ms target"));
+		}
+		else
+		{
+			UE_LOG(LogDelveDeepConfig, Warning, TEXT("  ✗ FAIL: Exceeds 100ms target"));
+		}
+
+		// Summary
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("\n=== Performance Profile Summary ==="));
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("Single Query:     %.4f ms %s"), 
+			SingleQueryTimeMs, SingleQueryTimeMs < 1.0 ? TEXT("✓") : TEXT("✗"));
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("Bulk Avg Query:   %.4f ms %s"), 
+			BulkQueryAvgMs, BulkQueryAvgMs < 1.0 ? TEXT("✓") : TEXT("✗"));
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("Cache Hit Rate:   %.2f%% %s"), 
+			RepeatCacheHitRate, RepeatCacheHitRate > 95.0f ? TEXT("✓") : TEXT("✗"));
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("Validation Time:  %.2f ms %s"), 
+			ValidationTimeMs, ValidationTimeMs < 100.0 ? TEXT("✓") : TEXT("✗"));
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("\n=== Profile Complete ==="));
+	}
+
+	FAutoConsoleCommandWithWorldAndArgs ProfileConfigPerformanceCmd(
+		TEXT("DelveDeep.ProfileConfigPerformance"),
+		TEXT("Runs comprehensive performance profiling and generates a detailed report"),
+		FConsoleCommandWithWorldAndArgsDelegate::CreateStatic(&ProfileConfigPerformanceCommand)
+	);
 }
