@@ -1,0 +1,336 @@
+# DelveDeep Documentation Index
+
+## Overview
+
+This document serves as the central navigation hub for all DelveDeep project documentation. Documentation is organized by category for easy access.
+
+## Quick Links
+
+- **[README.md](README.md)**: Project overview and getting started guide
+- **[DELVEDEEP_PROJECT_PROMPT.md](DELVEDEEP_PROJECT_PROMPT.md)**: Complete project context and development guidelines
+- **[.kiro/specs/SPEC_ORDER.md](.kiro/specs/SPEC_ORDER.md)**: Recommended spec implementation order
+
+## System Documentation
+
+### Implemented Systems
+
+#### Data-Driven Configuration System ✓
+
+**Status**: Complete
+
+**Core Documentation**:
+- **[ValidationSystem.md](Documentation/Systems/ValidationSystem.md)**: Validation infrastructure with FValidationContext
+- **[ContentDirectoryStructure.md](Documentation/Systems/ContentDirectoryStructure.md)**: Asset organization and naming conventions
+- **[Performance-Testing.md](Documentation/Systems/Performance-Testing.md)**: Performance testing and profiling guide
+
+**Implementation Notes**:
+- **[Task1-ValidationInfrastructure.md](Documentation/Implementation/Task1-ValidationInfrastructure.md)**: Core validation implementation
+- **[Task11-ExampleDataAssets.md](Documentation/Implementation/Task11-ExampleDataAssets.md)**: Example data assets for testing
+
+**Key Features**:
+- FValidationContext for error/warning tracking
+- UDelveDeepConfigurationManager subsystem
+- Data asset classes (Character, Weapon, Ability, Upgrade)
+- Data table structures (Monster configuration)
+- Performance optimization (<100ms init, <1ms queries)
+- Hot-reload support (development builds)
+
+**Console Commands**:
+```bash
+DelveDeep.ValidateAllData         # Validate all configuration data
+DelveDeep.ShowConfigStats         # Display performance statistics
+DelveDeep.ListLoadedAssets        # List all cached assets
+DelveDeep.ReloadConfigData        # Force reload all data
+DelveDeep.DumpConfigData [Name]   # Dump asset properties
+DelveDeep.CreateExampleData       # Create example test data
+```
+
+### Planned Systems
+
+#### Phase 1: Core Foundation
+- [ ] Character System Foundation
+- [ ] Enhanced Input System
+- [ ] Movement System
+- [ ] Animation State Machine
+
+#### Phase 2: Combat & AI
+- [ ] Combat System Foundation
+- [ ] Automatic Targeting System
+- [ ] Class-Specific Combat Mechanics
+- [ ] Monster AI Foundation
+- [ ] Monster Spawning System
+
+#### Phase 3: World & Environment
+- [ ] Procedural Mine Generation
+- [ ] Tile Rendering System
+- [ ] Atmospheric Effects System
+- [ ] Environmental Animation System
+- [ ] Parallax Background System
+
+#### Phase 4: Progression & Persistence
+- [ ] Progression System
+- [ ] Save System
+- [ ] Achievement System
+- [ ] Settings Management
+
+#### Phase 5: UI & Polish
+- [ ] Main Menu & Character Selection
+- [ ] In-Game HUD
+- [ ] Pause Menu & Settings UI
+- [ ] Upgrade Menu UI
+- [ ] Death Screen & Statistics
+- [ ] Audio System
+- [ ] Visual Effects System
+
+#### Phase 6: Content & Balance
+- [ ] Monster Variety
+- [ ] Inventory & Loot System
+- [ ] Item Effects System
+- [ ] Meta-Progression System
+- [ ] Leaderboard System
+
+## Development Guidelines
+
+### Code Standards
+
+**Location**: `.kiro/steering/`
+
+- **[blueprint-integration.md](.kiro/steering/blueprint-integration.md)**: Blueprint integration patterns
+- **[code-review.md](.kiro/steering/code-review.md)**: Code review checklist
+- **[data-assets.md](.kiro/steering/data-assets.md)**: Data asset guidelines
+- **[error-handling.md](.kiro/steering/error-handling.md)**: Error handling patterns
+- **[mcp-server-usage.md](.kiro/steering/mcp-server-usage.md)**: MCP server usage guidelines
+- **[product.md](.kiro/steering/product.md)**: Product overview
+- **[structure.md](.kiro/steering/structure.md)**: Project structure conventions
+- **[subsystems.md](.kiro/steering/subsystems.md)**: Subsystem guidelines
+- **[tech.md](.kiro/steering/tech.md)**: Technical stack
+- **[testing.md](.kiro/steering/testing.md)**: Testing guidelines
+
+### Naming Conventions
+
+**Classes**:
+- `A` prefix: Actors (e.g., `ADelveDeepPlayerCharacter`)
+- `U` prefix: Objects/Components (e.g., `UDelveDeepCombatComponent`)
+- `F` prefix: Structs (e.g., `FDelveDeepPlayerStats`)
+- `E` prefix: Enums (e.g., `EDelveDeepCharacterClass`)
+- `I` prefix: Interfaces (e.g., `IDelveDeepInteractable`)
+
+**Files**:
+- Header files: `DelveDeepClassName.h`
+- Implementation files: `DelveDeepClassName.cpp`
+- All public classes use `DELVEDEEP_API` macro
+
+**Data Assets**:
+- Data Assets: `DA_[Category]_[Name]` (e.g., `DA_Character_Warrior`)
+- Data Tables: `DT_[Category]_[Name]` (e.g., `DT_Monster_Configs`)
+
+### Performance Requirements
+
+- Always disable ticking unless needed: `PrimaryActorTick.bCanEverTick = false`
+- Use tick intervals for non-critical updates: `PrimaryActorTick.TickInterval = 0.2f`
+- Pre-allocate containers when size is known: `Items.Reserve(ExpectedMaxSize)`
+- Use object pooling for frequently spawned objects
+- Target: 60+ FPS gameplay, sub-100ms initialization, sub-millisecond queries
+
+## Testing
+
+### Automated Tests
+
+**Location**: `Source/DelveDeep/Private/Tests/`
+
+**Implemented Tests**:
+- **ConfigurationManagerTests.cpp**: Configuration manager functionality
+- **IntegrationTests.cpp**: System integration tests
+- **PerformanceTests.cpp**: Performance benchmarks
+- **ValidationTests.cpp**: Validation system tests
+
+**Running Tests**:
+```bash
+# Run all tests
+UnrealEditor-Cmd.exe DelveDeep -ExecCmds="Automation RunTests DelveDeep" -unattended
+
+# Run specific test suite
+UnrealEditor-Cmd.exe DelveDeep -ExecCmds="Automation RunTests DelveDeep.Config" -unattended
+```
+
+### Console Commands
+
+**System Testing**:
+```bash
+DelveDeep.ValidateAllSystems          # Run comprehensive system validation
+DelveDeep.TestInputSystem             # Validate input system
+DelveDeep.TestCombatSystem            # Validate combat system
+```
+
+**Performance Monitoring**:
+```bash
+stat fps                              # Display frame rate
+stat memory                           # Monitor memory usage
+stat DelveDeep                        # Show DelveDeep-specific metrics
+DelveDeep.ShowPerformanceMetrics      # Detailed performance analysis
+```
+
+**Debug Visualization**:
+```bash
+DelveDeep.ShowTargetingDebug          # Visualize targeting system
+DelveDeep.ShowAIDebug                 # Display AI behavior
+DelveDeep.ToggleDebugHUD              # Show/hide debug overlay
+```
+
+## Specifications
+
+### Active Specs
+
+**Location**: `.kiro/specs/`
+
+- **[data-driven-configuration/](kiro/specs/data-driven-configuration/)**: Data-driven configuration system (Complete)
+  - [requirements.md](.kiro/specs/data-driven-configuration/requirements.md)
+  - [design.md](.kiro/specs/data-driven-configuration/design.md)
+  - [tasks.md](.kiro/specs/data-driven-configuration/tasks.md)
+
+### Spec Development Order
+
+See **[SPEC_ORDER.md](.kiro/specs/SPEC_ORDER.md)** for the recommended implementation sequence.
+
+## Character Classes
+
+### Warrior
+- **Role**: Melee tank with area damage
+- **Combat Style**: Close-quarters with cleave attacks
+- **Resource**: Rage (builds with attacks and damage taken)
+
+### Ranger
+- **Role**: Ranged DPS specialist
+- **Combat Style**: Projectile-based attacks with piercing
+- **Resource**: Focus (regenerates over time)
+
+### Mage
+- **Role**: Elemental caster with area effects
+- **Combat Style**: Spell-casting with mana management
+- **Resource**: Mana (regenerates slowly)
+
+### Necromancer
+- **Role**: Summoner with minion control
+- **Combat Style**: Minion-based combat with life manipulation
+- **Resource**: Soul Energy (gained from kills)
+
+## Technical Stack
+
+- **Engine**: Unreal Engine 5.6
+- **Language**: Modern C++ (C++20)
+- **Build System**: Unreal Build Tool (UBT)
+- **Rendering**: Paper2D for 2D sprite-based graphics
+- **Input**: Enhanced Input System (UE5 standard)
+- **AI**: Behavior Trees with AI Perception
+- **UI**: UMG (Unreal Motion Graphics)
+- **Audio**: Unreal Audio Engine with spatial audio support
+
+## Module Structure
+
+```
+Source/
+├── DelveDeep/          # Main game module (DELVEDEEP_API)
+│   ├── Public/         # Header files
+│   └── Private/        # Implementation files
+│       └── Tests/      # Unit tests
+├── DelveDeepCore/      # Shared utilities (planned)
+├── DelveDeepUI/        # UI systems (planned)
+└── DelveDeepAudio/     # Audio systems (planned)
+```
+
+## Content Structure
+
+```
+Content/
+└── Data/                 # Configuration data assets
+    ├── Characters/       # Character data assets
+    ├── Monsters/         # Monster data tables
+    ├── Upgrades/         # Upgrade data assets
+    ├── Weapons/          # Weapon data assets
+    └── Abilities/        # Ability data assets
+```
+
+## Development Workflow
+
+1. **Requirements**: Define feature requirements with acceptance criteria
+2. **Design**: Create comprehensive design documents
+3. **Tasks**: Break down implementation into actionable tasks
+4. **Implementation**: Execute tasks with validation and testing
+5. **Documentation**: Update system documentation
+
+## Contributing
+
+### Code Quality Checklist
+
+- [ ] Follows UE5 naming conventions
+- [ ] Blueprint-ready design
+- [ ] Automated tests for core functionality
+- [ ] Doxygen-style comments for public APIs
+- [ ] System documentation updated
+- [ ] Performance profiled and optimized
+- [ ] Validation comprehensive
+
+### Performance Checklist
+
+- [ ] Tick disabled when not needed
+- [ ] Object pooling for frequently spawned objects
+- [ ] Containers pre-allocated when size known
+- [ ] SCOPE_CYCLE_COUNTER added for critical code
+- [ ] Performance targets met
+
+### Validation Checklist
+
+- [ ] FValidationContext used for validation
+- [ ] Data validated in PostLoad() for data assets
+- [ ] Detailed error messages with context
+- [ ] Validation failures logged appropriately
+
+## Project Status
+
+**Current Phase**: Phase 1 - Core Foundation
+
+**Completed**:
+- ✅ Validation infrastructure
+- ✅ Data-driven configuration system
+
+**In Progress**:
+- None
+
+**Next Up**:
+- Character System Foundation
+- Enhanced Input System
+- Movement System
+
+## Quick Reference
+
+### Important Files
+
+- **Project File**: `DelveDeep.uproject`
+- **Build Configuration**: `Source/DelveDeep/DelveDeep.Build.cs`
+- **Main Module Header**: `Source/DelveDeep/Public/DelveDeep.h`
+- **Configuration Manager**: `Source/DelveDeep/Public/DelveDeepConfigurationManager.h`
+- **Validation System**: `Source/DelveDeep/Public/DelveDeepValidation.h`
+
+### Key Directories
+
+- **Source Code**: `Source/DelveDeep/`
+- **Documentation**: `Documentation/`
+- **Specifications**: `.kiro/specs/`
+- **Development Guidelines**: `.kiro/steering/`
+- **Tests**: `Source/DelveDeep/Private/Tests/`
+
+### External Resources
+
+- **Unreal Engine 5.6 Documentation**: https://docs.unrealengine.com/5.6/
+- **C++20 Reference**: https://en.cppreference.com/w/cpp/20
+- **Paper2D Documentation**: https://docs.unrealengine.com/5.6/paper-2d/
+
+---
+
+**Last Updated**: October 23, 2025
+
+**Project Status**: Early Development - Data-Driven Configuration System Complete
+
+**Target Platform**: Windows, macOS (future: Linux, Console)
+
+**Performance Target**: 60+ FPS gameplay, sub-100ms save/load times, sub-millisecond data queries
