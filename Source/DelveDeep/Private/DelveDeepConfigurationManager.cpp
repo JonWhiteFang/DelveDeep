@@ -6,6 +6,7 @@
 #include "DelveDeepAbilityData.h"
 #include "DelveDeepUpgradeData.h"
 #include "DelveDeepMonsterConfig.h"
+#include "DelveDeepValidationSubsystem.h"
 #include "Engine/DataTable.h"
 
 #if !UE_BUILD_SHIPPING
@@ -68,11 +69,28 @@ void UDelveDeepConfigurationManager::Initialize(FSubsystemCollectionBase& Collec
 	UE_LOG(LogDelveDeepConfig, Display, TEXT("Configuration Manager initialized: %d assets loaded in %.2f ms"), 
 		TotalAssets, InitTime);
 
-	// Validate loaded data
-	FString ValidationReport;
-	if (!ValidateAllData(ValidationReport))
+	// Get validation subsystem
+	UDelveDeepValidationSubsystem* ValidationSubsystem = 
+		GetGameInstance()->GetSubsystem<UDelveDeepValidationSubsystem>();
+
+	if (ValidationSubsystem)
 	{
-		UE_LOG(LogDelveDeepConfig, Warning, TEXT("Configuration validation found issues:\n%s"), *ValidationReport);
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("Registering validation rules with validation subsystem..."));
+		RegisterValidationRules(ValidationSubsystem);
+		
+		// Validate loaded data using subsystem with caching
+		ValidateAllDataWithSubsystem(ValidationSubsystem);
+	}
+	else
+	{
+		UE_LOG(LogDelveDeepConfig, Warning, TEXT("Validation subsystem not available, using basic validation"));
+		
+		// Fall back to basic validation
+		FString ValidationReport;
+		if (!ValidateAllData(ValidationReport))
+		{
+			UE_LOG(LogDelveDeepConfig, Warning, TEXT("Configuration validation found issues:\n%s"), *ValidationReport);
+		}
 	}
 
 	// Validate directory structure
@@ -1107,4 +1125,243 @@ bool UDelveDeepConfigurationManager::IsAssetInStandardDirectory(const FString& A
 	OutSuggestion = FString::Printf(TEXT("Move asset to: %s/%s"), *ExpectedDirectory, *BaseAssetName);
 
 	return false;
+}
+
+void UDelveDeepConfigurationManager::RegisterValidationRules(UDelveDeepValidationSubsystem* ValidationSubsystem)
+{
+	if (!ValidationSubsystem)
+	{
+		return;
+	}
+
+	// Register validation rules for character data
+	ValidationSubsystem->RegisterValidationRule(
+		FName(TEXT("ValidateCharacterData")),
+		UDelveDeepCharacterData::StaticClass(),
+		FValidationRuleDelegate::CreateLambda([this](const UObject* Object, FValidationContext& Context) -> bool
+		{
+			const UDelveDeepCharacterData* CharacterData = Cast<UDelveDeepCharacterData>(Object);
+			if (CharacterData)
+			{
+				return ValidateCharacterData(CharacterData, Context);
+			}
+			return false;
+		}),
+		100, // High priority
+		TEXT("Validates character data assets for correct stat ranges and references")
+	);
+
+	// Register validation rules for monster configs
+	ValidationSubsystem->RegisterValidationRule(
+		FName(TEXT("ValidateMonsterConfig")),
+		UDataTable::StaticClass(),
+		FValidationRuleDelegate::CreateLambda([this](const UObject* Object, FValidationContext& Context) -> bool
+		{
+			const UDataTable* DataTable = Cast<UDataTable>(Object);
+			if (DataTable && DataTable->GetRowStruct() && 
+				DataTable->GetRowStruct()->IsChildOf(FDelveDeepMonsterConfig::StaticStruct()))
+			{
+				bool bAllValid = true;
+				TArray<FName> RowNames = DataTable->GetRowNames();
+				for (const FName& RowName : RowNames)
+				{
+					const FDelveDeepMonsterConfig* Config = DataTable->FindRow<FDelveDeepMonsterConfig>(RowName, TEXT("ValidationRule"));
+					if (Config && !ValidateMonsterConfig(Config, Context))
+					{
+						bAllValid = false;
+					}
+				}
+				return bAllValid;
+			}
+			return true; // Not a monster config table, skip
+		}),
+		100,
+		TEXT("Validates monster configuration data tables")
+	);
+
+	// Register validation rules for upgrade data
+	ValidationSubsystem->RegisterValidationRule(
+		FName(TEXT("ValidateUpgradeData")),
+		UDelveDeepUpgradeData::StaticClass(),
+		FValidationRuleDelegate::CreateLambda([this](const UObject* Object, FValidationContext& Context) -> bool
+		{
+			const UDelveDeepUpgradeData* UpgradeData = Cast<UDelveDeepUpgradeData>(Object);
+			if (UpgradeData)
+			{
+				return ValidateUpgradeData(UpgradeData, Context);
+			}
+			return false;
+		}),
+		100,
+		TEXT("Validates upgrade data assets for correct cost scaling and stat modifiers")
+	);
+
+	// Register validation rules for weapon data
+	ValidationSubsystem->RegisterValidationRule(
+		FName(TEXT("ValidateWeaponData")),
+		UDelveDeepWeaponData::StaticClass(),
+		FValidationRuleDelegate::CreateLambda([this](const UObject* Object, FValidationContext& Context) -> bool
+		{
+			const UDelveDeepWeaponData* WeaponData = Cast<UDelveDeepWeaponData>(Object);
+			if (WeaponData)
+			{
+				return ValidateWeaponData(WeaponData, Context);
+			}
+			return false;
+		}),
+		100,
+		TEXT("Validates weapon data assets for correct damage, speed, and range values")
+	);
+
+	// Register validation rules for ability data
+	ValidationSubsystem->RegisterValidationRule(
+		FName(TEXT("ValidateAbilityData")),
+		UDelveDeepAbilityData::StaticClass(),
+		FValidationRuleDelegate::CreateLambda([this](const UObject* Object, FValidationContext& Context) -> bool
+		{
+			const UDelveDeepAbilityData* AbilityData = Cast<UDelveDeepAbilityData>(Object);
+			if (AbilityData)
+			{
+				return ValidateAbilityData(AbilityData, Context);
+			}
+			return false;
+		}),
+		100,
+		TEXT("Validates ability data assets for correct cooldown, cost, and effect values")
+	);
+
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("Registered %d validation rules with validation subsystem"), 5);
+}
+
+void UDelveDeepConfigurationManager::ValidateAllDataWithSubsystem(UDelveDeepValidationSubsystem* ValidationSubsystem)
+{
+	if (!ValidationSubsystem)
+	{
+		return;
+	}
+
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("Validating all configuration data with validation subsystem..."));
+
+	int32 TotalValidated = 0;
+	int32 TotalPassed = 0;
+	int32 TotalFailed = 0;
+
+	// Validate all character data
+	for (const auto& Pair : CharacterDataCache)
+	{
+		if (Pair.Value)
+		{
+			FValidationContext Context;
+			Context.SystemName = TEXT("ConfigurationManager");
+			Context.OperationName = TEXT("ValidateCharacterData");
+			
+			if (ValidationSubsystem->ValidateObjectWithCache(Pair.Value, Context))
+			{
+				TotalPassed++;
+			}
+			else
+			{
+				TotalFailed++;
+				UE_LOG(LogDelveDeepConfig, Warning, TEXT("Character data validation failed for '%s':\n%s"),
+					*Pair.Key.ToString(), *Context.GetReport());
+			}
+			TotalValidated++;
+		}
+	}
+
+	// Validate monster config table
+	if (MonsterConfigTable)
+	{
+		FValidationContext Context;
+		Context.SystemName = TEXT("ConfigurationManager");
+		Context.OperationName = TEXT("ValidateMonsterConfigs");
+		
+		if (ValidationSubsystem->ValidateObjectWithCache(MonsterConfigTable, Context))
+		{
+			TotalPassed++;
+		}
+		else
+		{
+			TotalFailed++;
+			UE_LOG(LogDelveDeepConfig, Warning, TEXT("Monster config table validation failed:\n%s"),
+				*Context.GetReport());
+		}
+		TotalValidated++;
+	}
+
+	// Validate all upgrade data
+	for (const auto& Pair : UpgradeDataCache)
+	{
+		if (Pair.Value)
+		{
+			FValidationContext Context;
+			Context.SystemName = TEXT("ConfigurationManager");
+			Context.OperationName = TEXT("ValidateUpgradeData");
+			
+			if (ValidationSubsystem->ValidateObjectWithCache(Pair.Value, Context))
+			{
+				TotalPassed++;
+			}
+			else
+			{
+				TotalFailed++;
+				UE_LOG(LogDelveDeepConfig, Warning, TEXT("Upgrade data validation failed for '%s':\n%s"),
+					*Pair.Key.ToString(), *Context.GetReport());
+			}
+			TotalValidated++;
+		}
+	}
+
+	// Validate all weapon data
+	for (const auto& Pair : WeaponDataCache)
+	{
+		if (Pair.Value)
+		{
+			FValidationContext Context;
+			Context.SystemName = TEXT("ConfigurationManager");
+			Context.OperationName = TEXT("ValidateWeaponData");
+			
+			if (ValidationSubsystem->ValidateObjectWithCache(Pair.Value, Context))
+			{
+				TotalPassed++;
+			}
+			else
+			{
+				TotalFailed++;
+				UE_LOG(LogDelveDeepConfig, Warning, TEXT("Weapon data validation failed for '%s':\n%s"),
+					*Pair.Key.ToString(), *Context.GetReport());
+			}
+			TotalValidated++;
+		}
+	}
+
+	// Validate all ability data
+	for (const auto& Pair : AbilityDataCache)
+	{
+		if (Pair.Value)
+		{
+			FValidationContext Context;
+			Context.SystemName = TEXT("ConfigurationManager");
+			Context.OperationName = TEXT("ValidateAbilityData");
+			
+			if (ValidationSubsystem->ValidateObjectWithCache(Pair.Value, Context))
+			{
+				TotalPassed++;
+			}
+			else
+			{
+				TotalFailed++;
+				UE_LOG(LogDelveDeepConfig, Warning, TEXT("Ability data validation failed for '%s':\n%s"),
+					*Pair.Key.ToString(), *Context.GetReport());
+		}
+			TotalValidated++;
+		}
+	}
+
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("Configuration validation complete: %d validated, %d passed, %d failed"),
+		TotalValidated, TotalPassed, TotalFailed);
+
+	// Log validation metrics
+	FString MetricsReport = ValidationSubsystem->GetValidationMetricsReport();
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("Validation metrics:\n%s"), *MetricsReport);
 }

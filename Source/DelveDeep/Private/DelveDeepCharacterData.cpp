@@ -2,19 +2,45 @@
 
 #include "DelveDeepCharacterData.h"
 #include "DelveDeepValidationTemplates.h"
+#include "DelveDeepValidationSubsystem.h"
+#include "Engine/GameInstance.h"
+#include "Engine/World.h"
 
 void UDelveDeepCharacterData::PostLoad()
 {
 	Super::PostLoad();
 	
+	// Try to get validation subsystem for cached validation
+	UDelveDeepValidationSubsystem* ValidationSubsystem = nullptr;
+	
+	// Get world and game instance if available
+	UWorld* World = GetWorld();
+	if (World && World->GetGameInstance())
+	{
+		ValidationSubsystem = World->GetGameInstance()->GetSubsystem<UDelveDeepValidationSubsystem>();
+	}
+	
 	FValidationContext Context;
 	Context.SystemName = TEXT("Configuration");
 	Context.OperationName = TEXT("LoadCharacterData");
 	
-	if (!Validate(Context))
+	if (ValidationSubsystem)
 	{
-		UE_LOG(LogDelveDeepConfig, Error, TEXT("Character data validation failed for '%s': %s"), 
-			*GetName(), *Context.GetReport());
+		// Use subsystem validation with caching
+		if (!ValidationSubsystem->ValidateObjectWithCache(this, Context))
+		{
+			UE_LOG(LogDelveDeepConfig, Error, TEXT("Character data validation failed for '%s': %s"), 
+				*GetName(), *Context.GetReport());
+		}
+	}
+	else
+	{
+		// Fall back to basic validation
+		if (!Validate(Context))
+		{
+			UE_LOG(LogDelveDeepConfig, Error, TEXT("Character data validation failed for '%s': %s"), 
+				*GetName(), *Context.GetReport());
+		}
 	}
 }
 

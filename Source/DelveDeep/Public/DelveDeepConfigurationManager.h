@@ -163,4 +163,8 @@ private:
 	// Directory structure validation
 	void ValidateAssetDirectoryStructure();
 	bool IsAssetInStandardDirectory(const FString& AssetPath, const FString& ExpectedDirectory, FString& OutSuggestion) const;
+
+	// Validation subsystem integration
+	void RegisterValidationRules(class UDelveDeepValidationSubsystem* ValidationSubsystem);
+	void ValidateAllDataWithSubsystem(class UDelveDeepValidationSubsystem* ValidationSubsystem);
 };
