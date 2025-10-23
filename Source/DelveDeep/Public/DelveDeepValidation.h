@@ -328,3 +328,40 @@ struct DELVEDEEP_API FValidationCacheEntry
 	}
 };
 
+/**
+ * Blueprint-accessible validation metrics data.
+ */
+USTRUCT(BlueprintType)
+struct DELVEDEEP_API FValidationMetricsData
+{
+	GENERATED_BODY()
+
+	/** Total number of validations performed */
+	UPROPERTY(BlueprintReadOnly, Category = "Metrics")
+	int32 TotalValidations = 0;
+
+	/** Number of validations that passed */
+	UPROPERTY(BlueprintReadOnly, Category = "Metrics")
+	int32 PassedValidations = 0;
+
+	/** Number of validations that failed */
+	UPROPERTY(BlueprintReadOnly, Category = "Metrics")
+	int32 FailedValidations = 0;
+
+	/** Frequency of each unique error message */
+	UPROPERTY(BlueprintReadOnly, Category = "Metrics")
+	TMap<FString, int32> ErrorFrequency;
+
+	/** Average execution time per rule (in milliseconds) */
+	UPROPERTY(BlueprintReadOnly, Category = "Metrics")
+	TMap<FString, float> AverageRuleExecutionTime;
+
+	/** Average execution time per system (in milliseconds) */
+	UPROPERTY(BlueprintReadOnly, Category = "Metrics")
+	TMap<FString, float> AverageSystemExecutionTime;
+
+	/** Timestamp when metrics were last reset */
+	UPROPERTY(BlueprintReadOnly, Category = "Metrics")
+	FDateTime LastResetTime;
+};
+

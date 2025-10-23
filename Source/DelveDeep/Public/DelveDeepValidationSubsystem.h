@@ -79,6 +79,42 @@ public:
 	void ClearValidationCache();
 
 	/**
+	 * Gets a formatted report of validation metrics.
+	 * @return Formatted string with all validation metrics
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
+	FString GetValidationMetricsReport() const;
+
+	/**
+	 * Gets validation metrics data in a Blueprint-accessible format.
+	 * @return Struct containing all validation metrics
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
+	FValidationMetricsData GetValidationMetrics() const;
+
+	/**
+	 * Resets all validation metrics to zero.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
+	void ResetValidationMetrics();
+
+	/**
+	 * Saves validation metrics to a JSON file.
+	 * @param FilePath Optional custom file path (defaults to Saved/Validation/Metrics.json)
+	 * @return True if save was successful
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
+	bool SaveMetricsToFile(const FString& FilePath = TEXT(""));
+
+	/**
+	 * Loads validation metrics from a JSON file.
+	 * @param FilePath Optional custom file path (defaults to Saved/Validation/Metrics.json)
+	 * @return True if load was successful
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
+	bool LoadMetricsFromFile(const FString& FilePath = TEXT(""));
+
+	/**
 	 * Gets the number of registered rules for a specific class.
 	 * @param TargetClass The class to query
 	 * @return The number of registered rules
@@ -97,6 +133,35 @@ public:
 	 * @return Map of class to rule definitions
 	 */
 	const TMap<UClass*, TArray<FValidationRuleDefinition>>& GetAllRules() const { return ValidationRules; }
+
+	// Validation delegates
+
+	/**
+	 * Delegate fired before validation begins for an object.
+	 * Allows systems to prepare for validation or modify validation behavior.
+	 */
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FOnPreValidation, const UObject* /* Object */, FValidationContext& /* Context */);
+	
+	/** Pre-validation delegate instance */
+	FOnPreValidation OnPreValidation;
+
+	/**
+	 * Delegate fired after validation completes for an object.
+	 * Allows systems to respond to validation results or perform cleanup.
+	 */
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FOnPostValidation, const UObject* /* Object */, const FValidationContext& /* Context */);
+	
+	/** Post-validation delegate instance */
+	FOnPostValidation OnPostValidation;
+
+	/**
+	 * Delegate fired when a critical or error severity issue is added during validation.
+	 * Allows systems to respond immediately to critical validation failures.
+	 */
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FOnCriticalIssue, const UObject* /* Object */, const FValidationIssue& /* Issue */);
+	
+	/** Critical issue delegate instance */
+	FOnCriticalIssue OnCriticalIssue;
 
 private:
 	/**
@@ -122,9 +187,46 @@ private:
 	 */
 	uint32 CalculateObjectHash(const UObject* Object) const;
 
+	/**
+	 * Updates validation metrics after a validation operation.
+	 * @param Context The validation context with results
+	 * @param ExecutionTime Time taken for validation in seconds
+	 */
+	void UpdateMetrics(const FValidationContext& Context, double ExecutionTime);
+
 	/** Map of class to validation rules */
 	TMap<UClass*, TArray<FValidationRuleDefinition>> ValidationRules;
 
 	/** Cache of validation results */
 	TMap<const UObject*, FValidationCacheEntry> ValidationCache;
+
+	/** Validation metrics tracking */
+	struct FValidationMetrics
+	{
+		/** Total number of validations performed */
+		int32 TotalValidations = 0;
+
+		/** Number of validations that passed */
+		int32 PassedValidations = 0;
+
+		/** Number of validations that failed */
+		int32 FailedValidations = 0;
+
+		/** Frequency of each unique error message */
+		TMap<FString, int32> ErrorFrequency;
+
+		/** Total execution time per rule (in seconds) */
+		TMap<FName, double> RuleExecutionTimes;
+
+		/** Number of times each rule was executed */
+		TMap<FName, int32> RuleExecutionCounts;
+
+		/** Total execution time per system (in seconds) */
+		TMap<FString, double> SystemExecutionTimes;
+
+		/** Number of times each system was validated */
+		TMap<FString, int32> SystemExecutionCounts;
+	};
+
+	FValidationMetrics Metrics;
 };

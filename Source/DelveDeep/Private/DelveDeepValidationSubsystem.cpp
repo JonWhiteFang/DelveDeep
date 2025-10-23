@@ -3,6 +3,11 @@
 #include "DelveDeepValidationSubsystem.h"
 #include "UObject/UObjectHash.h"
 #include "Serialization/ArchiveCrc32.h"
+#include "Serialization/JsonSerializer.h"
+#include "Serialization/JsonWriter.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
+#include "HAL/PlatformFileManager.h"
 
 void UDelveDeepValidationSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -13,12 +18,21 @@ void UDelveDeepValidationSubsystem::Initialize(FSubsystemCollectionBase& Collect
 	// Initialize validation cache
 	ValidationCache.Empty();
 	
+	// Initialize metrics
+	Metrics = FValidationMetrics();
+	
+	// Load persisted metrics
+	LoadMetricsFromFile();
+	
 	UE_LOG(LogDelveDeepConfig, Display, TEXT("Validation Subsystem initialized"));
 }
 
 void UDelveDeepValidationSubsystem::Deinitialize()
 {
 	UE_LOG(LogDelveDeepConfig, Display, TEXT("Validation Subsystem shutting down..."));
+	
+	// Save metrics before shutdown
+	SaveMetricsToFile();
 	
 	// Clear all validation rules
 	ValidationRules.Empty();
@@ -140,11 +154,35 @@ bool UDelveDeepValidationSubsystem::ValidateObject(const UObject* Object, FValid
 	OutContext.OperationName = FString::Printf(TEXT("ValidateObject(%s)"), *Object->GetClass()->GetName());
 	OutContext.CreationTime = FDateTime::Now();
 	
+	// Broadcast pre-validation delegate
+	OnPreValidation.Broadcast(Object, OutContext);
+	
+	// Track start time for metrics
+	double StartTime = FPlatformTime::Seconds();
+	
 	// Execute validation rules
 	bool bResult = ExecuteRulesForObject(Object, OutContext);
 	
 	// Mark completion time
 	OutContext.CompletionTime = FDateTime::Now();
+	
+	// Calculate execution time
+	double ExecutionTime = FPlatformTime::Seconds() - StartTime;
+	
+	// Update metrics
+	UpdateMetrics(OutContext, ExecutionTime);
+	
+	// Check for critical issues and broadcast if found
+	for (const FValidationIssue& Issue : OutContext.Issues)
+	{
+		if (Issue.Severity == EValidationSeverity::Critical || Issue.Severity == EValidationSeverity::Error)
+		{
+			OnCriticalIssue.Broadcast(Object, Issue);
+		}
+	}
+	
+	// Broadcast post-validation delegate
+	OnPostValidation.Broadcast(Object, OutContext);
 	
 	return bResult;
 }
@@ -276,10 +314,20 @@ bool UDelveDeepValidationSubsystem::ExecuteRulesForObject(const UObject* Object,
 			RuleContext.OperationName = Rule.RuleName.ToString();
 			RuleContext.CreationTime = FDateTime::Now();
 			
+			// Track rule execution time
+			double RuleStartTime = FPlatformTime::Seconds();
+			
 			// Execute rule
 			bool bRulePassed = Rule.ValidationDelegate.Execute(Object, RuleContext);
 			
+			// Calculate rule execution time
+			double RuleExecutionTime = FPlatformTime::Seconds() - RuleStartTime;
+			
 			RuleContext.CompletionTime = FDateTime::Now();
+			
+			// Track rule execution metrics
+			Metrics.RuleExecutionTimes.FindOrAdd(Rule.RuleName) += RuleExecutionTime;
+			Metrics.RuleExecutionCounts.FindOrAdd(Rule.RuleName)++;
 			
 			// Add rule context as child
 			Context.AddChildContext(RuleContext);
@@ -326,4 +374,376 @@ uint32 UDelveDeepValidationSubsystem::CalculateObjectHash(const UObject* Object)
 	const_cast<UObject*>(Object)->Serialize(Ar);
 	
 	return Ar.GetCrc();
+}
+
+void UDelveDeepValidationSubsystem::UpdateMetrics(const FValidationContext& Context, double ExecutionTime)
+{
+	// Update total validation count
+	Metrics.TotalValidations++;
+	
+	// Update passed/failed counts
+	if (Context.IsValid())
+	{
+		Metrics.PassedValidations++;
+	}
+	else
+	{
+		Metrics.FailedValidations++;
+	}
+	
+	// Track error frequency
+	for (const FString& Error : Context.ValidationErrors)
+	{
+		Metrics.ErrorFrequency.FindOrAdd(Error)++;
+	}
+	
+	// Track error frequency from new Issues array
+	for (const FValidationIssue& Issue : Context.Issues)
+	{
+		if (Issue.Severity == EValidationSeverity::Error || Issue.Severity == EValidationSeverity::Critical)
+		{
+			Metrics.ErrorFrequency.FindOrAdd(Issue.Message)++;
+		}
+	}
+	
+	// Track system execution time
+	if (!Context.SystemName.IsEmpty())
+	{
+		Metrics.SystemExecutionTimes.FindOrAdd(Context.SystemName) += ExecutionTime;
+		Metrics.SystemExecutionCounts.FindOrAdd(Context.SystemName)++;
+	}
+	
+	// Track child context metrics recursively
+	for (const FValidationContext& ChildContext : Context.ChildContexts)
+	{
+		// Track error frequency from child contexts
+		for (const FString& Error : ChildContext.ValidationErrors)
+		{
+			Metrics.ErrorFrequency.FindOrAdd(Error)++;
+		}
+		
+		for (const FValidationIssue& Issue : ChildContext.Issues)
+		{
+			if (Issue.Severity == EValidationSeverity::Error || Issue.Severity == EValidationSeverity::Critical)
+			{
+				Metrics.ErrorFrequency.FindOrAdd(Issue.Message)++;
+			}
+		}
+	}
+}
+
+FString UDelveDeepValidationSubsystem::GetValidationMetricsReport() const
+{
+	FString Report;
+	Report += TEXT("=== Validation Metrics Report ===\n\n");
+	
+	// Overall statistics
+	Report += FString::Printf(TEXT("Total Validations: %d\n"), Metrics.TotalValidations);
+	Report += FString::Printf(TEXT("Passed: %d (%.1f%%)\n"), 
+		Metrics.PassedValidations, 
+		Metrics.TotalValidations > 0 ? (Metrics.PassedValidations * 100.0f / Metrics.TotalValidations) : 0.0f);
+	Report += FString::Printf(TEXT("Failed: %d (%.1f%%)\n\n"), 
+		Metrics.FailedValidations,
+		Metrics.TotalValidations > 0 ? (Metrics.FailedValidations * 100.0f / Metrics.TotalValidations) : 0.0f);
+	
+	// Error frequency
+	if (Metrics.ErrorFrequency.Num() > 0)
+	{
+		Report += TEXT("=== Most Common Errors ===\n");
+		
+		// Sort errors by frequency
+		TArray<TPair<FString, int32>> SortedErrors;
+		for (const auto& Pair : Metrics.ErrorFrequency)
+		{
+			SortedErrors.Add(TPair<FString, int32>(Pair.Key, Pair.Value));
+		}
+		SortedErrors.Sort([](const TPair<FString, int32>& A, const TPair<FString, int32>& B)
+		{
+			return A.Value > B.Value;
+		});
+		
+		// Show top 10 errors
+		int32 Count = 0;
+		for (const auto& Pair : SortedErrors)
+		{
+			Report += FString::Printf(TEXT("  %d: %s\n"), Pair.Value, *Pair.Key);
+			if (++Count >= 10)
+				break;
+		}
+		Report += TEXT("\n");
+	}
+	
+	// Rule execution times
+	if (Metrics.RuleExecutionTimes.Num() > 0)
+	{
+		Report += TEXT("=== Rule Performance ===\n");
+		
+		// Calculate average times and sort
+		TArray<TPair<FName, double>> SortedRules;
+		for (const auto& Pair : Metrics.RuleExecutionTimes)
+		{
+			int32 ExecutionCount = Metrics.RuleExecutionCounts.FindRef(Pair.Key);
+			double AvgTime = ExecutionCount > 0 ? (Pair.Value / ExecutionCount) : 0.0;
+			SortedRules.Add(TPair<FName, double>(Pair.Key, AvgTime));
+		}
+		SortedRules.Sort([](const TPair<FName, double>& A, const TPair<FName, double>& B)
+		{
+			return A.Value > B.Value;
+		});
+		
+		// Show top 10 slowest rules
+		int32 Count = 0;
+		for (const auto& Pair : SortedRules)
+		{
+			int32 ExecutionCount = Metrics.RuleExecutionCounts.FindRef(Pair.Key);
+			Report += FString::Printf(TEXT("  %s: %.3f ms avg (%d executions)\n"), 
+				*Pair.Key.ToString(), Pair.Value * 1000.0, ExecutionCount);
+			if (++Count >= 10)
+				break;
+		}
+		Report += TEXT("\n");
+	}
+	
+	// System execution times
+	if (Metrics.SystemExecutionTimes.Num() > 0)
+	{
+		Report += TEXT("=== System Performance ===\n");
+		
+		// Calculate average times and sort
+		TArray<TPair<FString, double>> SortedSystems;
+		for (const auto& Pair : Metrics.SystemExecutionTimes)
+		{
+			int32 ExecutionCount = Metrics.SystemExecutionCounts.FindRef(Pair.Key);
+			double AvgTime = ExecutionCount > 0 ? (Pair.Value / ExecutionCount) : 0.0;
+			SortedSystems.Add(TPair<FString, double>(Pair.Key, AvgTime));
+		}
+		SortedSystems.Sort([](const TPair<FString, double>& A, const TPair<FString, double>& B)
+		{
+			return A.Value > B.Value;
+		});
+		
+		for (const auto& Pair : SortedSystems)
+		{
+			int32 ExecutionCount = Metrics.SystemExecutionCounts.FindRef(Pair.Key);
+			Report += FString::Printf(TEXT("  %s: %.3f ms avg (%d validations)\n"), 
+				*Pair.Key, Pair.Value * 1000.0, ExecutionCount);
+		}
+		Report += TEXT("\n");
+	}
+	
+	return Report;
+}
+
+FValidationMetricsData UDelveDeepValidationSubsystem::GetValidationMetrics() const
+{
+	FValidationMetricsData Data;
+	
+	Data.TotalValidations = Metrics.TotalValidations;
+	Data.PassedValidations = Metrics.PassedValidations;
+	Data.FailedValidations = Metrics.FailedValidations;
+	Data.ErrorFrequency = Metrics.ErrorFrequency;
+	
+	// Calculate average rule execution times
+	for (const auto& Pair : Metrics.RuleExecutionTimes)
+	{
+		int32 ExecutionCount = Metrics.RuleExecutionCounts.FindRef(Pair.Key);
+		if (ExecutionCount > 0)
+		{
+			float AvgTimeMs = static_cast<float>((Pair.Value / ExecutionCount) * 1000.0);
+			Data.AverageRuleExecutionTime.Add(Pair.Key.ToString(), AvgTimeMs);
+		}
+	}
+	
+	// Calculate average system execution times
+	for (const auto& Pair : Metrics.SystemExecutionTimes)
+	{
+		int32 ExecutionCount = Metrics.SystemExecutionCounts.FindRef(Pair.Key);
+		if (ExecutionCount > 0)
+		{
+			float AvgTimeMs = static_cast<float>((Pair.Value / ExecutionCount) * 1000.0);
+			Data.AverageSystemExecutionTime.Add(Pair.Key, AvgTimeMs);
+		}
+	}
+	
+	Data.LastResetTime = FDateTime::Now();
+	
+	return Data;
+}
+
+void UDelveDeepValidationSubsystem::ResetValidationMetrics()
+{
+	Metrics = FValidationMetrics();
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("Validation metrics reset"));
+}
+
+bool UDelveDeepValidationSubsystem::SaveMetricsToFile(const FString& FilePath)
+{
+	FString SavePath = FilePath;
+	if (SavePath.IsEmpty())
+	{
+		SavePath = FPaths::ProjectSavedDir() / TEXT("Validation") / TEXT("Metrics.json");
+	}
+	
+	// Ensure directory exists
+	FString Directory = FPaths::GetPath(SavePath);
+	if (!FPaths::DirectoryExists(Directory))
+	{
+		if (!IFileManager::Get().MakeDirectory(*Directory, true))
+		{
+			UE_LOG(LogDelveDeepConfig, Error, TEXT("Failed to create directory: %s"), *Directory);
+			return false;
+		}
+	}
+	
+	// Build JSON object
+	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
+	
+	JsonObject->SetNumberField(TEXT("TotalValidations"), Metrics.TotalValidations);
+	JsonObject->SetNumberField(TEXT("PassedValidations"), Metrics.PassedValidations);
+	JsonObject->SetNumberField(TEXT("FailedValidations"), Metrics.FailedValidations);
+	JsonObject->SetStringField(TEXT("Timestamp"), FDateTime::Now().ToString());
+	
+	// Error frequency
+	TSharedPtr<FJsonObject> ErrorFreqObj = MakeShareable(new FJsonObject);
+	for (const auto& Pair : Metrics.ErrorFrequency)
+	{
+		ErrorFreqObj->SetNumberField(Pair.Key, Pair.Value);
+	}
+	JsonObject->SetObjectField(TEXT("ErrorFrequency"), ErrorFreqObj);
+	
+	// Rule execution times
+	TSharedPtr<FJsonObject> RuleTimesObj = MakeShareable(new FJsonObject);
+	for (const auto& Pair : Metrics.RuleExecutionTimes)
+	{
+		int32 ExecutionCount = Metrics.RuleExecutionCounts.FindRef(Pair.Key);
+		double AvgTime = ExecutionCount > 0 ? (Pair.Value / ExecutionCount) : 0.0;
+		
+		TSharedPtr<FJsonObject> RuleObj = MakeShareable(new FJsonObject);
+		RuleObj->SetNumberField(TEXT("TotalTime"), Pair.Value);
+		RuleObj->SetNumberField(TEXT("ExecutionCount"), ExecutionCount);
+		RuleObj->SetNumberField(TEXT("AverageTime"), AvgTime);
+		
+		RuleTimesObj->SetObjectField(Pair.Key.ToString(), RuleObj);
+	}
+	JsonObject->SetObjectField(TEXT("RuleExecutionTimes"), RuleTimesObj);
+	
+	// System execution times
+	TSharedPtr<FJsonObject> SystemTimesObj = MakeShareable(new FJsonObject);
+	for (const auto& Pair : Metrics.SystemExecutionTimes)
+	{
+		int32 ExecutionCount = Metrics.SystemExecutionCounts.FindRef(Pair.Key);
+		double AvgTime = ExecutionCount > 0 ? (Pair.Value / ExecutionCount) : 0.0;
+		
+		TSharedPtr<FJsonObject> SystemObj = MakeShareable(new FJsonObject);
+		SystemObj->SetNumberField(TEXT("TotalTime"), Pair.Value);
+		SystemObj->SetNumberField(TEXT("ExecutionCount"), ExecutionCount);
+		SystemObj->SetNumberField(TEXT("AverageTime"), AvgTime);
+		
+		SystemTimesObj->SetObjectField(Pair.Key, SystemObj);
+	}
+	JsonObject->SetObjectField(TEXT("SystemExecutionTimes"), SystemTimesObj);
+	
+	// Serialize to string
+	FString JsonString;
+	TSharedRef<TJsonWriter<>> JsonWriter = TJsonWriterFactory<>::Create(&JsonString);
+	if (!FJsonSerializer::Serialize(JsonObject.ToSharedRef(), JsonWriter))
+	{
+		UE_LOG(LogDelveDeepConfig, Error, TEXT("Failed to serialize metrics to JSON"));
+		return false;
+	}
+	
+	// Write to file
+	if (!FFileHelper::SaveStringToFile(JsonString, *SavePath))
+	{
+		UE_LOG(LogDelveDeepConfig, Error, TEXT("Failed to save metrics to file: %s"), *SavePath);
+		return false;
+	}
+	
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("Validation metrics saved to: %s"), *SavePath);
+	return true;
+}
+
+bool UDelveDeepValidationSubsystem::LoadMetricsFromFile(const FString& FilePath)
+{
+	FString LoadPath = FilePath;
+	if (LoadPath.IsEmpty())
+	{
+		LoadPath = FPaths::ProjectSavedDir() / TEXT("Validation") / TEXT("Metrics.json");
+	}
+	
+	// Check if file exists
+	if (!FPaths::FileExists(LoadPath))
+	{
+		UE_LOG(LogDelveDeepConfig, Warning, TEXT("Metrics file not found: %s"), *LoadPath);
+		return false;
+	}
+	
+	// Load file content
+	FString JsonString;
+	if (!FFileHelper::LoadFileToString(JsonString, *LoadPath))
+	{
+		UE_LOG(LogDelveDeepConfig, Error, TEXT("Failed to load metrics file: %s"), *LoadPath);
+		return false;
+	}
+	
+	// Parse JSON
+	TSharedPtr<FJsonObject> JsonObject;
+	TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(JsonString);
+	if (!FJsonSerializer::Deserialize(JsonReader, JsonObject) || !JsonObject.IsValid())
+	{
+		UE_LOG(LogDelveDeepConfig, Error, TEXT("Failed to parse metrics JSON"));
+		return false;
+	}
+	
+	// Reset current metrics
+	Metrics = FValidationMetrics();
+	
+	// Load basic metrics
+	Metrics.TotalValidations = JsonObject->GetIntegerField(TEXT("TotalValidations"));
+	Metrics.PassedValidations = JsonObject->GetIntegerField(TEXT("PassedValidations"));
+	Metrics.FailedValidations = JsonObject->GetIntegerField(TEXT("FailedValidations"));
+	
+	// Load error frequency
+	const TSharedPtr<FJsonObject>* ErrorFreqObj;
+	if (JsonObject->TryGetObjectField(TEXT("ErrorFrequency"), ErrorFreqObj))
+	{
+		for (const auto& Pair : (*ErrorFreqObj)->Values)
+		{
+			Metrics.ErrorFrequency.Add(Pair.Key, static_cast<int32>(Pair.Value->AsNumber()));
+		}
+	}
+	
+	// Load rule execution times
+	const TSharedPtr<FJsonObject>* RuleTimesObj;
+	if (JsonObject->TryGetObjectField(TEXT("RuleExecutionTimes"), RuleTimesObj))
+	{
+		for (const auto& Pair : (*RuleTimesObj)->Values)
+		{
+			const TSharedPtr<FJsonObject>* RuleObj;
+			if (Pair.Value->TryGetObject(RuleObj))
+			{
+				FName RuleName(*Pair.Key);
+				Metrics.RuleExecutionTimes.Add(RuleName, (*RuleObj)->GetNumberField(TEXT("TotalTime")));
+				Metrics.RuleExecutionCounts.Add(RuleName, static_cast<int32>((*RuleObj)->GetNumberField(TEXT("ExecutionCount"))));
+			}
+		}
+	}
+	
+	// Load system execution times
+	const TSharedPtr<FJsonObject>* SystemTimesObj;
+	if (JsonObject->TryGetObjectField(TEXT("SystemExecutionTimes"), SystemTimesObj))
+	{
+		for (const auto& Pair : (*SystemTimesObj)->Values)
+		{
+			const TSharedPtr<FJsonObject>* SystemObj;
+			if (Pair.Value->TryGetObject(SystemObj))
+			{
+				Metrics.SystemExecutionTimes.Add(Pair.Key, (*SystemObj)->GetNumberField(TEXT("TotalTime")));
+				Metrics.SystemExecutionCounts.Add(Pair.Key, static_cast<int32>((*SystemObj)->GetNumberField(TEXT("ExecutionCount"))));
+			}
+		}
+	}
+	
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("Validation metrics loaded from: %s"), *LoadPath);
+	return true;
 }
