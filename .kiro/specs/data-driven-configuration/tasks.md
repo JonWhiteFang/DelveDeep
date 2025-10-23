@@ -145,7 +145,7 @@
   - Create example ability data asset (DA_Ability_Cleave) with valid test values
   - _Requirements: 1.1, 2.1, 3.1, 4.1_
 
-- [ ] 12. Write unit tests for validation system
+- [x] 12. Write unit tests for validation system
   - Write test for FValidationContext error/warning tracking
   - Write test for character data validation with invalid health value
   - Write test for monster config validation with negative damage
