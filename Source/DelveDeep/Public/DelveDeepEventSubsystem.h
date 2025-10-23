@@ -138,6 +138,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Events")
 	void DisableEventLogging();
 
+	/**
+	 * Gets all event tags that are marked as network-relevant.
+	 * This is for future multiplayer support.
+	 * @return Array of GameplayTags for network-relevant events
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Events")
+	TArray<FGameplayTag> GetNetworkRelevantEvents() const;
+
 private:
 	/** Event registry: Maps GameplayTag to listener lists */
 	UPROPERTY()
@@ -179,6 +187,9 @@ private:
 
 	/** Whether event logging is enabled */
 	bool bEventLoggingEnabled = false;
+
+	/** Set of event tags that are marked as network-relevant */
+	TSet<FGameplayTag> NetworkRelevantEventTags;
 
 	/**
 	 * Generates a unique delegate handle.

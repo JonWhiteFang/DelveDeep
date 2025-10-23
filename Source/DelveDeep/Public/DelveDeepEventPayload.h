@@ -29,6 +29,14 @@ struct DELVEDEEP_API FDelveDeepEventPayload
 	UPROPERTY(BlueprintReadOnly, Category = "Event")
 	TWeakObjectPtr<AActor> Instigator;
 
+	/** Whether this event should be replicated over the network (for future multiplayer support) */
+	UPROPERTY(BlueprintReadOnly, Category = "Network")
+	bool bNetworkRelevant = false;
+
+	/** Whether this event should use reliable replication (for future multiplayer support) */
+	UPROPERTY(BlueprintReadOnly, Category = "Network")
+	bool bReliable = true;
+
 	FDelveDeepEventPayload()
 		: Timestamp(FDateTime::Now())
 	{}
@@ -41,6 +49,19 @@ struct DELVEDEEP_API FDelveDeepEventPayload
 	 * @return True if payload is valid, false otherwise
 	 */
 	virtual bool Validate(FValidationContext& Context) const;
+
+	/**
+	 * Determines if this event should be replicated over the network.
+	 * @return True if the event should be replicated, false otherwise
+	 */
+	virtual bool ShouldReplicate() const { return bNetworkRelevant; }
+
+	/**
+	 * Serializes the event payload for network transmission.
+	 * This is a stub for future multiplayer support.
+	 * @param Ar Archive for serialization
+	 */
+	virtual void Serialize(FArchive& Ar) { /* Implement when network support is added */ }
 
 protected:
 	/** Helper method to validate actor references */

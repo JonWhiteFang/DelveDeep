@@ -10,6 +10,9 @@ DEFINE_LOG_CATEGORY(LogDelveDeepEvents);
 DECLARE_STATS_GROUP(TEXT("DelveDeep.Events"), STATGROUP_DelveDeepEvents, STATCAT_Advanced);
 DECLARE_CYCLE_STAT(TEXT("Broadcast Event"), STAT_BroadcastEvent, STATGROUP_DelveDeepEvents);
 DECLARE_CYCLE_STAT(TEXT("Invoke Listeners"), STAT_InvokeListeners, STATGROUP_DelveDeepEvents);
+DECLARE_CYCLE_STAT(TEXT("Process Deferred"), STAT_ProcessDeferred, STATGROUP_DelveDeepEvents);
+DECLARE_DWORD_COUNTER_STAT(TEXT("Active Listeners"), STAT_ActiveListeners, STATGROUP_DelveDeepEvents);
+DECLARE_DWORD_COUNTER_STAT(TEXT("Events Per Frame"), STAT_EventsPerFrame, STATGROUP_DelveDeepEvents);
 
 void UDelveDeepEventSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -118,6 +121,14 @@ FDelegateHandle UDelveDeepEventSubsystem::RegisterListener(
 	UE_LOG(LogDelveDeepEvents, Verbose, TEXT("Registered listener for tag %s (Priority: %d, Total listeners: %d)"),
 		*EventTag.ToString(), static_cast<int32>(Priority), ListenerList.GetTotalListenerCount());
 
+	// Update active listener stat
+	int32 TotalListeners = 0;
+	for (const auto& RegistryPair : EventRegistry)
+	{
+		TotalListeners += RegistryPair.Value.GetTotalListenerCount();
+	}
+	SET_DWORD_STAT(STAT_ActiveListeners, TotalListeners);
+
 	return Handle;
 }
 
@@ -188,6 +199,14 @@ void UDelveDeepEventSubsystem::UnregisterListener(FDelegateHandle Handle)
 	UE_LOG(LogDelveDeepEvents, Verbose, TEXT("Unregistered listener for tag %s (Priority: %d, Remaining: %d)"),
 		*Location->EventTag.ToString(), static_cast<int32>(Location->Priority), 
 		ListenerList->GetTotalListenerCount());
+
+	// Update active listener stat
+	int32 TotalListeners = 0;
+	for (const auto& RegistryPair : EventRegistry)
+	{
+		TotalListeners += RegistryPair.Value.GetTotalListenerCount();
+	}
+	SET_DWORD_STAT(STAT_ActiveListeners, TotalListeners);
 }
 
 void UDelveDeepEventSubsystem::UnregisterAllListeners(UObject* Owner)
@@ -379,6 +398,8 @@ void UDelveDeepEventSubsystem::DisableDeferredMode()
 
 void UDelveDeepEventSubsystem::ProcessDeferredEvents()
 {
+	SCOPE_CYCLE_COUNTER(STAT_ProcessDeferred);
+
 	if (DeferredEventQueue.Num() == 0)
 	{
 		UE_LOG(LogDelveDeepEvents, VeryVerbose, TEXT("No deferred events to process"));
@@ -426,6 +447,7 @@ void UDelveDeepEventSubsystem::ProcessDeferredEvents()
 void UDelveDeepEventSubsystem::BroadcastEventImmediate(const FDelveDeepEventPayload& Payload)
 {
 	SCOPE_CYCLE_COUNTER(STAT_BroadcastEvent);
+	INC_DWORD_STAT(STAT_EventsPerFrame);
 
 	const double BroadcastStartTime = FPlatformTime::Seconds();
 	int32 TotalListenersInvoked = 0;
@@ -448,6 +470,12 @@ void UDelveDeepEventSubsystem::BroadcastEventImmediate(const FDelveDeepEventPayl
 		return;
 	}
 #endif
+
+	// Track network-relevant events
+	if (Payload.ShouldReplicate())
+	{
+		NetworkRelevantEventTags.Add(Payload.EventTag);
+	}
 
 	// Find all matching event tags (including parent tags for hierarchical matching)
 	TArray<FGameplayTag> MatchingTags;
@@ -618,6 +646,13 @@ void UDelveDeepEventSubsystem::DisableEventLogging()
 {
 	bEventLoggingEnabled = false;
 	UE_LOG(LogDelveDeepEvents, Display, TEXT("Event logging disabled"));
+}
+
+TArray<FGameplayTag> UDelveDeepEventSubsystem::GetNetworkRelevantEvents() const
+{
+	TArray<FGameplayTag> Result;
+	NetworkRelevantEventTags.GenerateValueArray(Result);
+	return Result;
 }
 
 void UDelveDeepEventSubsystem::AddToHistory(const FEventRecord& Record)

@@ -16,6 +16,18 @@ bool FDelveDeepEventPayload::Validate(FValidationContext& Context) const
 		bIsValid = false;
 	}
 
+	// Validate network replication settings
+	if (bNetworkRelevant)
+	{
+		// Warn if network-relevant event has weak object pointers
+		// (these cannot be serialized directly and need special handling)
+		if (Instigator.IsValid())
+		{
+			Context.AddWarning(TEXT("Network-relevant event contains weak object pointer (Instigator). "
+				"Special serialization handling will be required for multiplayer."));
+		}
+	}
+
 	// Timestamp is always valid (set in constructor)
 	// Instigator is optional (can be null for system events)
 
