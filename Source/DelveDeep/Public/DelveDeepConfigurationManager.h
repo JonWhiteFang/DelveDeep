@@ -159,4 +159,8 @@ private:
 	bool ValidateUpgradeData(const UDelveDeepUpgradeData* Data, FValidationContext& Context) const;
 	bool ValidateWeaponData(const UDelveDeepWeaponData* Data, FValidationContext& Context) const;
 	bool ValidateAbilityData(const UDelveDeepAbilityData* Data, FValidationContext& Context) const;
+
+	// Directory structure validation
+	void ValidateAssetDirectoryStructure();
+	bool IsAssetInStandardDirectory(const FString& AssetPath, const FString& ExpectedDirectory, FString& OutSuggestion) const;
 };

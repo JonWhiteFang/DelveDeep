@@ -75,6 +75,9 @@ void UDelveDeepConfigurationManager::Initialize(FSubsystemCollectionBase& Collec
 		UE_LOG(LogDelveDeepConfig, Warning, TEXT("Configuration validation found issues:\n%s"), *ValidationReport);
 	}
 
+	// Validate directory structure
+	ValidateAssetDirectoryStructure();
+
 #if !UE_BUILD_SHIPPING
 	// Setup hot reload for development builds
 	SetupHotReload();
@@ -949,4 +952,159 @@ bool UDelveDeepConfigurationManager::ValidateAbilityData(const UDelveDeepAbility
 	}
 
 	return bIsValid;
+}
+
+void UDelveDeepConfigurationManager::ValidateAssetDirectoryStructure()
+{
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("Validating asset directory structure..."));
+
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
+
+	int32 MisplacedAssetCount = 0;
+
+	// Validate character data assets
+	for (const auto& Pair : CharacterDataCache)
+	{
+		if (Pair.Value)
+		{
+			FString AssetPath = Pair.Value->GetPathName();
+			FString Suggestion;
+			
+			if (!IsAssetInStandardDirectory(AssetPath, TEXT("/Game/Data/Characters"), Suggestion))
+			{
+				UE_LOG(LogDelveDeepConfig, Warning, 
+					TEXT("Character data asset outside standard directory: %s\n  Suggestion: %s"), 
+					*AssetPath, *Suggestion);
+				MisplacedAssetCount++;
+			}
+		}
+	}
+
+	// Validate upgrade data assets
+	for (const auto& Pair : UpgradeDataCache)
+	{
+		if (Pair.Value)
+		{
+			FString AssetPath = Pair.Value->GetPathName();
+			FString Suggestion;
+			
+			if (!IsAssetInStandardDirectory(AssetPath, TEXT("/Game/Data/Upgrades"), Suggestion))
+			{
+				UE_LOG(LogDelveDeepConfig, Warning, 
+					TEXT("Upgrade data asset outside standard directory: %s\n  Suggestion: %s"), 
+					*AssetPath, *Suggestion);
+				MisplacedAssetCount++;
+			}
+		}
+	}
+
+	// Validate weapon data assets
+	for (const auto& Pair : WeaponDataCache)
+	{
+		if (Pair.Value)
+		{
+			FString AssetPath = Pair.Value->GetPathName();
+			FString Suggestion;
+			
+			if (!IsAssetInStandardDirectory(AssetPath, TEXT("/Game/Data/Weapons"), Suggestion))
+			{
+				UE_LOG(LogDelveDeepConfig, Warning, 
+					TEXT("Weapon data asset outside standard directory: %s\n  Suggestion: %s"), 
+					*AssetPath, *Suggestion);
+				MisplacedAssetCount++;
+			}
+		}
+	}
+
+	// Validate ability data assets
+	for (const auto& Pair : AbilityDataCache)
+	{
+		if (Pair.Value)
+		{
+			FString AssetPath = Pair.Value->GetPathName();
+			FString Suggestion;
+			
+			if (!IsAssetInStandardDirectory(AssetPath, TEXT("/Game/Data/Abilities"), Suggestion))
+			{
+				UE_LOG(LogDelveDeepConfig, Warning, 
+					TEXT("Ability data asset outside standard directory: %s\n  Suggestion: %s"), 
+					*AssetPath, *Suggestion);
+				MisplacedAssetCount++;
+			}
+		}
+	}
+
+	// Validate monster config data table
+	if (MonsterConfigTable)
+	{
+		FString AssetPath = MonsterConfigTable->GetPathName();
+		FString Suggestion;
+		
+		if (!IsAssetInStandardDirectory(AssetPath, TEXT("/Game/Data/Monsters"), Suggestion))
+		{
+			UE_LOG(LogDelveDeepConfig, Warning, 
+				TEXT("Monster config data table outside standard directory: %s\n  Suggestion: %s"), 
+				*AssetPath, *Suggestion);
+			MisplacedAssetCount++;
+		}
+	}
+
+	if (MisplacedAssetCount > 0)
+	{
+		UE_LOG(LogDelveDeepConfig, Warning, 
+			TEXT("Directory structure validation found %d asset(s) outside standard directories"), 
+			MisplacedAssetCount);
+	}
+	else
+	{
+		UE_LOG(LogDelveDeepConfig, Display, 
+			TEXT("Directory structure validation passed: All assets in standard directories"));
+	}
+}
+
+bool UDelveDeepConfigurationManager::IsAssetInStandardDirectory(const FString& AssetPath, const FString& ExpectedDirectory, FString& OutSuggestion) const
+{
+	// Extract the package path (everything before the asset name)
+	FString PackagePath;
+	FString AssetName;
+	
+	if (AssetPath.Split(TEXT("."), &PackagePath, &AssetName))
+	{
+		// Check if the package path starts with the expected directory
+		if (PackagePath.StartsWith(ExpectedDirectory))
+		{
+			return true;
+		}
+	}
+	else
+	{
+		// If no dot found, the entire path is the package path
+		PackagePath = AssetPath;
+		if (PackagePath.StartsWith(ExpectedDirectory))
+		{
+			return true;
+		}
+	}
+
+	// Asset is not in the expected directory, generate suggestion
+	// Extract just the asset name from the full path
+	FString BaseAssetName;
+	if (AssetPath.Split(TEXT("/"), nullptr, &BaseAssetName, ESearchCase::IgnoreCase, ESearchDir::FromEnd))
+	{
+		// Remove the .AssetName suffix if present
+		if (BaseAssetName.Contains(TEXT(".")))
+		{
+			BaseAssetName.Split(TEXT("."), &BaseAssetName, nullptr);
+		}
+	}
+	else
+	{
+		BaseAssetName = AssetName.IsEmpty() ? TEXT("Asset") : AssetName;
+	}
+
+	// Generate suggestion with correct directory and naming convention
+	OutSuggestion = FString::Printf(TEXT("Move asset to: %s/%s"), *ExpectedDirectory, *BaseAssetName);
+
+	return false;
 }
