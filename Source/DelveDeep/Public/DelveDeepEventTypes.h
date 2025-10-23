@@ -174,3 +174,146 @@ struct DELVEDEEP_API FEventListenerList
 		}
 	}
 };
+
+/**
+ * Performance metrics for the event system.
+ * Tracks broadcast counts, timing, and listener invocations.
+ */
+USTRUCT(BlueprintType)
+struct DELVEDEEP_API FEventSystemMetrics
+{
+	GENERATED_BODY()
+
+	/** Total number of events broadcast */
+	UPROPERTY(BlueprintReadOnly, Category = "Metrics")
+	int32 TotalEventsBroadcast = 0;
+
+	/** Total number of listener invocations */
+	UPROPERTY(BlueprintReadOnly, Category = "Metrics")
+	int32 TotalListenerInvocations = 0;
+
+	/** Average time per event broadcast (in milliseconds) */
+	UPROPERTY(BlueprintReadOnly, Category = "Metrics")
+	double AverageTimePerBroadcast = 0.0;
+
+	/** Average time per listener callback (in milliseconds) */
+	UPROPERTY(BlueprintReadOnly, Category = "Metrics")
+	double AverageTimePerListener = 0.0;
+
+	/** Total event system overhead (in milliseconds) */
+	UPROPERTY(BlueprintReadOnly, Category = "Metrics")
+	double TotalEventSystemOverhead = 0.0;
+
+	/** Number of deferred events processed */
+	UPROPERTY(BlueprintReadOnly, Category = "Metrics")
+	int32 DeferredEventsProcessed = 0;
+
+	/** Number of listener callbacks that failed */
+	UPROPERTY(BlueprintReadOnly, Category = "Metrics")
+	int32 FailedListenerInvocations = 0;
+
+	/** Peak number of listeners for a single event */
+	UPROPERTY(BlueprintReadOnly, Category = "Metrics")
+	int32 PeakListenersPerEvent = 0;
+
+	/** Resets all metrics to zero */
+	void Reset()
+	{
+		TotalEventsBroadcast = 0;
+		TotalListenerInvocations = 0;
+		AverageTimePerBroadcast = 0.0;
+		AverageTimePerListener = 0.0;
+		TotalEventSystemOverhead = 0.0;
+		DeferredEventsProcessed = 0;
+		FailedListenerInvocations = 0;
+		PeakListenersPerEvent = 0;
+	}
+
+	/**
+	 * Records a broadcast event and updates metrics.
+	 * @param Duration Time taken for the broadcast (in seconds)
+	 * @param ListenerCount Number of listeners invoked
+	 * @param FailedCount Number of listeners that failed
+	 */
+	void RecordBroadcast(double Duration, int32 ListenerCount, int32 FailedCount = 0)
+	{
+		TotalEventsBroadcast++;
+		TotalListenerInvocations += ListenerCount;
+		FailedListenerInvocations += FailedCount;
+
+		// Convert duration to milliseconds
+		const double DurationMs = Duration * 1000.0;
+		TotalEventSystemOverhead += DurationMs;
+
+		// Update average time per broadcast
+		AverageTimePerBroadcast = TotalEventSystemOverhead / TotalEventsBroadcast;
+
+		// Update average time per listener
+		if (TotalListenerInvocations > 0)
+		{
+			AverageTimePerListener = TotalEventSystemOverhead / TotalListenerInvocations;
+		}
+
+		// Update peak listeners
+		if (ListenerCount > PeakListenersPerEvent)
+		{
+			PeakListenersPerEvent = ListenerCount;
+		}
+	}
+
+	/**
+	 * Records deferred event processing.
+	 * @param EventCount Number of deferred events processed
+	 */
+	void RecordDeferredProcessing(int32 EventCount)
+	{
+		DeferredEventsProcessed += EventCount;
+	}
+};
+
+/**
+ * Record of a broadcast event for debugging and history tracking.
+ * Contains event metadata and timing information.
+ */
+USTRUCT(BlueprintType)
+struct DELVEDEEP_API FEventRecord
+{
+	GENERATED_BODY()
+
+	/** The event tag that was broadcast */
+	UPROPERTY(BlueprintReadOnly, Category = "Event")
+	FGameplayTag EventTag;
+
+	/** Timestamp when the event was broadcast */
+	UPROPERTY(BlueprintReadOnly, Category = "Event")
+	FDateTime Timestamp;
+
+	/** Number of listeners that received this event */
+	UPROPERTY(BlueprintReadOnly, Category = "Event")
+	int32 ListenerCount = 0;
+
+	/** Time taken to process this event (in milliseconds) */
+	UPROPERTY(BlueprintReadOnly, Category = "Event")
+	double ProcessingTime = 0.0;
+
+	/** Number of listeners that failed during this event */
+	UPROPERTY(BlueprintReadOnly, Category = "Event")
+	int32 FailedListenerCount = 0;
+
+	/** Summary of the event payload (for debugging) */
+	UPROPERTY(BlueprintReadOnly, Category = "Event")
+	FString PayloadSummary;
+
+	FEventRecord()
+		: Timestamp(FDateTime::Now())
+	{}
+
+	FEventRecord(const FGameplayTag& InEventTag, int32 InListenerCount, double InProcessingTime, int32 InFailedCount, const FString& InPayloadSummary)
+		: EventTag(InEventTag)
+		, Timestamp(FDateTime::Now())
+		, ListenerCount(InListenerCount)
+		, ProcessingTime(InProcessingTime)
+		, FailedListenerCount(InFailedCount)
+		, PayloadSummary(InPayloadSummary)
+	{}
+};

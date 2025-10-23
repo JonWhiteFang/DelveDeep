@@ -62,7 +62,7 @@
   - Track failed listener invocations in performance metrics
   - _Requirements: 2.5, 8.1, 8.2, 8.4_
 
-- [ ] 9. Implement deferred event processing system
+- [x] 9. Implement deferred event processing system
   - Create DeferredEventQueue TArray for queued events
   - Implement EnableDeferredMode() and DisableDeferredMode() methods
   - Create BroadcastEventDeferred() method to queue events
@@ -71,7 +71,7 @@
   - Log warnings when queue reaches 80% capacity
   - _Requirements: 4.5, 6.1, 6.2, 6.3, 6.4, 6.5_
 
-- [ ] 10. Implement performance metrics tracking
+- [x] 10. Implement performance metrics tracking
   - Create FEventSystemMetrics struct with broadcast/listener timing fields
   - Track TotalEventsBroadcast, TotalListenerInvocations, AverageTimePerBroadcast
   - Implement RecordBroadcast() method to update metrics
@@ -80,7 +80,7 @@
   - Log performance warnings when listener callbacks exceed 5ms
   - _Requirements: 9.1, 9.2, 9.3, 9.4_
 
-- [ ] 11. Implement event history and debugging
+- [x] 11. Implement event history and debugging
   - Create FEventRecord struct with EventTag, Timestamp, ListenerCount, ProcessingTime
   - Implement TCircularBuffer for last 100 events (MaxHistorySize)
   - Store event records during broadcasting
@@ -88,7 +88,7 @@
   - Implement event logging with configurable verbosity
   - _Requirements: 7.1, 7.4_
 
-- [ ] 12. Implement console commands for debugging
+- [x] 12. Implement console commands for debugging
   - Create DelveDeep.Events.ListListeners command to display listeners by tag
   - Create DelveDeep.Events.ListAllListeners command to display all registered listeners
   - Create DelveDeep.Events.ShowMetrics command to display performance statistics

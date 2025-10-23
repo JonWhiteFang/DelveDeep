@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "DelveDeepEventSubsystem.h"
+#include "DelveDeepEventCommands.h"
 #include "Stats/Stats.h"
 
 DEFINE_LOG_CATEGORY(LogDelveDeepEvents);
@@ -21,6 +22,23 @@ void UDelveDeepEventSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	HandleToListenerMap.Empty();
 	NextHandleId = 1;
 	
+	// Initialize deferred event system
+	DeferredEventQueue.Empty();
+	DeferredEventQueue.Reserve(MaxDeferredEvents);
+	bDeferredMode = false;
+	
+	// Initialize performance metrics
+	PerformanceMetrics.Reset();
+	
+	// Initialize event history
+	EventHistory.Empty();
+	EventHistory.Reserve(MaxHistorySize);
+	HistoryIndex = 0;
+	bEventLoggingEnabled = false;
+	
+	// Register console commands
+	FDelveDeepEventCommands::RegisterCommands();
+	
 	UE_LOG(LogDelveDeepEvents, Display, TEXT("Event Subsystem initialized successfully"));
 }
 
@@ -28,9 +46,19 @@ void UDelveDeepEventSubsystem::Deinitialize()
 {
 	UE_LOG(LogDelveDeepEvents, Display, TEXT("Event Subsystem shutting down..."));
 	
+	// Process any remaining deferred events
+	if (DeferredEventQueue.Num() > 0)
+	{
+		UE_LOG(LogDelveDeepEvents, Warning, TEXT("Processing %d remaining deferred events during shutdown"),
+			DeferredEventQueue.Num());
+		ProcessDeferredEvents();
+	}
+	
 	// Clear all listeners and registry
 	EventRegistry.Empty();
 	HandleToListenerMap.Empty();
+	DeferredEventQueue.Empty();
+	EventHistory.Empty();
 	
 	Super::Deinitialize();
 }
@@ -286,7 +314,122 @@ void UDelveDeepEventSubsystem::RemoveListenerFromArray(
 
 void UDelveDeepEventSubsystem::BroadcastEvent(const FDelveDeepEventPayload& Payload)
 {
+	// If in deferred mode, queue the event instead of broadcasting immediately
+	if (bDeferredMode)
+	{
+		BroadcastEventDeferred(Payload);
+		return;
+	}
+
+	// Otherwise broadcast immediately
+	BroadcastEventImmediate(Payload);
+}
+
+void UDelveDeepEventSubsystem::BroadcastEventDeferred(const FDelveDeepEventPayload& Payload)
+{
+	// Check queue capacity
+	if (DeferredEventQueue.Num() >= MaxDeferredEvents)
+	{
+		UE_LOG(LogDelveDeepEvents, Error, 
+			TEXT("Deferred event queue overflow! Discarding oldest event. Queue size: %d"),
+			DeferredEventQueue.Num());
+		
+		// Remove oldest event
+		DeferredEventQueue.RemoveAt(0);
+	}
+	else if (DeferredEventQueue.Num() >= MaxDeferredEvents * 0.8f)
+	{
+		// Warn when queue reaches 80% capacity
+		UE_LOG(LogDelveDeepEvents, Warning,
+			TEXT("Deferred event queue at 80%% capacity: %d/%d events"),
+			DeferredEventQueue.Num(), MaxDeferredEvents);
+	}
+
+	// Create a copy of the payload and queue it
+	TSharedPtr<FDelveDeepEventPayload> PayloadCopy = MakeShared<FDelveDeepEventPayload>(Payload);
+	DeferredEventQueue.Add(PayloadCopy);
+
+	UE_LOG(LogDelveDeepEvents, VeryVerbose, TEXT("Queued deferred event %s (Queue size: %d)"),
+		*Payload.EventTag.ToString(), DeferredEventQueue.Num());
+}
+
+void UDelveDeepEventSubsystem::EnableDeferredMode()
+{
+	if (bDeferredMode)
+	{
+		UE_LOG(LogDelveDeepEvents, Warning, TEXT("Deferred mode already enabled"));
+		return;
+	}
+
+	bDeferredMode = true;
+	UE_LOG(LogDelveDeepEvents, Display, TEXT("Deferred event processing mode enabled"));
+}
+
+void UDelveDeepEventSubsystem::DisableDeferredMode()
+{
+	if (!bDeferredMode)
+	{
+		UE_LOG(LogDelveDeepEvents, Warning, TEXT("Deferred mode already disabled"));
+		return;
+	}
+
+	bDeferredMode = false;
+	UE_LOG(LogDelveDeepEvents, Display, TEXT("Deferred event processing mode disabled"));
+}
+
+void UDelveDeepEventSubsystem::ProcessDeferredEvents()
+{
+	if (DeferredEventQueue.Num() == 0)
+	{
+		UE_LOG(LogDelveDeepEvents, VeryVerbose, TEXT("No deferred events to process"));
+		return;
+	}
+
+	const int32 EventCount = DeferredEventQueue.Num();
+	const double StartTime = FPlatformTime::Seconds();
+
+	UE_LOG(LogDelveDeepEvents, Display, TEXT("Processing %d deferred events..."), EventCount);
+
+	// Process all queued events in order
+	for (const TSharedPtr<FDelveDeepEventPayload>& PayloadPtr : DeferredEventQueue)
+	{
+		if (PayloadPtr.IsValid())
+		{
+			BroadcastEventImmediate(*PayloadPtr);
+		}
+	}
+
+	// Clear the queue
+	DeferredEventQueue.Empty();
+
+	const double EndTime = FPlatformTime::Seconds();
+	const double Duration = (EndTime - StartTime) * 1000.0; // Convert to milliseconds
+
+	// Record deferred processing metrics
+	{
+		FScopeLock Lock(&MetricsMutex);
+		PerformanceMetrics.RecordDeferredProcessing(EventCount);
+	}
+
+	UE_LOG(LogDelveDeepEvents, Display, 
+		TEXT("Processed %d deferred events in %.2f ms (%.2f ms per event)"),
+		EventCount, Duration, Duration / EventCount);
+
+	// Warn if processing took too long
+	if (Duration > 10.0)
+	{
+		UE_LOG(LogDelveDeepEvents, Warning,
+			TEXT("Deferred event processing exceeded 10ms target: %.2f ms"), Duration);
+	}
+}
+
+void UDelveDeepEventSubsystem::BroadcastEventImmediate(const FDelveDeepEventPayload& Payload)
+{
 	SCOPE_CYCLE_COUNTER(STAT_BroadcastEvent);
+
+	const double BroadcastStartTime = FPlatformTime::Seconds();
+	int32 TotalListenersInvoked = 0;
+	int32 FailedListeners = 0;
 
 	// Validate event tag
 	if (!Payload.EventTag.IsValid())
@@ -362,6 +505,9 @@ void UDelveDeepEventSubsystem::BroadcastEvent(const FDelveDeepEventPayload& Payl
 				{
 					SCOPE_CYCLE_COUNTER(STAT_InvokeListeners);
 
+					const double ListenerStartTime = FPlatformTime::Seconds();
+					bool bListenerFailed = false;
+
 					try
 					{
 						Listener.Callback(Payload);
@@ -372,16 +518,55 @@ void UDelveDeepEventSubsystem::BroadcastEvent(const FDelveDeepEventPayload& Payl
 						UE_LOG(LogDelveDeepEvents, Error, 
 							TEXT("Exception in listener callback for tag %s: %s"),
 							*Tag.ToString(), ANSI_TO_TCHAR(e.what()));
+						bListenerFailed = true;
+						FailedListeners++;
 					}
 					catch (...)
 					{
 						UE_LOG(LogDelveDeepEvents, Error, 
 							TEXT("Unknown exception in listener callback for tag %s"),
 							*Tag.ToString());
+						bListenerFailed = true;
+						FailedListeners++;
+					}
+
+					const double ListenerEndTime = FPlatformTime::Seconds();
+					const double ListenerDuration = (ListenerEndTime - ListenerStartTime) * 1000.0; // ms
+
+					// Warn if listener took too long
+					if (ListenerDuration > SlowListenerThresholdMs)
+					{
+						UE_LOG(LogDelveDeepEvents, Warning,
+							TEXT("Slow listener callback for tag %s: %.2f ms (threshold: %.2f ms)"),
+							*Tag.ToString(), ListenerDuration, SlowListenerThresholdMs);
 					}
 				}
 			}
 		}
+	}
+
+	// Record broadcast metrics
+	const double BroadcastEndTime = FPlatformTime::Seconds();
+	const double BroadcastDuration = BroadcastEndTime - BroadcastStartTime;
+	const double BroadcastDurationMs = BroadcastDuration * 1000.0;
+	
+	{
+		FScopeLock Lock(&MetricsMutex);
+		PerformanceMetrics.RecordBroadcast(BroadcastDuration, TotalListenersInvoked, FailedListeners);
+	}
+
+	// Add to event history
+	FString PayloadSummary = GeneratePayloadSummary(Payload);
+	FEventRecord Record(Payload.EventTag, TotalListenersInvoked, BroadcastDurationMs, FailedListeners, PayloadSummary);
+	AddToHistory(Record);
+
+	// Log event if logging is enabled
+	if (bEventLoggingEnabled)
+	{
+		UE_LOG(LogDelveDeepEvents, Display,
+			TEXT("Event: %s | Listeners: %d | Failed: %d | Time: %.2f ms | Payload: %s"),
+			*Payload.EventTag.ToString(), TotalListenersInvoked, FailedListeners, 
+			BroadcastDurationMs, *PayloadSummary);
 	}
 
 	UE_LOG(LogDelveDeepEvents, VeryVerbose, TEXT("Broadcast event %s to %d listeners"),
@@ -402,4 +587,68 @@ int32 UDelveDeepEventSubsystem::GetListenerCount(FGameplayTag EventTag) const
 	}
 
 	return ListenerList->GetTotalListenerCount();
+}
+
+const FEventSystemMetrics& UDelveDeepEventSubsystem::GetPerformanceMetrics() const
+{
+	FScopeLock Lock(&MetricsMutex);
+	return PerformanceMetrics;
+}
+
+void UDelveDeepEventSubsystem::ResetPerformanceMetrics()
+{
+	FScopeLock Lock(&MetricsMutex);
+	PerformanceMetrics.Reset();
+	UE_LOG(LogDelveDeepEvents, Display, TEXT("Performance metrics reset"));
+}
+
+TArray<FEventRecord> UDelveDeepEventSubsystem::GetEventHistory() const
+{
+	FScopeLock Lock(&MetricsMutex);
+	return EventHistory;
+}
+
+void UDelveDeepEventSubsystem::EnableEventLogging()
+{
+	bEventLoggingEnabled = true;
+	UE_LOG(LogDelveDeepEvents, Display, TEXT("Event logging enabled"));
+}
+
+void UDelveDeepEventSubsystem::DisableEventLogging()
+{
+	bEventLoggingEnabled = false;
+	UE_LOG(LogDelveDeepEvents, Display, TEXT("Event logging disabled"));
+}
+
+void UDelveDeepEventSubsystem::AddToHistory(const FEventRecord& Record)
+{
+	FScopeLock Lock(&MetricsMutex);
+
+	// If history is not yet full, just add
+	if (EventHistory.Num() < MaxHistorySize)
+	{
+		EventHistory.Add(Record);
+	}
+	else
+	{
+		// Use circular buffer - overwrite oldest entry
+		EventHistory[HistoryIndex] = Record;
+		HistoryIndex = (HistoryIndex + 1) % MaxHistorySize;
+	}
+}
+
+FString UDelveDeepEventSubsystem::GeneratePayloadSummary(const FDelveDeepEventPayload& Payload) const
+{
+	// Generate a brief summary of the payload for debugging
+	FString Summary = FString::Printf(TEXT("Tag: %s"), *Payload.EventTag.ToString());
+
+	if (Payload.Instigator.IsValid())
+	{
+		Summary += FString::Printf(TEXT(", Instigator: %s"), *Payload.Instigator->GetName());
+	}
+
+	// Add timestamp
+	Summary += FString::Printf(TEXT(", Time: %s"), *Payload.Timestamp.ToString());
+
+	return Summary;
 }
