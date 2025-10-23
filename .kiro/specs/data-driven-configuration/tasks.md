@@ -163,7 +163,7 @@
   - Write test for query performance under target thresholds
   - _Requirements: 6.4, 10.1_
 
-- [ ] 14. Write integration tests
+- [x] 14. Write integration tests
   - Write test for upgrade cost calculation at various levels
   - Write test for asset reference resolution (weapon → ability)
   - Write test for upgrade dependency chain validation
