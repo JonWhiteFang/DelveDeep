@@ -246,3 +246,85 @@ private:
 	 */
 	FString GetNestedReport(int32 IndentLevel = 0) const;
 };
+
+/**
+ * Delegate signature for validation rules.
+ * @param Object The object being validated
+ * @param Context The validation context to populate with issues
+ * @return True if validation passed, false otherwise
+ */
+DECLARE_DELEGATE_RetVal_TwoParams(bool, FValidationRuleDelegate, const UObject*, FValidationContext&);
+
+/**
+ * Definition of a validation rule with metadata.
+ */
+USTRUCT()
+struct DELVEDEEP_API FValidationRuleDefinition
+{
+	GENERATED_BODY()
+
+	/** Unique name for this validation rule */
+	FName RuleName;
+
+	/** The class this rule applies to */
+	UClass* TargetClass = nullptr;
+
+	/** The validation function to execute */
+	FValidationRuleDelegate ValidationDelegate;
+
+	/** Priority for rule execution (higher priority runs first) */
+	int32 Priority = 0;
+
+	/** Human-readable description of what this rule validates */
+	FString Description;
+
+	/** Constructor */
+	FValidationRuleDefinition()
+		: RuleName(NAME_None)
+		, TargetClass(nullptr)
+		, Priority(0)
+	{
+	}
+
+	/** Constructor with parameters */
+	FValidationRuleDefinition(FName InRuleName, UClass* InTargetClass, FValidationRuleDelegate InDelegate, int32 InPriority = 0, const FString& InDescription = TEXT(""))
+		: RuleName(InRuleName)
+		, TargetClass(InTargetClass)
+		, ValidationDelegate(InDelegate)
+		, Priority(InPriority)
+		, Description(InDescription)
+	{
+	}
+
+	/** Comparison operator for sorting by priority */
+	bool operator<(const FValidationRuleDefinition& Other) const
+	{
+		return Priority > Other.Priority; // Higher priority first
+	}
+};
+
+/**
+ * Cache entry for validation results.
+ */
+USTRUCT()
+struct DELVEDEEP_API FValidationCacheEntry
+{
+	GENERATED_BODY()
+
+	/** The cached validation context */
+	FValidationContext Context;
+
+	/** Timestamp when this entry was cached */
+	FDateTime Timestamp;
+
+	/** Hash of the asset at the time of validation */
+	uint32 AssetHash = 0;
+
+	/** Constructor */
+	FValidationCacheEntry()
+		: Timestamp(FDateTime::Now())
+		, AssetHash(0)
+	{
+	}
+};
+

@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "DelveDeepValidation.h"
+#include "DelveDeepValidationSubsystem.h"
 #include "DelveDeepCharacterData.h"
 #include "DelveDeepMonsterConfig.h"
 #include "DelveDeepUpgradeData.h"
@@ -562,3 +563,428 @@ bool FDelveDeepValidationContextDurationTest::RunTest(const FString& Parameters)
 }
 
 #endif // WITH_DEV_AUTOMATION_TESTS
+
+/**
+ * Test validation subsystem initialization and cleanup
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepValidationSubsystemInitTest, 
+	"DelveDeep.Validation.SubsystemInitialization", 
+	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+
+bool FDelveDeepValidationSubsystemInitTest::RunTest(const FString& Parameters)
+{
+	// Create test game instance
+	UGameInstance* GameInstance = NewObject<UGameInstance>();
+	
+	// Get validation subsystem (auto-initializes)
+	UDelveDeepValidationSubsystem* ValidationSubsystem = 
+		GameInstance->GetSubsystem<UDelveDeepValidationSubsystem>();
+	
+	TestTrue(TEXT("Validation subsystem should be created"), ValidationSubsystem != nullptr);
+	
+	if (ValidationSubsystem)
+	{
+		// Verify initial state
+		TestEqual(TEXT("Should have no rules initially"), 
+			ValidationSubsystem->GetAllRules().Num(), 0);
+	}
+	
+	return true;
+}
+
+/**
+ * Test validation rule registration
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepValidationRuleRegistrationTest, 
+	"DelveDeep.Validation.RuleRegistration", 
+	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+
+bool FDelveDeepValidationRuleRegistrationTest::RunTest(const FString& Parameters)
+{
+	// Create test game instance
+	UGameInstance* GameInstance = NewObject<UGameInstance>();
+	UDelveDeepValidationSubsystem* ValidationSubsystem = 
+		GameInstance->GetSubsystem<UDelveDeepValidationSubsystem>();
+	
+	if (!ValidationSubsystem)
+	{
+		AddError(TEXT("Failed to create validation subsystem"));
+		return false;
+	}
+	
+	// Create a simple validation rule
+	FValidationRuleDelegate TestRule;
+	TestRule.BindLambda([](const UObject* Object, FValidationContext& Context) -> bool
+	{
+		Context.AddInfo(TEXT("Test rule executed"));
+		return true;
+	});
+	
+	// Register the rule
+	ValidationSubsystem->RegisterValidationRule(
+		TEXT("TestRule"),
+		UObject::StaticClass(),
+		TestRule,
+		100,
+		TEXT("Test validation rule")
+	);
+	
+	// Verify rule was registered
+	TestEqual(TEXT("Should have one rule registered"), 
+		ValidationSubsystem->GetRuleCountForClass(UObject::StaticClass()), 1);
+	
+	TArray<FValidationRuleDefinition> Rules = 
+		ValidationSubsystem->GetRulesForClass(UObject::StaticClass());
+	
+	TestEqual(TEXT("Should return one rule"), Rules.Num(), 1);
+	TestEqual(TEXT("Rule name should match"), Rules[0].RuleName, FName(TEXT("TestRule")));
+	TestEqual(TEXT("Rule priority should match"), Rules[0].Priority, 100);
+	TestEqual(TEXT("Rule description should match"), 
+		Rules[0].Description, TEXT("Test validation rule"));
+	
+	return true;
+}
+
+/**
+ * Test validation rule execution
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepValidationRuleExecutionTest, 
+	"DelveDeep.Validation.RuleExecution", 
+	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+
+bool FDelveDeepValidationRuleExecutionTest::RunTest(const FString& Parameters)
+{
+	// Create test game instance
+	UGameInstance* GameInstance = NewObject<UGameInstance>();
+	UDelveDeepValidationSubsystem* ValidationSubsystem = 
+		GameInstance->GetSubsystem<UDelveDeepValidationSubsystem>();
+	
+	if (!ValidationSubsystem)
+	{
+		AddError(TEXT("Failed to create validation subsystem"));
+		return false;
+	}
+	
+	// Create a validation rule that adds an error
+	FValidationRuleDelegate FailingRule;
+	FailingRule.BindLambda([](const UObject* Object, FValidationContext& Context) -> bool
+	{
+		Context.AddError(TEXT("Validation failed"));
+		return false;
+	});
+	
+	// Register the rule
+	ValidationSubsystem->RegisterValidationRule(
+		TEXT("FailingRule"),
+		UObject::StaticClass(),
+		FailingRule,
+		0,
+		TEXT("Rule that always fails")
+	);
+	
+	// Create test object
+	UObject* TestObject = NewObject<UObject>();
+	
+	// Validate object
+	FValidationContext Context;
+	bool bResult = ValidationSubsystem->ValidateObject(TestObject, Context);
+	
+	// Verify rule was executed
+	TestFalse(TEXT("Validation should fail"), bResult);
+	TestTrue(TEXT("Context should have child contexts"), Context.ChildContexts.Num() > 0);
+	
+	// Find the child context for our rule
+	bool bFoundRuleContext = false;
+	for (const FValidationContext& ChildContext : Context.ChildContexts)
+	{
+		if (ChildContext.OperationName == TEXT("FailingRule"))
+		{
+			bFoundRuleContext = true;
+			TestTrue(TEXT("Rule context should have errors"), 
+				ChildContext.ValidationErrors.Num() > 0);
+			TestEqual(TEXT("Error message should match"), 
+				ChildContext.ValidationErrors[0], TEXT("Validation failed"));
+		}
+	}
+	
+	TestTrue(TEXT("Should find rule context in child contexts"), bFoundRuleContext);
+	
+	return true;
+}
+
+/**
+ * Test validation rule priority ordering
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepValidationRulePriorityTest, 
+	"DelveDeep.Validation.RulePriority", 
+	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+
+bool FDelveDeepValidationRulePriorityTest::RunTest(const FString& Parameters)
+{
+	// Create test game instance
+	UGameInstance* GameInstance = NewObject<UGameInstance>();
+	UDelveDeepValidationSubsystem* ValidationSubsystem = 
+		GameInstance->GetSubsystem<UDelveDeepValidationSubsystem>();
+	
+	if (!ValidationSubsystem)
+	{
+		AddError(TEXT("Failed to create validation subsystem"));
+		return false;
+	}
+	
+	// Register rules with different priorities
+	TArray<FString> ExecutionOrder;
+	
+	FValidationRuleDelegate LowPriorityRule;
+	LowPriorityRule.BindLambda([&ExecutionOrder](const UObject* Object, FValidationContext& Context) -> bool
+	{
+		ExecutionOrder.Add(TEXT("LowPriority"));
+		return true;
+	});
+	
+	FValidationRuleDelegate HighPriorityRule;
+	HighPriorityRule.BindLambda([&ExecutionOrder](const UObject* Object, FValidationContext& Context) -> bool
+	{
+		ExecutionOrder.Add(TEXT("HighPriority"));
+		return true;
+	});
+	
+	FValidationRuleDelegate MediumPriorityRule;
+	MediumPriorityRule.BindLambda([&ExecutionOrder](const UObject* Object, FValidationContext& Context) -> bool
+	{
+		ExecutionOrder.Add(TEXT("MediumPriority"));
+		return true;
+	});
+	
+	// Register in random order
+	ValidationSubsystem->RegisterValidationRule(TEXT("LowPriority"), UObject::StaticClass(), LowPriorityRule, 10);
+	ValidationSubsystem->RegisterValidationRule(TEXT("HighPriority"), UObject::StaticClass(), HighPriorityRule, 100);
+	ValidationSubsystem->RegisterValidationRule(TEXT("MediumPriority"), UObject::StaticClass(), MediumPriorityRule, 50);
+	
+	// Validate object
+	UObject* TestObject = NewObject<UObject>();
+	FValidationContext Context;
+	ValidationSubsystem->ValidateObject(TestObject, Context);
+	
+	// Verify execution order (higher priority first)
+	TestEqual(TEXT("Should execute three rules"), ExecutionOrder.Num(), 3);
+	TestEqual(TEXT("First rule should be HighPriority"), ExecutionOrder[0], TEXT("HighPriority"));
+	TestEqual(TEXT("Second rule should be MediumPriority"), ExecutionOrder[1], TEXT("MediumPriority"));
+	TestEqual(TEXT("Third rule should be LowPriority"), ExecutionOrder[2], TEXT("LowPriority"));
+	
+	return true;
+}
+
+/**
+ * Test validation caching functionality
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepValidationCachingTest, 
+	"DelveDeep.Validation.Caching", 
+	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+
+bool FDelveDeepValidationCachingTest::RunTest(const FString& Parameters)
+{
+	// Create test game instance
+	UGameInstance* GameInstance = NewObject<UGameInstance>();
+	UDelveDeepValidationSubsystem* ValidationSubsystem = 
+		GameInstance->GetSubsystem<UDelveDeepValidationSubsystem>();
+	
+	if (!ValidationSubsystem)
+	{
+		AddError(TEXT("Failed to create validation subsystem"));
+		return false;
+	}
+	
+	// Track rule execution count
+	int32 ExecutionCount = 0;
+	
+	FValidationRuleDelegate CountingRule;
+	CountingRule.BindLambda([&ExecutionCount](const UObject* Object, FValidationContext& Context) -> bool
+	{
+		ExecutionCount++;
+		Context.AddInfo(FString::Printf(TEXT("Execution %d"), ExecutionCount));
+		return true;
+	});
+	
+	ValidationSubsystem->RegisterValidationRule(TEXT("CountingRule"), UObject::StaticClass(), CountingRule);
+	
+	// Create test object
+	UObject* TestObject = NewObject<UObject>();
+	
+	// First validation - should execute rule
+	FValidationContext Context1;
+	ValidationSubsystem->ValidateObjectWithCache(TestObject, Context1);
+	TestEqual(TEXT("Rule should execute once"), ExecutionCount, 1);
+	
+	// Second validation with cache - should NOT execute rule again
+	FValidationContext Context2;
+	ValidationSubsystem->ValidateObjectWithCache(TestObject, Context2);
+	TestEqual(TEXT("Rule should not execute again (cached)"), ExecutionCount, 1);
+	
+	// Force revalidation - should execute rule again
+	FValidationContext Context3;
+	ValidationSubsystem->ValidateObjectWithCache(TestObject, Context3, true);
+	TestEqual(TEXT("Rule should execute again (forced)"), ExecutionCount, 2);
+	
+	return true;
+}
+
+/**
+ * Test validation cache invalidation
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepValidationCacheInvalidationTest, 
+	"DelveDeep.Validation.CacheInvalidation", 
+	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+
+bool FDelveDeepValidationCacheInvalidationTest::RunTest(const FString& Parameters)
+{
+	// Create test game instance
+	UGameInstance* GameInstance = NewObject<UGameInstance>();
+	UDelveDeepValidationSubsystem* ValidationSubsystem = 
+		GameInstance->GetSubsystem<UDelveDeepValidationSubsystem>();
+	
+	if (!ValidationSubsystem)
+	{
+		AddError(TEXT("Failed to create validation subsystem"));
+		return false;
+	}
+	
+	// Track rule execution count
+	int32 ExecutionCount = 0;
+	
+	FValidationRuleDelegate CountingRule;
+	CountingRule.BindLambda([&ExecutionCount](const UObject* Object, FValidationContext& Context) -> bool
+	{
+		ExecutionCount++;
+		return true;
+	});
+	
+	ValidationSubsystem->RegisterValidationRule(TEXT("CountingRule"), UObject::StaticClass(), CountingRule);
+	
+	// Create test object
+	UObject* TestObject = NewObject<UObject>();
+	
+	// First validation - should execute rule
+	FValidationContext Context1;
+	ValidationSubsystem->ValidateObjectWithCache(TestObject, Context1);
+	TestEqual(TEXT("Rule should execute once"), ExecutionCount, 1);
+	
+	// Invalidate cache
+	ValidationSubsystem->InvalidateCache(TestObject);
+	
+	// Second validation - should execute rule again (cache invalidated)
+	FValidationContext Context2;
+	ValidationSubsystem->ValidateObjectWithCache(TestObject, Context2);
+	TestEqual(TEXT("Rule should execute again after invalidation"), ExecutionCount, 2);
+	
+	return true;
+}
+
+/**
+ * Test validation cache clearing
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepValidationCacheClearTest, 
+	"DelveDeep.Validation.CacheClear", 
+	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+
+bool FDelveDeepValidationCacheClearTest::RunTest(const FString& Parameters)
+{
+	// Create test game instance
+	UGameInstance* GameInstance = NewObject<UGameInstance>();
+	UDelveDeepValidationSubsystem* ValidationSubsystem = 
+		GameInstance->GetSubsystem<UDelveDeepValidationSubsystem>();
+	
+	if (!ValidationSubsystem)
+	{
+		AddError(TEXT("Failed to create validation subsystem"));
+		return false;
+	}
+	
+	// Track rule execution count
+	int32 ExecutionCount = 0;
+	
+	FValidationRuleDelegate CountingRule;
+	CountingRule.BindLambda([&ExecutionCount](const UObject* Object, FValidationContext& Context) -> bool
+	{
+		ExecutionCount++;
+		return true;
+	});
+	
+	ValidationSubsystem->RegisterValidationRule(TEXT("CountingRule"), UObject::StaticClass(), CountingRule);
+	
+	// Create multiple test objects
+	UObject* TestObject1 = NewObject<UObject>();
+	UObject* TestObject2 = NewObject<UObject>();
+	
+	// Validate both objects
+	FValidationContext Context1;
+	ValidationSubsystem->ValidateObjectWithCache(TestObject1, Context1);
+	FValidationContext Context2;
+	ValidationSubsystem->ValidateObjectWithCache(TestObject2, Context2);
+	TestEqual(TEXT("Rule should execute twice"), ExecutionCount, 2);
+	
+	// Clear all cache
+	ValidationSubsystem->ClearValidationCache();
+	
+	// Validate both objects again - should execute rules again
+	FValidationContext Context3;
+	ValidationSubsystem->ValidateObjectWithCache(TestObject1, Context3);
+	FValidationContext Context4;
+	ValidationSubsystem->ValidateObjectWithCache(TestObject2, Context4);
+	TestEqual(TEXT("Rule should execute twice more after cache clear"), ExecutionCount, 4);
+	
+	return true;
+}
+
+/**
+ * Test rule unregistration
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepValidationRuleUnregistrationTest, 
+	"DelveDeep.Validation.RuleUnregistration", 
+	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+
+bool FDelveDeepValidationRuleUnregistrationTest::RunTest(const FString& Parameters)
+{
+	// Create test game instance
+	UGameInstance* GameInstance = NewObject<UGameInstance>();
+	UDelveDeepValidationSubsystem* ValidationSubsystem = 
+		GameInstance->GetSubsystem<UDelveDeepValidationSubsystem>();
+	
+	if (!ValidationSubsystem)
+	{
+		AddError(TEXT("Failed to create validation subsystem"));
+		return false;
+	}
+	
+	// Register multiple rules
+	FValidationRuleDelegate Rule1;
+	Rule1.BindLambda([](const UObject* Object, FValidationContext& Context) -> bool { return true; });
+	
+	FValidationRuleDelegate Rule2;
+	Rule2.BindLambda([](const UObject* Object, FValidationContext& Context) -> bool { return true; });
+	
+	ValidationSubsystem->RegisterValidationRule(TEXT("Rule1"), UObject::StaticClass(), Rule1);
+	ValidationSubsystem->RegisterValidationRule(TEXT("Rule2"), UObject::StaticClass(), Rule2);
+	
+	TestEqual(TEXT("Should have two rules"), 
+		ValidationSubsystem->GetRuleCountForClass(UObject::StaticClass()), 2);
+	
+	// Unregister one rule
+	ValidationSubsystem->UnregisterValidationRule(TEXT("Rule1"), UObject::StaticClass());
+	
+	TestEqual(TEXT("Should have one rule after unregistration"), 
+		ValidationSubsystem->GetRuleCountForClass(UObject::StaticClass()), 1);
+	
+	// Verify remaining rule is Rule2
+	TArray<FValidationRuleDefinition> Rules = 
+		ValidationSubsystem->GetRulesForClass(UObject::StaticClass());
+	TestEqual(TEXT("Remaining rule should be Rule2"), Rules[0].RuleName, FName(TEXT("Rule2")));
+	
+	// Unregister all rules for class
+	ValidationSubsystem->UnregisterAllRulesForClass(UObject::StaticClass());
+	
+	TestEqual(TEXT("Should have no rules after unregistering all"), 
+		ValidationSubsystem->GetRuleCountForClass(UObject::StaticClass()), 0);
+	
+	return true;
+}
