@@ -4,57 +4,28 @@
 
 namespace DelveDeepValidation
 {
-	bool ValidateString(const FString& Value, const FString& PropertyName,
-						FValidationContext& Context, int32 MinLength, 
-						int32 MaxLength, bool bAllowEmpty)
-	{
-		bool bIsValid = true;
-		
-		// Check if empty
-		if (!bAllowEmpty && Value.IsEmpty())
-		{
-			Context.AddError(FString::Printf(TEXT("%s is empty"), *PropertyName));
-			bIsValid = false;
-		}
-		
-		// Check length constraints
-		int32 Length = Value.Len();
-		if (Length < MinLength)
-		{
-			Context.AddError(FString::Printf(
-				TEXT("%s is too short: %d characters (minimum: %d)"),
-				*PropertyName, Length, MinLength));
-			bIsValid = false;
-		}
-		
-		if (Length > MaxLength)
-		{
-			Context.AddError(FString::Printf(
-				TEXT("%s is too long: %d characters (maximum: %d)"),
-				*PropertyName, Length, MaxLength));
-			bIsValid = false;
-		}
-		
-		return bIsValid;
-	}
+	// Note: ValidateString is implemented as inline in the header file
+	// This file contains additional helper functions
 
 	bool ValidateText(const FText& Value, const FString& PropertyName,
-					  FValidationContext& Context, bool bAllowEmpty)
+					  FValidationContext& Context, bool bAllowEmpty,
+					  EValidationSeverity Severity)
 	{
 		if (!bAllowEmpty && Value.IsEmpty())
 		{
-			Context.AddError(FString::Printf(TEXT("%s is empty"), *PropertyName));
+			Context.AddIssue(Severity, FString::Printf(TEXT("%s is empty"), *PropertyName));
 			return false;
 		}
 		return true;
 	}
 
 	bool ValidateName(const FName& Value, const FString& PropertyName,
-					  FValidationContext& Context, bool bAllowNone)
+					  FValidationContext& Context, bool bAllowNone,
+					  EValidationSeverity Severity)
 	{
 		if (!bAllowNone && Value == NAME_None)
 		{
-			Context.AddError(FString::Printf(TEXT("%s is None"), *PropertyName));
+			Context.AddIssue(Severity, FString::Printf(TEXT("%s is None"), *PropertyName));
 			return false;
 		}
 		return true;

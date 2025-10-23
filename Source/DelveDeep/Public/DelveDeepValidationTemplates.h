@@ -171,4 +171,30 @@ namespace DelveDeepValidation
 		}
 		return true;
 	}
+
+	/**
+	 * Validates that an FText value is not empty.
+	 * @param Value The FText to validate
+	 * @param PropertyName Name of the property being validated
+	 * @param Context Validation context to add issues to
+	 * @param bAllowEmpty If true, empty text is considered valid (default: false)
+	 * @param Severity Severity level for validation failures (default: Error)
+	 * @return True if text is valid, false otherwise
+	 */
+	bool ValidateText(const FText& Value, const FString& PropertyName,
+					  FValidationContext& Context, bool bAllowEmpty = false,
+					  EValidationSeverity Severity = EValidationSeverity::Error);
+
+	/**
+	 * Validates that an FName value is not None.
+	 * @param Value The FName to validate
+	 * @param PropertyName Name of the property being validated
+	 * @param Context Validation context to add issues to
+	 * @param bAllowNone If true, NAME_None is considered valid (default: false)
+	 * @param Severity Severity level for validation failures (default: Error)
+	 * @return True if name is valid, false otherwise
+	 */
+	bool ValidateName(const FName& Value, const FString& PropertyName,
+					  FValidationContext& Context, bool bAllowNone = false,
+					  EValidationSeverity Severity = EValidationSeverity::Error);
 }
