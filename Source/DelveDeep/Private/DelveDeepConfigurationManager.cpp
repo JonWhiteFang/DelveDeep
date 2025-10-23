@@ -15,8 +15,29 @@
 #include "Misc/Paths.h"
 #include "HAL/PlatformTime.h"
 
+// Stats group for DelveDeep configuration system
+DECLARE_STATS_GROUP(TEXT("DelveDeepConfig"), STATGROUP_DelveDeepConfig, STATCAT_Advanced);
+
+// Cycle stats for data loading operations
+DECLARE_CYCLE_STAT(TEXT("Config Initialize"), STAT_ConfigInitialize, STATGROUP_DelveDeepConfig);
+DECLARE_CYCLE_STAT(TEXT("Load Character Data"), STAT_LoadCharacterData, STATGROUP_DelveDeepConfig);
+DECLARE_CYCLE_STAT(TEXT("Load Upgrade Data"), STAT_LoadUpgradeData, STATGROUP_DelveDeepConfig);
+DECLARE_CYCLE_STAT(TEXT("Load Weapon Data"), STAT_LoadWeaponData, STATGROUP_DelveDeepConfig);
+DECLARE_CYCLE_STAT(TEXT("Load Ability Data"), STAT_LoadAbilityData, STATGROUP_DelveDeepConfig);
+DECLARE_CYCLE_STAT(TEXT("Load Data Tables"), STAT_LoadDataTables, STATGROUP_DelveDeepConfig);
+
+// Cycle stats for data query operations
+DECLARE_CYCLE_STAT(TEXT("Get Character Data"), STAT_GetCharacterData, STATGROUP_DelveDeepConfig);
+DECLARE_CYCLE_STAT(TEXT("Get Monster Config"), STAT_GetMonsterConfig, STATGROUP_DelveDeepConfig);
+DECLARE_CYCLE_STAT(TEXT("Get Upgrade Data"), STAT_GetUpgradeData, STATGROUP_DelveDeepConfig);
+DECLARE_CYCLE_STAT(TEXT("Get Weapon Data"), STAT_GetWeaponData, STATGROUP_DelveDeepConfig);
+DECLARE_CYCLE_STAT(TEXT("Get Ability Data"), STAT_GetAbilityData, STATGROUP_DelveDeepConfig);
+DECLARE_CYCLE_STAT(TEXT("Validate All Data"), STAT_ValidateAllData, STATGROUP_DelveDeepConfig);
+
 void UDelveDeepConfigurationManager::Initialize(FSubsystemCollectionBase& Collection)
 {
+	SCOPE_CYCLE_COUNTER(STAT_ConfigInitialize);
+	
 	Super::Initialize(Collection);
 
 	UE_LOG(LogDelveDeepConfig, Display, TEXT("Configuration Manager initializing..."));
@@ -87,6 +108,8 @@ void UDelveDeepConfigurationManager::Deinitialize()
 
 const UDelveDeepCharacterData* UDelveDeepConfigurationManager::GetCharacterData(FName CharacterName) const
 {
+	SCOPE_CYCLE_COUNTER(STAT_GetCharacterData);
+	
 	double StartTime = FPlatformTime::Seconds();
 
 	// Check cache
@@ -112,6 +135,8 @@ const UDelveDeepCharacterData* UDelveDeepConfigurationManager::GetCharacterData(
 
 const FDelveDeepMonsterConfig* UDelveDeepConfigurationManager::GetMonsterConfig(FName MonsterName) const
 {
+	SCOPE_CYCLE_COUNTER(STAT_GetMonsterConfig);
+	
 	double StartTime = FPlatformTime::Seconds();
 
 	if (!MonsterConfigTable)
@@ -146,6 +171,8 @@ const FDelveDeepMonsterConfig* UDelveDeepConfigurationManager::GetMonsterConfig(
 
 const UDelveDeepUpgradeData* UDelveDeepConfigurationManager::GetUpgradeData(FName UpgradeName) const
 {
+	SCOPE_CYCLE_COUNTER(STAT_GetUpgradeData);
+	
 	double StartTime = FPlatformTime::Seconds();
 
 	// Check cache
@@ -171,6 +198,8 @@ const UDelveDeepUpgradeData* UDelveDeepConfigurationManager::GetUpgradeData(FNam
 
 const UDelveDeepWeaponData* UDelveDeepConfigurationManager::GetWeaponData(FName WeaponName) const
 {
+	SCOPE_CYCLE_COUNTER(STAT_GetWeaponData);
+	
 	double StartTime = FPlatformTime::Seconds();
 
 	// Check cache
@@ -196,6 +225,8 @@ const UDelveDeepWeaponData* UDelveDeepConfigurationManager::GetWeaponData(FName 
 
 const UDelveDeepAbilityData* UDelveDeepConfigurationManager::GetAbilityData(FName AbilityName) const
 {
+	SCOPE_CYCLE_COUNTER(STAT_GetAbilityData);
+	
 	double StartTime = FPlatformTime::Seconds();
 
 	// Check cache
@@ -221,6 +252,8 @@ const UDelveDeepAbilityData* UDelveDeepConfigurationManager::GetAbilityData(FNam
 
 bool UDelveDeepConfigurationManager::ValidateAllData(FString& OutReport)
 {
+	SCOPE_CYCLE_COUNTER(STAT_ValidateAllData);
+	
 	FValidationContext Context;
 	Context.SystemName = TEXT("ConfigurationManager");
 	Context.OperationName = TEXT("ValidateAllData");
@@ -515,6 +548,8 @@ void UDelveDeepConfigurationManager::OnAssetReloaded(const FAssetData& AssetData
 
 void UDelveDeepConfigurationManager::LoadCharacterData()
 {
+	SCOPE_CYCLE_COUNTER(STAT_LoadCharacterData);
+	
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 	IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
 
@@ -545,6 +580,8 @@ void UDelveDeepConfigurationManager::LoadCharacterData()
 
 void UDelveDeepConfigurationManager::LoadUpgradeData()
 {
+	SCOPE_CYCLE_COUNTER(STAT_LoadUpgradeData);
+	
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 	IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
 
@@ -575,6 +612,8 @@ void UDelveDeepConfigurationManager::LoadUpgradeData()
 
 void UDelveDeepConfigurationManager::LoadWeaponData()
 {
+	SCOPE_CYCLE_COUNTER(STAT_LoadWeaponData);
+	
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 	IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
 
@@ -605,6 +644,8 @@ void UDelveDeepConfigurationManager::LoadWeaponData()
 
 void UDelveDeepConfigurationManager::LoadAbilityData()
 {
+	SCOPE_CYCLE_COUNTER(STAT_LoadAbilityData);
+	
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 	IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
 
@@ -635,6 +676,8 @@ void UDelveDeepConfigurationManager::LoadAbilityData()
 
 void UDelveDeepConfigurationManager::LoadDataTables()
 {
+	SCOPE_CYCLE_COUNTER(STAT_LoadDataTables);
+	
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 	IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
 
