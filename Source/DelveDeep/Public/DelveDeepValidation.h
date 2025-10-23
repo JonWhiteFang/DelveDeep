@@ -176,13 +176,73 @@ public:
 	bool IsValid() const;
 
 	/**
+	 * Adds a child validation context for nested validation.
+	 * @param ChildContext The child context to add
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
+	void AddChildContext(const FValidationContext& ChildContext);
+
+	/**
+	 * Merges another validation context into this one.
+	 * @param OtherContext The context to merge
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
+	void MergeContext(const FValidationContext& OtherContext);
+
+	/**
+	 * Attaches metadata to the most recent issue.
+	 * @param Key The metadata key
+	 * @param Value The metadata value
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
+	void AttachMetadata(const FString& Key, const FString& Value);
+
+	/**
+	 * Gets the validation duration (time between creation and completion).
+	 * @return The validation duration as a timespan
+	 */
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Validation")
+	FTimespan GetValidationDuration() const;
+
+	/**
 	 * Generates a formatted validation report with all errors and warnings.
+	 * Groups issues by severity with visual distinction and includes nested contexts.
 	 * @return A formatted string containing the validation report
 	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
 	FString GetReport() const;
+
+	/**
+	 * Generates a JSON-formatted validation report with all context data.
+	 * @return A JSON string containing the validation report
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
+	FString GetReportJSON() const;
+
+	/**
+	 * Generates a CSV-formatted validation report for spreadsheet analysis.
+	 * @return A CSV string containing the validation report
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
+	FString GetReportCSV() const;
+
+	/**
+	 * Generates an HTML-formatted validation report with color coding and interactivity.
+	 * @return An HTML string containing the validation report
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
+	FString GetReportHTML() const;
 
 	/**
 	 * Resets the validation context, clearing all errors and warnings.
 	 */
 	void Reset();
+
+private:
+	/**
+	 * Helper function to generate report for nested contexts with indentation.
+	 * @param IndentLevel The current indentation level
+	 * @return A formatted string for nested contexts
+	 */
+	FString GetNestedReport(int32 IndentLevel = 0) const;
 };
