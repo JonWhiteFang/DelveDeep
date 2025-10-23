@@ -386,4 +386,179 @@ bool FDelveDeepAbilityDataValidationTest::RunTest(const FString& Parameters)
 	return true;
 }
 
+/**
+ * Test validation context nesting functionality
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepValidationContextNestingTest, 
+	"DelveDeep.Validation.ContextNesting", 
+	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+
+bool FDelveDeepValidationContextNestingTest::RunTest(const FString& Parameters)
+{
+	// Create parent context
+	FValidationContext ParentContext;
+	ParentContext.SystemName = TEXT("ParentSystem");
+	ParentContext.OperationName = TEXT("ParentOperation");
+	ParentContext.AddError(TEXT("Parent error"));
+	
+	// Create child context
+	FValidationContext ChildContext;
+	ChildContext.SystemName = TEXT("ChildSystem");
+	ChildContext.OperationName = TEXT("ChildOperation");
+	ChildContext.AddError(TEXT("Child error"));
+	ChildContext.AddWarning(TEXT("Child warning"));
+	
+	// Add child to parent
+	ParentContext.AddChildContext(ChildContext);
+	
+	// Verify child was added
+	TestEqual(TEXT("Parent should have one child context"), ParentContext.ChildContexts.Num(), 1);
+	TestEqual(TEXT("Child context should have correct system name"), 
+		ParentContext.ChildContexts[0].SystemName, TEXT("ChildSystem"));
+	
+	// Verify parent report includes child issues
+	FString Report = ParentContext.GetReport();
+	TestTrue(TEXT("Report should contain parent error"), Report.Contains(TEXT("Parent error")));
+	TestTrue(TEXT("Report should contain child error"), Report.Contains(TEXT("Child error")));
+	TestTrue(TEXT("Report should contain child warning"), Report.Contains(TEXT("Child warning")));
+	TestTrue(TEXT("Report should show nested contexts section"), Report.Contains(TEXT("NESTED CONTEXTS")));
+	
+	return true;
+}
+
+/**
+ * Test validation context merging functionality
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepValidationContextMergingTest, 
+	"DelveDeep.Validation.ContextMerging", 
+	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+
+bool FDelveDeepValidationContextMergingTest::RunTest(const FString& Parameters)
+{
+	// Create first context
+	FValidationContext Context1;
+	Context1.SystemName = TEXT("System1");
+	Context1.OperationName = TEXT("Operation1");
+	Context1.AddError(TEXT("Error from context 1"));
+	Context1.AddWarning(TEXT("Warning from context 1"));
+	
+	// Create second context
+	FValidationContext Context2;
+	Context2.SystemName = TEXT("System2");
+	Context2.OperationName = TEXT("Operation2");
+	Context2.AddError(TEXT("Error from context 2"));
+	Context2.AddWarning(TEXT("Warning from context 2"));
+	
+	// Store initial counts
+	int32 InitialErrors = Context1.ValidationErrors.Num();
+	int32 InitialWarnings = Context1.ValidationWarnings.Num();
+	int32 InitialIssues = Context1.Issues.Num();
+	
+	// Merge context2 into context1
+	Context1.MergeContext(Context2);
+	
+	// Verify merge results
+	TestEqual(TEXT("Should have combined errors"), 
+		Context1.ValidationErrors.Num(), InitialErrors + Context2.ValidationErrors.Num());
+	TestEqual(TEXT("Should have combined warnings"), 
+		Context1.ValidationWarnings.Num(), InitialWarnings + Context2.ValidationWarnings.Num());
+	TestEqual(TEXT("Should have combined issues"), 
+		Context1.Issues.Num(), InitialIssues + Context2.Issues.Num());
+	
+	// Verify merged content
+	FString Report = Context1.GetReport();
+	TestTrue(TEXT("Report should contain error from context 1"), 
+		Report.Contains(TEXT("Error from context 1")));
+	TestTrue(TEXT("Report should contain error from context 2"), 
+		Report.Contains(TEXT("Error from context 2")));
+	TestTrue(TEXT("Report should contain warning from context 1"), 
+		Report.Contains(TEXT("Warning from context 1")));
+	TestTrue(TEXT("Report should contain warning from context 2"), 
+		Report.Contains(TEXT("Warning from context 2")));
+	
+	return true;
+}
+
+/**
+ * Test validation context metadata attachment
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepValidationContextMetadataTest, 
+	"DelveDeep.Validation.MetadataAttachment", 
+	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+
+bool FDelveDeepValidationContextMetadataTest::RunTest(const FString& Parameters)
+{
+	// Create context and add issue
+	FValidationContext Context;
+	Context.SystemName = TEXT("TestSystem");
+	Context.OperationName = TEXT("TestOperation");
+	Context.AddError(TEXT("Test error with metadata"));
+	
+	// Attach metadata to the issue
+	Context.AttachMetadata(TEXT("AssetPath"), TEXT("/Game/Data/TestAsset"));
+	Context.AttachMetadata(TEXT("PropertyName"), TEXT("BaseHealth"));
+	
+	// Verify metadata was attached
+	TestEqual(TEXT("Should have one issue"), Context.Issues.Num(), 1);
+	TestEqual(TEXT("Issue should have two metadata entries"), Context.Issues[0].Metadata.Num(), 2);
+	TestTrue(TEXT("Should have AssetPath metadata"), 
+		Context.Issues[0].Metadata.Contains(TEXT("AssetPath")));
+	TestTrue(TEXT("Should have PropertyName metadata"), 
+		Context.Issues[0].Metadata.Contains(TEXT("PropertyName")));
+	TestEqual(TEXT("AssetPath value should match"), 
+		Context.Issues[0].Metadata[TEXT("AssetPath")], TEXT("/Game/Data/TestAsset"));
+	TestEqual(TEXT("PropertyName value should match"), 
+		Context.Issues[0].Metadata[TEXT("PropertyName")], TEXT("BaseHealth"));
+	
+	// Verify metadata appears in report
+	FString Report = Context.GetReport();
+	TestTrue(TEXT("Report should contain metadata"), Report.Contains(TEXT("Metadata:")));
+	TestTrue(TEXT("Report should contain AssetPath"), Report.Contains(TEXT("AssetPath")));
+	TestTrue(TEXT("Report should contain PropertyName"), Report.Contains(TEXT("PropertyName")));
+	
+	return true;
+}
+
+/**
+ * Test validation duration calculation
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepValidationContextDurationTest, 
+	"DelveDeep.Validation.DurationCalculation", 
+	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+
+bool FDelveDeepValidationContextDurationTest::RunTest(const FString& Parameters)
+{
+	// Create context
+	FValidationContext Context;
+	Context.SystemName = TEXT("TestSystem");
+	Context.OperationName = TEXT("TestOperation");
+	
+	// Record creation time
+	FDateTime StartTime = Context.CreationTime;
+	
+	// Simulate some work
+	FPlatformProcess::Sleep(0.01f); // Sleep for 10ms
+	
+	// Get duration before completion
+	FTimespan DurationInProgress = Context.GetValidationDuration();
+	TestTrue(TEXT("Duration should be positive while in progress"), 
+		DurationInProgress.GetTotalMilliseconds() > 0);
+	
+	// Mark as completed
+	Context.CompletionTime = FDateTime::Now();
+	
+	// Get final duration
+	FTimespan FinalDuration = Context.GetValidationDuration();
+	TestTrue(TEXT("Final duration should be positive"), 
+		FinalDuration.GetTotalMilliseconds() > 0);
+	TestTrue(TEXT("Final duration should be at least 10ms"), 
+		FinalDuration.GetTotalMilliseconds() >= 10.0);
+	
+	// Verify duration appears in report
+	FString Report = Context.GetReport();
+	TestTrue(TEXT("Report should contain duration"), Report.Contains(TEXT("Duration:")));
+	
+	return true;
+}
+
 #endif // WITH_DEV_AUTOMATION_TESTS
