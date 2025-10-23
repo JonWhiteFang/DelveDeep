@@ -137,7 +137,7 @@
   - Provide suggestions for correct asset placement in warnings
   - _Requirements: 8.4_
 
-- [ ] 11. Create example data assets for testing
+- [x] 11. Create example data assets for testing
   - Create example character data asset (DA_Character_Warrior) with valid test values
   - Create example monster config data table (DT_Monster_Configs) with 3-5 test monsters
   - Create example upgrade data asset (DA_Upgrade_HealthBoost) with valid test values

@@ -7,6 +7,7 @@
 #include "DelveDeepAbilityData.h"
 #include "DelveDeepUpgradeData.h"
 #include "DelveDeepMonsterConfig.h"
+#include "DelveDeepExampleData.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "Engine/Engine.h"
@@ -489,5 +490,198 @@ namespace DelveDeepConsoleCommands
 		TEXT("DelveDeep.DumpConfigData"),
 		TEXT("Dumps all properties of a specified configuration asset. Usage: DelveDeep.DumpConfigData <AssetName>"),
 		FConsoleCommandWithWorldAndArgsDelegate::CreateStatic(&DumpConfigDataCommand)
+	);
+
+	/**
+	 * Console command: DelveDeep.CreateExampleData
+	 * Creates example data assets for testing purposes.
+	 */
+	static void CreateExampleDataCommand(const TArray<FString>& Args, UWorld* World)
+	{
+		if (!World)
+		{
+			UE_LOG(LogDelveDeepConfig, Error, TEXT("DelveDeep.CreateExampleData: No valid world found"));
+			return;
+		}
+
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("=== Creating Example Data Assets ==="));
+
+		FDelveDeepExampleDataSet ExampleData;
+		UDelveDeepExampleData::CreateAllExampleData(GetTransientPackage(), ExampleData);
+
+		// Validate created data
+		int32 SuccessCount = 0;
+		int32 FailureCount = 0;
+
+		if (ExampleData.WarriorData)
+		{
+			FValidationContext Context;
+			Context.SystemName = TEXT("ExampleData");
+			Context.OperationName = TEXT("CreateWarriorData");
+			
+			if (ExampleData.WarriorData->Validate(Context))
+			{
+				UE_LOG(LogDelveDeepConfig, Display, TEXT("✓ Created DA_Character_Warrior: %s"), 
+					*ExampleData.WarriorData->CharacterName.ToString());
+				SuccessCount++;
+			}
+			else
+			{
+				UE_LOG(LogDelveDeepConfig, Error, TEXT("✗ DA_Character_Warrior validation failed:\n%s"), 
+					*Context.GetReport());
+				FailureCount++;
+			}
+		}
+		else
+		{
+			UE_LOG(LogDelveDeepConfig, Error, TEXT("✗ Failed to create DA_Character_Warrior"));
+			FailureCount++;
+		}
+
+		if (ExampleData.SwordData)
+		{
+			FValidationContext Context;
+			Context.SystemName = TEXT("ExampleData");
+			Context.OperationName = TEXT("CreateSwordData");
+			
+			if (ExampleData.SwordData->Validate(Context))
+			{
+				UE_LOG(LogDelveDeepConfig, Display, TEXT("✓ Created DA_Weapon_Sword: %s"), 
+					*ExampleData.SwordData->WeaponName.ToString());
+				SuccessCount++;
+			}
+			else
+			{
+				UE_LOG(LogDelveDeepConfig, Error, TEXT("✗ DA_Weapon_Sword validation failed:\n%s"), 
+					*Context.GetReport());
+				FailureCount++;
+			}
+		}
+		else
+		{
+			UE_LOG(LogDelveDeepConfig, Error, TEXT("✗ Failed to create DA_Weapon_Sword"));
+			FailureCount++;
+		}
+
+		if (ExampleData.CleaveData)
+		{
+			FValidationContext Context;
+			Context.SystemName = TEXT("ExampleData");
+			Context.OperationName = TEXT("CreateCleaveData");
+			
+			if (ExampleData.CleaveData->Validate(Context))
+			{
+				UE_LOG(LogDelveDeepConfig, Display, TEXT("✓ Created DA_Ability_Cleave: %s"), 
+					*ExampleData.CleaveData->AbilityName.ToString());
+				SuccessCount++;
+			}
+			else
+			{
+				UE_LOG(LogDelveDeepConfig, Error, TEXT("✗ DA_Ability_Cleave validation failed:\n%s"), 
+					*Context.GetReport());
+				FailureCount++;
+			}
+		}
+		else
+		{
+			UE_LOG(LogDelveDeepConfig, Error, TEXT("✗ Failed to create DA_Ability_Cleave"));
+			FailureCount++;
+		}
+
+		if (ExampleData.HealthBoostData)
+		{
+			FValidationContext Context;
+			Context.SystemName = TEXT("ExampleData");
+			Context.OperationName = TEXT("CreateHealthBoostData");
+			
+			if (ExampleData.HealthBoostData->Validate(Context))
+			{
+				UE_LOG(LogDelveDeepConfig, Display, TEXT("✓ Created DA_Upgrade_HealthBoost: %s"), 
+					*ExampleData.HealthBoostData->UpgradeName.ToString());
+				
+				// Test cost calculation
+				int32 Level1Cost = ExampleData.HealthBoostData->CalculateCostForLevel(1);
+				int32 Level5Cost = ExampleData.HealthBoostData->CalculateCostForLevel(5);
+				int32 Level10Cost = ExampleData.HealthBoostData->CalculateCostForLevel(10);
+				
+				UE_LOG(LogDelveDeepConfig, Display, TEXT("  Cost at Level 1: %d"), Level1Cost);
+				UE_LOG(LogDelveDeepConfig, Display, TEXT("  Cost at Level 5: %d"), Level5Cost);
+				UE_LOG(LogDelveDeepConfig, Display, TEXT("  Cost at Level 10: %d"), Level10Cost);
+				
+				SuccessCount++;
+			}
+			else
+			{
+				UE_LOG(LogDelveDeepConfig, Error, TEXT("✗ DA_Upgrade_HealthBoost validation failed:\n%s"), 
+					*Context.GetReport());
+				FailureCount++;
+			}
+		}
+		else
+		{
+			UE_LOG(LogDelveDeepConfig, Error, TEXT("✗ Failed to create DA_Upgrade_HealthBoost"));
+			FailureCount++;
+		}
+
+		if (ExampleData.MonsterConfigTable)
+		{
+			TArray<FName> RowNames = ExampleData.MonsterConfigTable->GetRowNames();
+			UE_LOG(LogDelveDeepConfig, Display, TEXT("✓ Created DT_Monster_Configs with %d monsters:"), RowNames.Num());
+			
+			int32 ValidMonsters = 0;
+			for (const FName& RowName : RowNames)
+			{
+				FDelveDeepMonsterConfig* MonsterConfig = ExampleData.MonsterConfigTable->FindRow<FDelveDeepMonsterConfig>(RowName, TEXT(""));
+				if (MonsterConfig)
+				{
+					FValidationContext Context;
+					Context.SystemName = TEXT("ExampleData");
+					Context.OperationName = TEXT("ValidateMonsterConfig");
+					
+					if (MonsterConfig->Validate(Context))
+					{
+						UE_LOG(LogDelveDeepConfig, Display, TEXT("  ✓ %s: %s (HP: %.0f, DMG: %.0f)"), 
+							*RowName.ToString(), 
+							*MonsterConfig->MonsterName.ToString(),
+							MonsterConfig->Health,
+							MonsterConfig->Damage);
+						ValidMonsters++;
+					}
+					else
+					{
+						UE_LOG(LogDelveDeepConfig, Error, TEXT("  ✗ %s validation failed:\n%s"), 
+							*RowName.ToString(), *Context.GetReport());
+					}
+				}
+			}
+			
+			if (ValidMonsters == RowNames.Num())
+			{
+				SuccessCount++;
+			}
+			else
+			{
+				FailureCount++;
+			}
+		}
+		else
+		{
+			UE_LOG(LogDelveDeepConfig, Error, TEXT("✗ Failed to create DT_Monster_Configs"));
+			FailureCount++;
+		}
+
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("\n=== Example Data Creation Complete ==="));
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("Success: %d | Failures: %d"), SuccessCount, FailureCount);
+		
+		if (FailureCount == 0)
+		{
+			UE_LOG(LogDelveDeepConfig, Display, TEXT("All example data assets created and validated successfully!"));
+		}
+	}
+
+	FAutoConsoleCommandWithWorldAndArgs CreateExampleDataCmd(
+		TEXT("DelveDeep.CreateExampleData"),
+		TEXT("Creates example data assets for testing purposes"),
+		FConsoleCommandWithWorldAndArgsDelegate::CreateStatic(&CreateExampleDataCommand)
 	);
 }
