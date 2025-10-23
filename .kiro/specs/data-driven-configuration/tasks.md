@@ -6,29 +6,29 @@
   - Add logging category DECLARE_LOG_CATEGORY_EXTERN(LogDelveDeepConfig, Log, All)
   - _Requirements: 5.2, 5.3_
 
-- [ ] 2. Implement base data asset classes
-- [ ] 2.1 Create UDelveDeepCharacterData class
+- [x] 2. Implement base data asset classes
+- [x] 2.1 Create UDelveDeepCharacterData class
   - Write header with all UPROPERTY fields (health, damage, speed, armor, resource stats)
   - Implement PostLoad() override for load-time validation
   - Implement Validate() method using FValidationContext
   - Add TSoftObjectPtr references for starting weapon and abilities
   - _Requirements: 1.2, 1.4, 9.2_
 
-- [ ] 2.2 Create UDelveDeepWeaponData class
+- [x] 2.2 Create UDelveDeepWeaponData class
   - Write header with combat stats (damage, attack speed, range, damage type)
   - Add projectile parameters (speed, piercing, max pierce targets)
   - Implement PostLoad() and Validate() methods
   - Add TSoftObjectPtr reference for special ability
   - _Requirements: 4.1, 4.4, 9.2_
 
-- [ ] 2.3 Create UDelveDeepAbilityData class
+- [x] 2.3 Create UDelveDeepAbilityData class
   - Write header with timing parameters (cooldown, cast time, duration)
   - Add resource cost and damage parameters
   - Add AoE parameters (radius, affects allies flag)
   - Implement PostLoad() and Validate() methods
   - _Requirements: 4.2, 4.3, 9.2_
 
-- [ ] 2.4 Create UDelveDeepUpgradeData class
+- [x] 2.4 Create UDelveDeepUpgradeData class
   - Write header with cost parameters (base cost, scaling factor, max level)
   - Add stat modification properties (health, damage, speed, armor modifiers)
   - Implement CalculateCostForLevel() Blueprint-callable function
