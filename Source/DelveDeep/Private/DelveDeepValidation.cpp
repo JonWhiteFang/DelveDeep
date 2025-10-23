@@ -2,6 +2,10 @@
 
 #include "DelveDeepValidation.h"
 
+// Performance profiling stats (declared in DelveDeepValidationSubsystem.cpp)
+DECLARE_STATS_GROUP(TEXT("DelveDeepValidation"), STATGROUP_DelveDeepValidation, STATCAT_Advanced);
+DECLARE_CYCLE_STAT_EXTERN(TEXT("Generate Report"), STAT_GenerateReport, STATGROUP_DelveDeepValidation, );
+
 DEFINE_LOG_CATEGORY(LogDelveDeepConfig);
 
 void FValidationContext::AddError(const FString& Error)
@@ -143,6 +147,7 @@ FTimespan FValidationContext::GetValidationDuration() const
 
 FString FValidationContext::GetReport() const
 {
+	SCOPE_CYCLE_COUNTER(STAT_GenerateReport);
 	return GetNestedReport(0);
 }
 
@@ -320,6 +325,8 @@ FString FValidationContext::GetNestedReport(int32 IndentLevel) const
 
 FString FValidationContext::GetReportJSON() const
 {
+	SCOPE_CYCLE_COUNTER(STAT_GenerateReport);
+	
 	FString JSON = TEXT("{\n");
 	
 	// Add context information
@@ -425,6 +432,8 @@ FString FValidationContext::GetReportJSON() const
 
 FString FValidationContext::GetReportCSV() const
 {
+	SCOPE_CYCLE_COUNTER(STAT_GenerateReport);
+	
 	FString CSV;
 	
 	// Add header row
@@ -495,6 +504,8 @@ FString FValidationContext::GetReportCSV() const
 
 FString FValidationContext::GetReportHTML() const
 {
+	SCOPE_CYCLE_COUNTER(STAT_GenerateReport);
+	
 	FString HTML;
 	
 	// HTML header with embedded CSS

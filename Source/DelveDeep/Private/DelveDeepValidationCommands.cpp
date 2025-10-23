@@ -1,863 +1,521 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "DelveDeepValidationCommands.h"
-#include "DelveDeepConfigurationManager.h"
-#include "DelveDeepCharacterData.h"
-#include "DelveDeepWeaponData.h"
-#include "DelveDeepAbilityData.h"
-#include "DelveDeepUpgradeData.h"
-#include "DelveDeepMonsterConfig.h"
-#include "DelveDeepExampleData.h"
-#include "Engine/GameInstance.h"
-#include "Engine/World.h"
+#include "DelveDeepValidationSubsystem.h"
+#include "DelveDeepValidation.h"
 #include "Engine/Engine.h"
+#include "Engine/World.h"
+#include "UObject/UObjectGlobals.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
+#include "HAL/PlatformTime.h"
 
-DEFINE_LOG_CATEGORY(LogDelveDeepConfig);
+// Console command instances
+static FAutoConsoleCommand ValidateObjectCmd(
+	TEXT("DelveDeep.ValidateObject"),
+	TEXT("Validates a single object by path. Usage: DelveDeep.ValidateObject <ObjectPath>"),
+	FConsoleCommandWithArgsDelegate::CreateStatic(&FDelveDeepValidationCommands::ValidateObject)
+);
 
-namespace DelveDeepConsoleCommands
+static FAutoConsoleCommand ListValidationRulesCmd(
+	TEXT("DelveDeep.ListValidationRules"),
+	TEXT("Lists all registered validation rules"),
+	FConsoleCommandWithArgsDelegate::CreateStatic(&FDelveDeepValidationCommands::ListValidationRules)
+);
+
+static FAutoConsoleCommand ListRulesForClassCmd(
+	TEXT("DelveDeep.ListRulesForClass"),
+	TEXT("Lists validation rules for a specific class. Usage: DelveDeep.ListRulesForClass <ClassName>"),
+	FConsoleCommandWithArgsDelegate::CreateStatic(&FDelveDeepValidationCommands::ListRulesForClass)
+);
+
+static FAutoConsoleCommand ShowValidationCacheCmd(
+	TEXT("DelveDeep.ShowValidationCache"),
+	TEXT("Displays validation cache statistics"),
+	FConsoleCommandWithArgsDelegate::CreateStatic(&FDelveDeepValidationCommands::ShowValidationCache)
+);
+
+static FAutoConsoleCommand ClearValidationCacheCmd(
+	TEXT("DelveDeep.ClearValidationCache"),
+	TEXT("Clears all cached validation results"),
+	FConsoleCommandWithArgsDelegate::CreateStatic(&FDelveDeepValidationCommands::ClearValidationCache)
+);
+
+static FAutoConsoleCommand ShowValidationMetricsCmd(
+	TEXT("DelveDeep.ShowValidationMetrics"),
+	TEXT("Displays validation metrics report"),
+	FConsoleCommandWithArgsDelegate::CreateStatic(&FDelveDeepValidationCommands::ShowValidationMetrics)
+);
+
+static FAutoConsoleCommand ResetValidationMetricsCmd(
+	TEXT("DelveDeep.ResetValidationMetrics"),
+	TEXT("Resets all validation metrics"),
+	FConsoleCommandWithArgsDelegate::CreateStatic(&FDelveDeepValidationCommands::ResetValidationMetrics)
+);
+
+static FAutoConsoleCommand ExportValidationMetricsCmd(
+	TEXT("DelveDeep.ExportValidationMetrics"),
+	TEXT("Exports validation metrics to file. Usage: DelveDeep.ExportValidationMetrics [Format] [FilePath]"),
+	FConsoleCommandWithArgsDelegate::CreateStatic(&FDelveDeepValidationCommands::ExportValidationMetrics)
+);
+
+static FAutoConsoleCommand TestValidationSeverityCmd(
+	TEXT("DelveDeep.TestValidationSeverity"),
+	TEXT("Tests validation severity levels"),
+	FConsoleCommandWithArgsDelegate::CreateStatic(&FDelveDeepValidationCommands::TestValidationSeverity)
+);
+
+static FAutoConsoleCommand ProfileValidationCmd(
+	TEXT("DelveDeep.ProfileValidation"),
+	TEXT("Profiles validation performance for an object. Usage: DelveDeep.ProfileValidation <ObjectPath>"),
+	FConsoleCommandWithArgsDelegate::CreateStatic(&FDelveDeepValidationCommands::ProfileValidation)
+);
+
+void FDelveDeepValidationCommands::RegisterCommands()
 {
-	/**
-	 * Console command: DelveDeep.ValidateAllData
-	 * Validates all loaded configuration data and logs the report.
-	 */
-	static void ValidateAllDataCommand(const TArray<FString>& Args, UWorld* World)
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("Validation console commands registered"));
+}
+
+void FDelveDeepValidationCommands::UnregisterCommands()
+{
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("Validation console commands unregistered"));
+}
+
+UDelveDeepValidationSubsystem* FDelveDeepValidationCommands::GetValidationSubsystem()
+{
+	if (GEngine && GEngine->GameViewport && GEngine->GameViewport->GetWorld())
 	{
-		if (!World || !World->GetGameInstance())
+		UWorld* World = GEngine->GameViewport->GetWorld();
+		if (World && World->GetGameInstance())
 		{
-			UE_LOG(LogDelveDeepConfig, Error, TEXT("DelveDeep.ValidateAllData: No valid game instance found"));
-			return;
+			return World->GetGameInstance()->GetSubsystem<UDelveDeepValidationSubsystem>();
 		}
-
-		UDelveDeepConfigurationManager* ConfigManager = 
-			World->GetGameInstance()->GetSubsystem<UDelveDeepConfigurationManager>();
-
-		if (!ConfigManager)
-		{
-			UE_LOG(LogDelveDeepConfig, Error, TEXT("DelveDeep.ValidateAllData: Configuration Manager not found"));
-			return;
-		}
-
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("=== Validating All Configuration Data ==="));
-
-		FString ValidationReport;
-		bool bIsValid = ConfigManager->ValidateAllData(ValidationReport);
-
-		if (bIsValid)
-		{
-			UE_LOG(LogDelveDeepConfig, Display, TEXT("Validation Result: SUCCESS - All data is valid"));
-		}
-		else
-		{
-			UE_LOG(LogDelveDeepConfig, Warning, TEXT("Validation Result: FAILED - Issues found"));
-		}
-
-		if (!ValidationReport.IsEmpty())
-		{
-			UE_LOG(LogDelveDeepConfig, Display, TEXT("\n%s"), *ValidationReport);
-		}
-		else
-		{
-			UE_LOG(LogDelveDeepConfig, Display, TEXT("No validation issues found."));
-		}
-
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("=== Validation Complete ==="));
 	}
+	
+	UE_LOG(LogDelveDeepConfig, Error, TEXT("Failed to get validation subsystem"));
+	return nullptr;
+}
 
-	/**
-	 * Console command: DelveDeep.ShowConfigStats
-	 * Displays performance statistics for the configuration system.
-	 */
-	static void ShowConfigStatsCommand(const TArray<FString>& Args, UWorld* World)
+UObject* FDelveDeepValidationCommands::LoadObjectFromPath(const FString& ObjectPath)
+{
+	if (ObjectPath.IsEmpty())
 	{
-		if (!World || !World->GetGameInstance())
-		{
-			UE_LOG(LogDelveDeepConfig, Error, TEXT("DelveDeep.ShowConfigStats: No valid game instance found"));
-			return;
-		}
-
-		UDelveDeepConfigurationManager* ConfigManager = 
-			World->GetGameInstance()->GetSubsystem<UDelveDeepConfigurationManager>();
-
-		if (!ConfigManager)
-		{
-			UE_LOG(LogDelveDeepConfig, Error, TEXT("DelveDeep.ShowConfigStats: Configuration Manager not found"));
-			return;
-		}
-
-		int32 CacheHits = 0;
-		int32 CacheMisses = 0;
-		float AvgQueryTime = 0.0f;
-
-		ConfigManager->GetPerformanceStats(CacheHits, CacheMisses, AvgQueryTime);
-
-		int32 TotalQueries = CacheHits + CacheMisses;
-		float CacheHitRate = (TotalQueries > 0) ? (static_cast<float>(CacheHits) / TotalQueries * 100.0f) : 0.0f;
-
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("=== Configuration System Performance Stats ==="));
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("Total Queries:    %d"), TotalQueries);
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("Cache Hits:       %d"), CacheHits);
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("Cache Misses:     %d"), CacheMisses);
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("Cache Hit Rate:   %.2f%%"), CacheHitRate);
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("Avg Query Time:   %.4f ms"), AvgQueryTime);
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("=== Stats Complete ==="));
+		return nullptr;
 	}
-
-	/**
-	 * Console command: DelveDeep.ListLoadedAssets
-	 * Lists all cached configuration assets by type.
-	 */
-	static void ListLoadedAssetsCommand(const TArray<FString>& Args, UWorld* World)
+	
+	// Try to load the object
+	UObject* Object = StaticLoadObject(UObject::StaticClass(), nullptr, *ObjectPath);
+	
+	if (!Object)
 	{
-		if (!World || !World->GetGameInstance())
-		{
-			UE_LOG(LogDelveDeepConfig, Error, TEXT("DelveDeep.ListLoadedAssets: No valid game instance found"));
-			return;
-		}
-
-		UDelveDeepConfigurationManager* ConfigManager = 
-			World->GetGameInstance()->GetSubsystem<UDelveDeepConfigurationManager>();
-
-		if (!ConfigManager)
-		{
-			UE_LOG(LogDelveDeepConfig, Error, TEXT("DelveDeep.ListLoadedAssets: Configuration Manager not found"));
-			return;
-		}
-
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("=== Loaded Configuration Assets ==="));
-
-		// List character data
-		int32 CharacterCount = 0;
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("\nCharacter Data:"));
-		for (TFieldIterator<FProperty> PropIt(UDelveDeepConfigurationManager::StaticClass()); PropIt; ++PropIt)
-		{
-			if (FMapProperty* MapProp = CastField<FMapProperty>(*PropIt))
-			{
-				if (MapProp->GetName() == TEXT("CharacterDataCache"))
-				{
-					const void* MapPtr = MapProp->ContainerPtrToValuePtr<void>(ConfigManager);
-					FScriptMapHelper MapHelper(MapProp, MapPtr);
-					CharacterCount = MapHelper.Num();
-					
-					for (int32 i = 0; i < MapHelper.Num(); ++i)
-					{
-						if (MapHelper.IsValidIndex(i))
-						{
-							FName* KeyPtr = (FName*)MapHelper.GetKeyPtr(i);
-							if (KeyPtr)
-							{
-								UE_LOG(LogDelveDeepConfig, Display, TEXT("  - %s"), *KeyPtr->ToString());
-							}
-						}
-					}
-					break;
-				}
-			}
-		}
-		if (CharacterCount == 0)
-		{
-			UE_LOG(LogDelveDeepConfig, Display, TEXT("  (none)"));
-		}
-
-		// List upgrade data
-		int32 UpgradeCount = 0;
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("\nUpgrade Data:"));
-		for (TFieldIterator<FProperty> PropIt(UDelveDeepConfigurationManager::StaticClass()); PropIt; ++PropIt)
-		{
-			if (FMapProperty* MapProp = CastField<FMapProperty>(*PropIt))
-			{
-				if (MapProp->GetName() == TEXT("UpgradeDataCache"))
-				{
-					const void* MapPtr = MapProp->ContainerPtrToValuePtr<void>(ConfigManager);
-					FScriptMapHelper MapHelper(MapProp, MapPtr);
-					UpgradeCount = MapHelper.Num();
-					
-					for (int32 i = 0; i < MapHelper.Num(); ++i)
-					{
-						if (MapHelper.IsValidIndex(i))
-						{
-							FName* KeyPtr = (FName*)MapHelper.GetKeyPtr(i);
-							if (KeyPtr)
-							{
-								UE_LOG(LogDelveDeepConfig, Display, TEXT("  - %s"), *KeyPtr->ToString());
-							}
-						}
-					}
-					break;
-				}
-			}
-		}
-		if (UpgradeCount == 0)
-		{
-			UE_LOG(LogDelveDeepConfig, Display, TEXT("  (none)"));
-		}
-
-		// List weapon data
-		int32 WeaponCount = 0;
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("\nWeapon Data:"));
-		for (TFieldIterator<FProperty> PropIt(UDelveDeepConfigurationManager::StaticClass()); PropIt; ++PropIt)
-		{
-			if (FMapProperty* MapProp = CastField<FMapProperty>(*PropIt))
-			{
-				if (MapProp->GetName() == TEXT("WeaponDataCache"))
-				{
-					const void* MapPtr = MapProp->ContainerPtrToValuePtr<void>(ConfigManager);
-					FScriptMapHelper MapHelper(MapProp, MapPtr);
-					WeaponCount = MapHelper.Num();
-					
-					for (int32 i = 0; i < MapHelper.Num(); ++i)
-					{
-						if (MapHelper.IsValidIndex(i))
-						{
-							FName* KeyPtr = (FName*)MapHelper.GetKeyPtr(i);
-							if (KeyPtr)
-							{
-								UE_LOG(LogDelveDeepConfig, Display, TEXT("  - %s"), *KeyPtr->ToString());
-							}
-						}
-					}
-					break;
-				}
-			}
-		}
-		if (WeaponCount == 0)
-		{
-			UE_LOG(LogDelveDeepConfig, Display, TEXT("  (none)"));
-		}
-
-		// List ability data
-		int32 AbilityCount = 0;
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("\nAbility Data:"));
-		for (TFieldIterator<FProperty> PropIt(UDelveDeepConfigurationManager::StaticClass()); PropIt; ++PropIt)
-		{
-			if (FMapProperty* MapProp = CastField<FMapProperty>(*PropIt))
-			{
-				if (MapProp->GetName() == TEXT("AbilityDataCache"))
-				{
-					const void* MapPtr = MapProp->ContainerPtrToValuePtr<void>(ConfigManager);
-					FScriptMapHelper MapHelper(MapProp, MapPtr);
-					AbilityCount = MapHelper.Num();
-					
-					for (int32 i = 0; i < MapHelper.Num(); ++i)
-					{
-						if (MapHelper.IsValidIndex(i))
-						{
-							FName* KeyPtr = (FName*)MapHelper.GetKeyPtr(i);
-							if (KeyPtr)
-							{
-								UE_LOG(LogDelveDeepConfig, Display, TEXT("  - %s"), *KeyPtr->ToString());
-							}
-						}
-					}
-					break;
-				}
-			}
-		}
-		if (AbilityCount == 0)
-		{
-			UE_LOG(LogDelveDeepConfig, Display, TEXT("  (none)"));
-		}
-
-		int32 TotalAssets = CharacterCount + UpgradeCount + WeaponCount + AbilityCount;
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("\nTotal Assets: %d"), TotalAssets);
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("=== List Complete ==="));
+		// Try finding it if it's already loaded
+		Object = FindObject<UObject>(nullptr, *ObjectPath);
 	}
+	
+	return Object;
+}
 
-	/**
-	 * Console command: DelveDeep.ReloadConfigData
-	 * Forces a full reload of all configuration data.
-	 */
-	static void ReloadConfigDataCommand(const TArray<FString>& Args, UWorld* World)
+void FDelveDeepValidationCommands::ValidateObject(const TArray<FString>& Args)
+{
+	if (Args.Num() < 1)
 	{
-		if (!World || !World->GetGameInstance())
-		{
-			UE_LOG(LogDelveDeepConfig, Error, TEXT("DelveDeep.ReloadConfigData: No valid game instance found"));
-			return;
-		}
+		UE_LOG(LogDelveDeepConfig, Error, TEXT("Usage: DelveDeep.ValidateObject <ObjectPath>"));
+		return;
+	}
+	
+	UDelveDeepValidationSubsystem* ValidationSubsystem = GetValidationSubsystem();
+	if (!ValidationSubsystem)
+	{
+		return;
+	}
+	
+	FString ObjectPath = Args[0];
+	UObject* Object = LoadObjectFromPath(ObjectPath);
+	
+	if (!Object)
+	{
+		UE_LOG(LogDelveDeepConfig, Error, TEXT("Failed to load object: %s"), *ObjectPath);
+		return;
+	}
+	
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("Validating object: %s"), *Object->GetName());
+	
+	FValidationContext Context;
+	bool bResult = ValidationSubsystem->ValidateObject(Object, Context);
+	
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("\n%s"), *Context.GetReport());
+	
+	if (bResult)
+	{
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("Validation PASSED"));
+	}
+	else
+	{
+		UE_LOG(LogDelveDeepConfig, Error, TEXT("Validation FAILED"));
+	}
+}
 
-		UDelveDeepConfigurationManager* ConfigManager = 
-			World->GetGameInstance()->GetSubsystem<UDelveDeepConfigurationManager>();
-
-		if (!ConfigManager)
-		{
-			UE_LOG(LogDelveDeepConfig, Error, TEXT("DelveDeep.ReloadConfigData: Configuration Manager not found"));
-			return;
-		}
-
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("=== Reloading All Configuration Data ==="));
-
-		// Deinitialize and reinitialize the subsystem
-		ConfigManager->Deinitialize();
+void FDelveDeepValidationCommands::ListValidationRules(const TArray<FString>& Args)
+{
+	UDelveDeepValidationSubsystem* ValidationSubsystem = GetValidationSubsystem();
+	if (!ValidationSubsystem)
+	{
+		return;
+	}
+	
+	const TMap<UClass*, TArray<FValidationRuleDefinition>>& AllRules = ValidationSubsystem->GetAllRules();
+	
+	if (AllRules.Num() == 0)
+	{
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("No validation rules registered"));
+		return;
+	}
+	
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("=== Registered Validation Rules ==="));
+	
+	int32 TotalRules = 0;
+	for (const auto& Pair : AllRules)
+	{
+		UClass* TargetClass = Pair.Key;
+		const TArray<FValidationRuleDefinition>& Rules = Pair.Value;
 		
-		FSubsystemCollectionBase DummyCollection;
-		ConfigManager->Initialize(DummyCollection);
-
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("=== Reload Complete ==="));
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("\nClass: %s (%d rules)"), *TargetClass->GetName(), Rules.Num());
+		
+		for (const FValidationRuleDefinition& Rule : Rules)
+		{
+			UE_LOG(LogDelveDeepConfig, Display, TEXT("  - %s (Priority: %d)"), *Rule.RuleName.ToString(), Rule.Priority);
+			if (!Rule.Description.IsEmpty())
+			{
+				UE_LOG(LogDelveDeepConfig, Display, TEXT("    Description: %s"), *Rule.Description);
+			}
+		}
+		
+		TotalRules += Rules.Num();
 	}
+	
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("\nTotal: %d rules across %d classes"), TotalRules, AllRules.Num());
+}
 
-	/**
-	 * Console command: DelveDeep.DumpConfigData <AssetName>
-	 * Dumps all properties of a specified configuration asset.
-	 */
-	static void DumpConfigDataCommand(const TArray<FString>& Args, UWorld* World)
+void FDelveDeepValidationCommands::ListRulesForClass(const TArray<FString>& Args)
+{
+	if (Args.Num() < 1)
 	{
-		if (!World || !World->GetGameInstance())
-		{
-			UE_LOG(LogDelveDeepConfig, Error, TEXT("DelveDeep.DumpConfigData: No valid game instance found"));
-			return;
-		}
-
-		if (Args.Num() < 1)
-		{
-			UE_LOG(LogDelveDeepConfig, Error, TEXT("DelveDeep.DumpConfigData: Usage: DelveDeep.DumpConfigData <AssetName>"));
-			UE_LOG(LogDelveDeepConfig, Display, TEXT("Example: DelveDeep.DumpConfigData DA_Character_Warrior"));
-			return;
-		}
-
-		UDelveDeepConfigurationManager* ConfigManager = 
-			World->GetGameInstance()->GetSubsystem<UDelveDeepConfigurationManager>();
-
-		if (!ConfigManager)
-		{
-			UE_LOG(LogDelveDeepConfig, Error, TEXT("DelveDeep.DumpConfigData: Configuration Manager not found"));
-			return;
-		}
-
-		FName AssetName = FName(*Args[0]);
-		bool bFound = false;
-
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("=== Dumping Configuration Data: %s ==="), *AssetName.ToString());
-
-		// Try to find as character data
-		const UDelveDeepCharacterData* CharacterData = ConfigManager->GetCharacterData(AssetName);
-		if (CharacterData)
-		{
-			UE_LOG(LogDelveDeepConfig, Display, TEXT("\nType: Character Data"));
-			UE_LOG(LogDelveDeepConfig, Display, TEXT("Name: %s"), *CharacterData->CharacterName.ToString());
-			UE_LOG(LogDelveDeepConfig, Display, TEXT("Description: %s"), *CharacterData->Description.ToString());
-			UE_LOG(LogDelveDeepConfig, Display, TEXT("\nBase Stats:"));
-			UE_LOG(LogDelveDeepConfig, Display, TEXT("  BaseHealth: %.2f"), CharacterData->BaseHealth);
-			UE_LOG(LogDelveDeepConfig, Display, TEXT("  BaseDamage: %.2f"), CharacterData->BaseDamage);
-			UE_LOG(LogDelveDeepConfig, Display, TEXT("  MoveSpeed: %.2f"), CharacterData->MoveSpeed);
-			UE_LOG(LogDelveDeepConfig, Display, TEXT("  BaseArmor: %.2f"), CharacterData->BaseArmor);
-			UE_LOG(LogDelveDeepConfig, Display, TEXT("\nResource System:"));
-			UE_LOG(LogDelveDeepConfig, Display, TEXT("  MaxResource: %.2f"), CharacterData->MaxResource);
-			UE_LOG(LogDelveDeepConfig, Display, TEXT("  ResourceRegenRate: %.2f"), CharacterData->ResourceRegenRate);
-			UE_LOG(LogDelveDeepConfig, Display, TEXT("\nCombat Parameters:"));
-			UE_LOG(LogDelveDeepConfig, Display, TEXT("  BaseAttackSpeed: %.2f"), CharacterData->BaseAttackSpeed);
-			UE_LOG(LogDelveDeepConfig, Display, TEXT("  AttackRange: %.2f"), CharacterData->AttackRange);
-			UE_LOG(LogDelveDeepConfig, Display, TEXT("\nEquipment:"));
-			UE_LOG(LogDelveDeepConfig, Display, TEXT("  StartingWeapon: %s"), 
-				CharacterData->StartingWeapon.IsNull() ? TEXT("(none)") : *CharacterData->StartingWeapon.ToString());
-			UE_LOG(LogDelveDeepConfig, Display, TEXT("  StartingAbilities: %d"), CharacterData->StartingAbilities.Num());
-			bFound = true;
-		}
-
-		// Try to find as upgrade data
-		if (!bFound)
-		{
-			const UDelveDeepUpgradeData* UpgradeData = ConfigManager->GetUpgradeData(AssetName);
-			if (UpgradeData)
-			{
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("\nType: Upgrade Data"));
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("Name: %s"), *UpgradeData->UpgradeName.ToString());
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("Description: %s"), *UpgradeData->Description.ToString());
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("\nCost Parameters:"));
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  BaseCost: %d"), UpgradeData->BaseCost);
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  CostScalingFactor: %.2f"), UpgradeData->CostScalingFactor);
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  MaxLevel: %d"), UpgradeData->MaxLevel);
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("\nStat Modifications:"));
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  HealthModifier: %.2f"), UpgradeData->HealthModifier);
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  DamageModifier: %.2f"), UpgradeData->DamageModifier);
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  MoveSpeedModifier: %.2f"), UpgradeData->MoveSpeedModifier);
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  ArmorModifier: %.2f"), UpgradeData->ArmorModifier);
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("\nDependencies:"));
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  RequiredUpgrades: %d"), UpgradeData->RequiredUpgrades.Num());
-				bFound = true;
-			}
-		}
-
-		// Try to find as weapon data
-		if (!bFound)
-		{
-			const UDelveDeepWeaponData* WeaponData = ConfigManager->GetWeaponData(AssetName);
-			if (WeaponData)
-			{
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("\nType: Weapon Data"));
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("Name: %s"), *WeaponData->WeaponName.ToString());
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("Description: %s"), *WeaponData->Description.ToString());
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("\nCombat Stats:"));
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  BaseDamage: %.2f"), WeaponData->BaseDamage);
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  AttackSpeed: %.2f"), WeaponData->AttackSpeed);
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  Range: %.2f"), WeaponData->Range);
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  DamageType: %s"), *WeaponData->DamageType.ToString());
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("\nProjectile Parameters:"));
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  ProjectileSpeed: %.2f"), WeaponData->ProjectileSpeed);
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  bPiercing: %s"), WeaponData->bPiercing ? TEXT("true") : TEXT("false"));
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  MaxPierceTargets: %d"), WeaponData->MaxPierceTargets);
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("\nSpecial Abilities:"));
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  SpecialAbility: %s"), 
-					WeaponData->SpecialAbility.IsNull() ? TEXT("(none)") : *WeaponData->SpecialAbility.ToString());
-				bFound = true;
-			}
-		}
-
-		// Try to find as ability data
-		if (!bFound)
-		{
-			const UDelveDeepAbilityData* AbilityData = ConfigManager->GetAbilityData(AssetName);
-			if (AbilityData)
-			{
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("\nType: Ability Data"));
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("Name: %s"), *AbilityData->AbilityName.ToString());
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("Description: %s"), *AbilityData->Description.ToString());
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("\nTiming Parameters:"));
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  Cooldown: %.2f"), AbilityData->Cooldown);
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  CastTime: %.2f"), AbilityData->CastTime);
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  Duration: %.2f"), AbilityData->Duration);
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("\nResource Cost:"));
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  ResourceCost: %.2f"), AbilityData->ResourceCost);
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("\nDamage Parameters:"));
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  DamageMultiplier: %.2f"), AbilityData->DamageMultiplier);
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  DamageType: %s"), *AbilityData->DamageType.ToString());
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("\nArea of Effect:"));
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  AoERadius: %.2f"), AbilityData->AoERadius);
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  bAffectsAllies: %s"), AbilityData->bAffectsAllies ? TEXT("true") : TEXT("false"));
-				bFound = true;
-			}
-		}
-
-		// Try to find as monster config
-		if (!bFound)
-		{
-			const FDelveDeepMonsterConfig* MonsterConfig = ConfigManager->GetMonsterConfig(AssetName);
-			if (MonsterConfig)
-			{
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("\nType: Monster Config"));
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("Name: %s"), *MonsterConfig->MonsterName.ToString());
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("Description: %s"), *MonsterConfig->Description.ToString());
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("\nBase Stats:"));
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  Health: %.2f"), MonsterConfig->Health);
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  Damage: %.2f"), MonsterConfig->Damage);
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  MoveSpeed: %.2f"), MonsterConfig->MoveSpeed);
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  Armor: %.2f"), MonsterConfig->Armor);
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("\nAI Behavior:"));
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  DetectionRange: %.2f"), MonsterConfig->DetectionRange);
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  AttackRange: %.2f"), MonsterConfig->AttackRange);
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  AIBehaviorType: %s"), *MonsterConfig->AIBehaviorType.ToString());
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("\nLoot and Rewards:"));
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  CoinDropMin: %d"), MonsterConfig->CoinDropMin);
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  CoinDropMax: %d"), MonsterConfig->CoinDropMax);
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  ExperienceReward: %d"), MonsterConfig->ExperienceReward);
-				bFound = true;
-			}
-		}
-
-		if (!bFound)
-		{
-			UE_LOG(LogDelveDeepConfig, Warning, TEXT("Asset not found: %s"), *AssetName.ToString());
-			UE_LOG(LogDelveDeepConfig, Display, TEXT("Use DelveDeep.ListLoadedAssets to see available assets"));
-		}
-
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("=== Dump Complete ==="));
+		UE_LOG(LogDelveDeepConfig, Error, TEXT("Usage: DelveDeep.ListRulesForClass <ClassName>"));
+		return;
 	}
-
-	// Register console commands
-	FAutoConsoleCommandWithWorldAndArgs ValidateAllDataCmd(
-		TEXT("DelveDeep.ValidateAllData"),
-		TEXT("Validates all loaded configuration data and logs the report"),
-		FConsoleCommandWithWorldAndArgsDelegate::CreateStatic(&ValidateAllDataCommand)
-	);
-
-	FAutoConsoleCommandWithWorldAndArgs ShowConfigStatsCmd(
-		TEXT("DelveDeep.ShowConfigStats"),
-		TEXT("Displays performance statistics for the configuration system"),
-		FConsoleCommandWithWorldAndArgsDelegate::CreateStatic(&ShowConfigStatsCommand)
-	);
-
-	FAutoConsoleCommandWithWorldAndArgs ListLoadedAssetsCmd(
-		TEXT("DelveDeep.ListLoadedAssets"),
-		TEXT("Lists all cached configuration assets by type"),
-		FConsoleCommandWithWorldAndArgsDelegate::CreateStatic(&ListLoadedAssetsCommand)
-	);
-
-	FAutoConsoleCommandWithWorldAndArgs ReloadConfigDataCmd(
-		TEXT("DelveDeep.ReloadConfigData"),
-		TEXT("Forces a full reload of all configuration data"),
-		FConsoleCommandWithWorldAndArgsDelegate::CreateStatic(&ReloadConfigDataCommand)
-	);
-
-	FAutoConsoleCommandWithWorldAndArgs DumpConfigDataCmd(
-		TEXT("DelveDeep.DumpConfigData"),
-		TEXT("Dumps all properties of a specified configuration asset. Usage: DelveDeep.DumpConfigData <AssetName>"),
-		FConsoleCommandWithWorldAndArgsDelegate::CreateStatic(&DumpConfigDataCommand)
-	);
-
-	/**
-	 * Console command: DelveDeep.CreateExampleData
-	 * Creates example data assets for testing purposes.
-	 */
-	static void CreateExampleDataCommand(const TArray<FString>& Args, UWorld* World)
+	
+	UDelveDeepValidationSubsystem* ValidationSubsystem = GetValidationSubsystem();
+	if (!ValidationSubsystem)
 	{
-		if (!World)
-		{
-			UE_LOG(LogDelveDeepConfig, Error, TEXT("DelveDeep.CreateExampleData: No valid world found"));
-			return;
-		}
-
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("=== Creating Example Data Assets ==="));
-
-		FDelveDeepExampleDataSet ExampleData;
-		UDelveDeepExampleData::CreateAllExampleData(GetTransientPackage(), ExampleData);
-
-		// Validate created data
-		int32 SuccessCount = 0;
-		int32 FailureCount = 0;
-
-		if (ExampleData.WarriorData)
-		{
-			FValidationContext Context;
-			Context.SystemName = TEXT("ExampleData");
-			Context.OperationName = TEXT("CreateWarriorData");
-			
-			if (ExampleData.WarriorData->Validate(Context))
-			{
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("✓ Created DA_Character_Warrior: %s"), 
-					*ExampleData.WarriorData->CharacterName.ToString());
-				SuccessCount++;
-			}
-			else
-			{
-				UE_LOG(LogDelveDeepConfig, Error, TEXT("✗ DA_Character_Warrior validation failed:\n%s"), 
-					*Context.GetReport());
-				FailureCount++;
-			}
-		}
-		else
-		{
-			UE_LOG(LogDelveDeepConfig, Error, TEXT("✗ Failed to create DA_Character_Warrior"));
-			FailureCount++;
-		}
-
-		if (ExampleData.SwordData)
-		{
-			FValidationContext Context;
-			Context.SystemName = TEXT("ExampleData");
-			Context.OperationName = TEXT("CreateSwordData");
-			
-			if (ExampleData.SwordData->Validate(Context))
-			{
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("✓ Created DA_Weapon_Sword: %s"), 
-					*ExampleData.SwordData->WeaponName.ToString());
-				SuccessCount++;
-			}
-			else
-			{
-				UE_LOG(LogDelveDeepConfig, Error, TEXT("✗ DA_Weapon_Sword validation failed:\n%s"), 
-					*Context.GetReport());
-				FailureCount++;
-			}
-		}
-		else
-		{
-			UE_LOG(LogDelveDeepConfig, Error, TEXT("✗ Failed to create DA_Weapon_Sword"));
-			FailureCount++;
-		}
-
-		if (ExampleData.CleaveData)
-		{
-			FValidationContext Context;
-			Context.SystemName = TEXT("ExampleData");
-			Context.OperationName = TEXT("CreateCleaveData");
-			
-			if (ExampleData.CleaveData->Validate(Context))
-			{
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("✓ Created DA_Ability_Cleave: %s"), 
-					*ExampleData.CleaveData->AbilityName.ToString());
-				SuccessCount++;
-			}
-			else
-			{
-				UE_LOG(LogDelveDeepConfig, Error, TEXT("✗ DA_Ability_Cleave validation failed:\n%s"), 
-					*Context.GetReport());
-				FailureCount++;
-			}
-		}
-		else
-		{
-			UE_LOG(LogDelveDeepConfig, Error, TEXT("✗ Failed to create DA_Ability_Cleave"));
-			FailureCount++;
-		}
-
-		if (ExampleData.HealthBoostData)
-		{
-			FValidationContext Context;
-			Context.SystemName = TEXT("ExampleData");
-			Context.OperationName = TEXT("CreateHealthBoostData");
-			
-			if (ExampleData.HealthBoostData->Validate(Context))
-			{
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("✓ Created DA_Upgrade_HealthBoost: %s"), 
-					*ExampleData.HealthBoostData->UpgradeName.ToString());
-				
-				// Test cost calculation
-				int32 Level1Cost = ExampleData.HealthBoostData->CalculateCostForLevel(1);
-				int32 Level5Cost = ExampleData.HealthBoostData->CalculateCostForLevel(5);
-				int32 Level10Cost = ExampleData.HealthBoostData->CalculateCostForLevel(10);
-				
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  Cost at Level 1: %d"), Level1Cost);
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  Cost at Level 5: %d"), Level5Cost);
-				UE_LOG(LogDelveDeepConfig, Display, TEXT("  Cost at Level 10: %d"), Level10Cost);
-				
-				SuccessCount++;
-			}
-			else
-			{
-				UE_LOG(LogDelveDeepConfig, Error, TEXT("✗ DA_Upgrade_HealthBoost validation failed:\n%s"), 
-					*Context.GetReport());
-				FailureCount++;
-			}
-		}
-		else
-		{
-			UE_LOG(LogDelveDeepConfig, Error, TEXT("✗ Failed to create DA_Upgrade_HealthBoost"));
-			FailureCount++;
-		}
-
-		if (ExampleData.MonsterConfigTable)
-		{
-			TArray<FName> RowNames = ExampleData.MonsterConfigTable->GetRowNames();
-			UE_LOG(LogDelveDeepConfig, Display, TEXT("✓ Created DT_Monster_Configs with %d monsters:"), RowNames.Num());
-			
-			int32 ValidMonsters = 0;
-			for (const FName& RowName : RowNames)
-			{
-				FDelveDeepMonsterConfig* MonsterConfig = ExampleData.MonsterConfigTable->FindRow<FDelveDeepMonsterConfig>(RowName, TEXT(""));
-				if (MonsterConfig)
-				{
-					FValidationContext Context;
-					Context.SystemName = TEXT("ExampleData");
-					Context.OperationName = TEXT("ValidateMonsterConfig");
-					
-					if (MonsterConfig->Validate(Context))
-					{
-						UE_LOG(LogDelveDeepConfig, Display, TEXT("  ✓ %s: %s (HP: %.0f, DMG: %.0f)"), 
-							*RowName.ToString(), 
-							*MonsterConfig->MonsterName.ToString(),
-							MonsterConfig->Health,
-							MonsterConfig->Damage);
-						ValidMonsters++;
-					}
-					else
-					{
-						UE_LOG(LogDelveDeepConfig, Error, TEXT("  ✗ %s validation failed:\n%s"), 
-							*RowName.ToString(), *Context.GetReport());
-					}
-				}
-			}
-			
-			if (ValidMonsters == RowNames.Num())
-			{
-				SuccessCount++;
-			}
-			else
-			{
-				FailureCount++;
-			}
-		}
-		else
-		{
-			UE_LOG(LogDelveDeepConfig, Error, TEXT("✗ Failed to create DT_Monster_Configs"));
-			FailureCount++;
-		}
-
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("\n=== Example Data Creation Complete ==="));
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("Success: %d | Failures: %d"), SuccessCount, FailureCount);
-		
-		if (FailureCount == 0)
-		{
-			UE_LOG(LogDelveDeepConfig, Display, TEXT("All example data assets created and validated successfully!"));
-		}
+		return;
 	}
-
-	FAutoConsoleCommandWithWorldAndArgs CreateExampleDataCmd(
-		TEXT("DelveDeep.CreateExampleData"),
-		TEXT("Creates example data assets for testing purposes"),
-		FConsoleCommandWithWorldAndArgsDelegate::CreateStatic(&CreateExampleDataCommand)
-	);
-
-	/**
-	 * Console command: DelveDeep.ProfileConfigPerformance
-	 * Runs comprehensive performance profiling and generates a detailed report.
-	 */
-	static void ProfileConfigPerformanceCommand(const TArray<FString>& Args, UWorld* World)
+	
+	FString ClassName = Args[0];
+	UClass* TargetClass = FindObject<UClass>(ANY_PACKAGE, *ClassName);
+	
+	if (!TargetClass)
 	{
-		if (!World || !World->GetGameInstance())
-		{
-			UE_LOG(LogDelveDeepConfig, Error, TEXT("DelveDeep.ProfileConfigPerformance: No valid game instance found"));
-			return;
-		}
-
-		UDelveDeepConfigurationManager* ConfigManager = 
-			World->GetGameInstance()->GetSubsystem<UDelveDeepConfigurationManager>();
-
-		if (!ConfigManager)
-		{
-			UE_LOG(LogDelveDeepConfig, Error, TEXT("DelveDeep.ProfileConfigPerformance: Configuration Manager not found"));
-			return;
-		}
-
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("=== Configuration System Performance Profile ==="));
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("\nRunning comprehensive performance tests..."));
-
-		// Get initial stats
-		int32 InitialCacheHits, InitialCacheMisses;
-		float InitialAvgQueryTime;
-		ConfigManager->GetPerformanceStats(InitialCacheHits, InitialCacheMisses, InitialAvgQueryTime);
-
-		// Test 1: Single query performance
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("\n[Test 1] Single Query Performance"));
-		double SingleQueryStart = FPlatformTime::Seconds();
-		const UDelveDeepCharacterData* TestData = ConfigManager->GetCharacterData(FName("DA_Character_Warrior"));
-		double SingleQueryEnd = FPlatformTime::Seconds();
-		double SingleQueryTimeMs = (SingleQueryEnd - SingleQueryStart) * 1000.0;
-		
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("  Single query time: %.4f ms"), SingleQueryTimeMs);
-		if (SingleQueryTimeMs < 1.0)
-		{
-			UE_LOG(LogDelveDeepConfig, Display, TEXT("  ✓ PASS: < 1ms target"));
-		}
-		else
-		{
-			UE_LOG(LogDelveDeepConfig, Warning, TEXT("  ✗ FAIL: Exceeds 1ms target"));
-		}
-
-		// Test 2: Bulk query performance (1000 queries)
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("\n[Test 2] Bulk Query Performance (1000 queries)"));
-		const int32 BulkQueryCount = 1000;
-		TArray<FName> TestNames = {
-			FName("DA_Character_Warrior"),
-			FName("DA_Character_Ranger"),
-			FName("DA_Weapon_Sword"),
-			FName("DA_Ability_Cleave"),
-			FName("DA_Upgrade_HealthBoost")
-		};
-
-		int32 PreBulkHits, PreBulkMisses;
-		float PreBulkAvgTime;
-		ConfigManager->GetPerformanceStats(PreBulkHits, PreBulkMisses, PreBulkAvgTime);
-
-		double BulkQueryStart = FPlatformTime::Seconds();
-		for (int32 i = 0; i < BulkQueryCount; ++i)
-		{
-			FName TestName = TestNames[i % TestNames.Num()];
-			ConfigManager->GetCharacterData(TestName);
-		}
-		double BulkQueryEnd = FPlatformTime::Seconds();
-		double BulkQueryTotalMs = (BulkQueryEnd - BulkQueryStart) * 1000.0;
-		double BulkQueryAvgMs = BulkQueryTotalMs / BulkQueryCount;
-
-		int32 PostBulkHits, PostBulkMisses;
-		float PostBulkAvgTime;
-		ConfigManager->GetPerformanceStats(PostBulkHits, PostBulkMisses, PostBulkAvgTime);
-
-		int32 BulkCacheHits = PostBulkHits - PreBulkHits;
-		int32 BulkCacheMisses = PostBulkMisses - PreBulkMisses;
-		int32 BulkTotalQueries = BulkCacheHits + BulkCacheMisses;
-		float BulkCacheHitRate = BulkTotalQueries > 0 ? 
-			(static_cast<float>(BulkCacheHits) / BulkTotalQueries) * 100.0f : 0.0f;
-
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("  Total time: %.2f ms"), BulkQueryTotalMs);
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("  Average query time: %.4f ms"), BulkQueryAvgMs);
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("  Cache hits: %d"), BulkCacheHits);
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("  Cache misses: %d"), BulkCacheMisses);
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("  Cache hit rate: %.2f%%"), BulkCacheHitRate);
-		
-		if (BulkQueryAvgMs < 1.0)
-		{
-			UE_LOG(LogDelveDeepConfig, Display, TEXT("  ✓ PASS: Average < 1ms target"));
-		}
-		else
-		{
-			UE_LOG(LogDelveDeepConfig, Warning, TEXT("  ✗ FAIL: Average exceeds 1ms target"));
-		}
-
-		// Test 3: Cache hit rate test
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("\n[Test 3] Cache Hit Rate (100 repeated queries)"));
-		const int32 RepeatCount = 100;
-		FName RepeatTestName = FName("DA_Character_Warrior");
-
-		int32 PreRepeatHits, PreRepeatMisses;
-		float PreRepeatAvgTime;
-		ConfigManager->GetPerformanceStats(PreRepeatHits, PreRepeatMisses, PreRepeatAvgTime);
-
-		for (int32 i = 0; i < RepeatCount; ++i)
-		{
-			ConfigManager->GetCharacterData(RepeatTestName);
-		}
-
-		int32 PostRepeatHits, PostRepeatMisses;
-		float PostRepeatAvgTime;
-		ConfigManager->GetPerformanceStats(PostRepeatHits, PostRepeatMisses, PostRepeatAvgTime);
-
-		int32 RepeatCacheHits = PostRepeatHits - PreRepeatHits;
-		int32 RepeatCacheMisses = PostRepeatMisses - PreRepeatMisses;
-		int32 RepeatTotalQueries = RepeatCacheHits + RepeatCacheMisses;
-		float RepeatCacheHitRate = RepeatTotalQueries > 0 ? 
-			(static_cast<float>(RepeatCacheHits) / RepeatTotalQueries) * 100.0f : 0.0f;
-
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("  Cache hits: %d"), RepeatCacheHits);
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("  Cache misses: %d"), RepeatCacheMisses);
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("  Cache hit rate: %.2f%%"), RepeatCacheHitRate);
-		
-		if (RepeatCacheHitRate > 95.0f)
-		{
-			UE_LOG(LogDelveDeepConfig, Display, TEXT("  ✓ PASS: > 95%% target"));
-		}
-		else if (RepeatTotalQueries > 0)
-		{
-			UE_LOG(LogDelveDeepConfig, Warning, TEXT("  ✗ FAIL: Below 95%% target"));
-		}
-		else
-		{
-			UE_LOG(LogDelveDeepConfig, Warning, TEXT("  ⚠ SKIP: No queries tracked (assets may not exist)"));
-		}
-
-		// Test 4: Validation performance
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("\n[Test 4] Validation Performance"));
-		double ValidationStart = FPlatformTime::Seconds();
-		FString ValidationReport;
-		bool bIsValid = ConfigManager->ValidateAllData(ValidationReport);
-		double ValidationEnd = FPlatformTime::Seconds();
-		double ValidationTimeMs = (ValidationEnd - ValidationStart) * 1000.0;
-
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("  Validation time: %.2f ms"), ValidationTimeMs);
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("  Validation result: %s"), bIsValid ? TEXT("Valid") : TEXT("Has Issues"));
-		
-		if (ValidationTimeMs < 100.0)
-		{
-			UE_LOG(LogDelveDeepConfig, Display, TEXT("  ✓ PASS: < 100ms target"));
-		}
-		else
-		{
-			UE_LOG(LogDelveDeepConfig, Warning, TEXT("  ✗ FAIL: Exceeds 100ms target"));
-		}
-
-		// Summary
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("\n=== Performance Profile Summary ==="));
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("Single Query:     %.4f ms %s"), 
-			SingleQueryTimeMs, SingleQueryTimeMs < 1.0 ? TEXT("✓") : TEXT("✗"));
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("Bulk Avg Query:   %.4f ms %s"), 
-			BulkQueryAvgMs, BulkQueryAvgMs < 1.0 ? TEXT("✓") : TEXT("✗"));
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("Cache Hit Rate:   %.2f%% %s"), 
-			RepeatCacheHitRate, RepeatCacheHitRate > 95.0f ? TEXT("✓") : TEXT("✗"));
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("Validation Time:  %.2f ms %s"), 
-			ValidationTimeMs, ValidationTimeMs < 100.0 ? TEXT("✓") : TEXT("✗"));
-		UE_LOG(LogDelveDeepConfig, Display, TEXT("\n=== Profile Complete ==="));
+		UE_LOG(LogDelveDeepConfig, Error, TEXT("Class not found: %s"), *ClassName);
+		return;
 	}
+	
+	TArray<FValidationRuleDefinition> Rules = ValidationSubsystem->GetRulesForClass(TargetClass);
+	
+	if (Rules.Num() == 0)
+	{
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("No validation rules registered for class: %s"), *ClassName);
+		return;
+	}
+	
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("=== Validation Rules for %s ==="), *ClassName);
+	
+	for (int32 i = 0; i < Rules.Num(); ++i)
+	{
+		const FValidationRuleDefinition& Rule = Rules[i];
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("%d. %s (Priority: %d)"), i + 1, *Rule.RuleName.ToString(), Rule.Priority);
+		if (!Rule.Description.IsEmpty())
+		{
+			UE_LOG(LogDelveDeepConfig, Display, TEXT("   Description: %s"), *Rule.Description);
+		}
+	}
+	
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("\nTotal: %d rules"), Rules.Num());
+}
 
-	FAutoConsoleCommandWithWorldAndArgs ProfileConfigPerformanceCmd(
-		TEXT("DelveDeep.ProfileConfigPerformance"),
-		TEXT("Runs comprehensive performance profiling and generates a detailed report"),
-		FConsoleCommandWithWorldAndArgsDelegate::CreateStatic(&ProfileConfigPerformanceCommand)
-	);
+void FDelveDeepValidationCommands::ShowValidationCache(const TArray<FString>& Args)
+{
+	UDelveDeepValidationSubsystem* ValidationSubsystem = GetValidationSubsystem();
+	if (!ValidationSubsystem)
+	{
+		return;
+	}
+	
+	// Note: Cache is private, so we can't directly access it
+	// This is a placeholder for cache statistics
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("=== Validation Cache Statistics ==="));
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("Cache statistics not directly accessible"));
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("Use DelveDeep.ShowValidationMetrics for performance data"));
+}
+
+void FDelveDeepValidationCommands::ClearValidationCache(const TArray<FString>& Args)
+{
+	UDelveDeepValidationSubsystem* ValidationSubsystem = GetValidationSubsystem();
+	if (!ValidationSubsystem)
+	{
+		return;
+	}
+	
+	ValidationSubsystem->ClearValidationCache();
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("Validation cache cleared"));
+}
+
+void FDelveDeepValidationCommands::ShowValidationMetrics(const TArray<FString>& Args)
+{
+	UDelveDeepValidationSubsystem* ValidationSubsystem = GetValidationSubsystem();
+	if (!ValidationSubsystem)
+	{
+		return;
+	}
+	
+	FString Report = ValidationSubsystem->GetValidationMetricsReport();
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("\n%s"), *Report);
+}
+
+void FDelveDeepValidationCommands::ResetValidationMetrics(const TArray<FString>& Args)
+{
+	UDelveDeepValidationSubsystem* ValidationSubsystem = GetValidationSubsystem();
+	if (!ValidationSubsystem)
+	{
+		return;
+	}
+	
+	ValidationSubsystem->ResetValidationMetrics();
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("Validation metrics reset"));
+}
+
+void FDelveDeepValidationCommands::ExportValidationMetrics(const TArray<FString>& Args)
+{
+	UDelveDeepValidationSubsystem* ValidationSubsystem = GetValidationSubsystem();
+	if (!ValidationSubsystem)
+	{
+		return;
+	}
+	
+	// Parse arguments
+	FString Format = Args.Num() > 0 ? Args[0].ToLower() : TEXT("json");
+	FString FilePath = Args.Num() > 1 ? Args[1] : TEXT("");
+	
+	// Get metrics data
+	FValidationMetricsData Metrics = ValidationSubsystem->GetValidationMetrics();
+	
+	// Generate default file path if not provided
+	if (FilePath.IsEmpty())
+	{
+		if (Format == TEXT("json"))
+		{
+			FilePath = FPaths::ProjectSavedDir() / TEXT("Validation") / TEXT("Metrics.json");
+		}
+		else if (Format == TEXT("csv"))
+		{
+			FilePath = FPaths::ProjectSavedDir() / TEXT("Validation") / TEXT("Metrics.csv");
+		}
+		else if (Format == TEXT("html"))
+		{
+			FilePath = FPaths::ProjectSavedDir() / TEXT("Validation") / TEXT("Metrics.html");
+		}
+		else
+		{
+			UE_LOG(LogDelveDeepConfig, Error, TEXT("Unknown format: %s. Supported formats: json, csv, html"), *Format);
+			return;
+		}
+	}
+	
+	// Export based on format
+	FString Content;
+	
+	if (Format == TEXT("json"))
+	{
+		// Export as JSON
+		ValidationSubsystem->SaveMetricsToFile(FilePath);
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("Metrics exported to: %s"), *FilePath);
+		return;
+	}
+	else if (Format == TEXT("csv"))
+	{
+		// Export as CSV
+		Content = TEXT("Metric,Value\n");
+		Content += FString::Printf(TEXT("Total Validations,%d\n"), Metrics.TotalValidations);
+		Content += FString::Printf(TEXT("Passed Validations,%d\n"), Metrics.PassedValidations);
+		Content += FString::Printf(TEXT("Failed Validations,%d\n"), Metrics.FailedValidations);
+		Content += TEXT("\nError,Frequency\n");
+		for (const auto& Pair : Metrics.ErrorFrequency)
+		{
+			FString EscapedError = Pair.Key.Replace(TEXT(","), TEXT(";"));
+			Content += FString::Printf(TEXT("\"%s\",%d\n"), *EscapedError, Pair.Value);
+		}
+	}
+	else if (Format == TEXT("html"))
+	{
+		// Export as HTML
+		Content = TEXT("<!DOCTYPE html>\n<html>\n<head>\n<title>Validation Metrics</title>\n");
+		Content += TEXT("<style>body{font-family:Arial;margin:20px;}table{border-collapse:collapse;width:100%;}");
+		Content += TEXT("th,td{border:1px solid #ddd;padding:8px;text-align:left;}th{background-color:#4CAF50;color:white;}</style>\n");
+		Content += TEXT("</head>\n<body>\n<h1>Validation Metrics Report</h1>\n");
+		Content += TEXT("<h2>Summary</h2>\n<table>\n");
+		Content += FString::Printf(TEXT("<tr><td>Total Validations</td><td>%d</td></tr>\n"), Metrics.TotalValidations);
+		Content += FString::Printf(TEXT("<tr><td>Passed Validations</td><td>%d</td></tr>\n"), Metrics.PassedValidations);
+		Content += FString::Printf(TEXT("<tr><td>Failed Validations</td><td>%d</td></tr>\n"), Metrics.FailedValidations);
+		Content += TEXT("</table>\n");
+		
+		if (Metrics.ErrorFrequency.Num() > 0)
+		{
+			Content += TEXT("<h2>Error Frequency</h2>\n<table>\n<tr><th>Error</th><th>Count</th></tr>\n");
+			for (const auto& Pair : Metrics.ErrorFrequency)
+			{
+				Content += FString::Printf(TEXT("<tr><td>%s</td><td>%d</td></tr>\n"), *Pair.Key, Pair.Value);
+			}
+			Content += TEXT("</table>\n");
+		}
+		
+		Content += TEXT("</body>\n</html>");
+	}
+	else
+	{
+		UE_LOG(LogDelveDeepConfig, Error, TEXT("Unknown format: %s"), *Format);
+		return;
+	}
+	
+	// Ensure directory exists
+	FString Directory = FPaths::GetPath(FilePath);
+	if (!FPaths::DirectoryExists(Directory))
+	{
+		IFileManager::Get().MakeDirectory(*Directory, true);
+	}
+	
+	// Write to file
+	if (FFileHelper::SaveStringToFile(Content, *FilePath))
+	{
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("Metrics exported to: %s"), *FilePath);
+	}
+	else
+	{
+		UE_LOG(LogDelveDeepConfig, Error, TEXT("Failed to export metrics to: %s"), *FilePath);
+	}
+}
+
+void FDelveDeepValidationCommands::TestValidationSeverity(const TArray<FString>& Args)
+{
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("=== Testing Validation Severity Levels ===\n"));
+	
+	FValidationContext Context;
+	Context.SystemName = TEXT("TestSystem");
+	Context.OperationName = TEXT("TestValidationSeverity");
+	
+	// Test each severity level
+	Context.AddCritical(TEXT("This is a CRITICAL issue"));
+	Context.AddError(TEXT("This is an ERROR"));
+	Context.AddWarning(TEXT("This is a WARNING"));
+	Context.AddInfo(TEXT("This is an INFO message"));
+	
+	// Display counts
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("Issue Counts:"));
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("  Critical: %d"), Context.GetIssueCount(EValidationSeverity::Critical));
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("  Errors: %d"), Context.GetIssueCount(EValidationSeverity::Error));
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("  Warnings: %d"), Context.GetIssueCount(EValidationSeverity::Warning));
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("  Info: %d"), Context.GetIssueCount(EValidationSeverity::Info));
+	
+	// Display validation status
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("\nValidation Status:"));
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("  Has Critical Issues: %s"), Context.HasCriticalIssues() ? TEXT("Yes") : TEXT("No"));
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("  Has Errors: %s"), Context.HasErrors() ? TEXT("Yes") : TEXT("No"));
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("  Has Warnings: %s"), Context.HasWarnings() ? TEXT("Yes") : TEXT("No"));
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("  Is Valid: %s"), Context.IsValid() ? TEXT("Yes") : TEXT("No"));
+	
+	// Display full report
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("\n%s"), *Context.GetReport());
+}
+
+void FDelveDeepValidationCommands::ProfileValidation(const TArray<FString>& Args)
+{
+	if (Args.Num() < 1)
+	{
+		UE_LOG(LogDelveDeepConfig, Error, TEXT("Usage: DelveDeep.ProfileValidation <ObjectPath>"));
+		return;
+	}
+	
+	UDelveDeepValidationSubsystem* ValidationSubsystem = GetValidationSubsystem();
+	if (!ValidationSubsystem)
+	{
+		return;
+	}
+	
+	FString ObjectPath = Args[0];
+	UObject* Object = LoadObjectFromPath(ObjectPath);
+	
+	if (!Object)
+	{
+		UE_LOG(LogDelveDeepConfig, Error, TEXT("Failed to load object: %s"), *ObjectPath);
+		return;
+	}
+	
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("=== Profiling Validation Performance ==="));
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("Object: %s"), *Object->GetName());
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("Class: %s\n"), *Object->GetClass()->GetName());
+	
+	// Run validation multiple times to get average
+	const int32 NumIterations = 100;
+	double TotalTime = 0.0;
+	
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("Running %d validation iterations..."), NumIterations);
+	
+	for (int32 i = 0; i < NumIterations; ++i)
+	{
+		FValidationContext Context;
+		
+		double StartTime = FPlatformTime::Seconds();
+		ValidationSubsystem->ValidateObject(Object, Context);
+		double EndTime = FPlatformTime::Seconds();
+		
+		TotalTime += (EndTime - StartTime);
+	}
+	
+	double AvgTime = TotalTime / NumIterations;
+	
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("\n=== Performance Results ==="));
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("Total Time: %.3f ms"), TotalTime * 1000.0);
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("Average Time: %.3f ms"), AvgTime * 1000.0);
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("Min Expected: < 1.0 ms"));
+	
+	if (AvgTime * 1000.0 < 1.0)
+	{
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("Performance: EXCELLENT (within target)"));
+	}
+	else if (AvgTime * 1000.0 < 5.0)
+	{
+		UE_LOG(LogDelveDeepConfig, Warning, TEXT("Performance: ACCEPTABLE (above target but reasonable)"));
+	}
+	else
+	{
+		UE_LOG(LogDelveDeepConfig, Error, TEXT("Performance: POOR (significantly above target)"));
+	}
+	
+	// Test with cache
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("\n=== Testing Cache Performance ==="));
+	
+	TotalTime = 0.0;
+	for (int32 i = 0; i < NumIterations; ++i)
+	{
+		FValidationContext Context;
+		
+		double StartTime = FPlatformTime::Seconds();
+		ValidationSubsystem->ValidateObjectWithCache(Object, Context, false);
+		double EndTime = FPlatformTime::Seconds();
+		
+		TotalTime += (EndTime - StartTime);
+	}
+	
+	AvgTime = TotalTime / NumIterations;
+	
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("Average Time (with cache): %.3f ms"), AvgTime * 1000.0);
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("Expected: < 0.1 ms for cache hits"));
 }

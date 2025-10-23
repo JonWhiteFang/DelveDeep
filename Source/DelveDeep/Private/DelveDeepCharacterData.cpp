@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "DelveDeepCharacterData.h"
+#include "DelveDeepValidationTemplates.h"
 
 void UDelveDeepCharacterData::PostLoad()
 {
@@ -21,80 +22,40 @@ bool UDelveDeepCharacterData::Validate(FValidationContext& Context) const
 {
 	bool bIsValid = true;
 	
-	// Validate base health
-	if (BaseHealth <= 0.0f || BaseHealth > 10000.0f)
-	{
-		Context.AddError(FString::Printf(
-			TEXT("BaseHealth out of range: %.2f (expected 1.0-10000.0)"), BaseHealth));
-		bIsValid = false;
-	}
+	// Add info message for validation start
+	Context.AddInfo(FString::Printf(TEXT("Validating character data: %s"), *GetName()));
 	
-	// Validate base damage
-	if (BaseDamage <= 0.0f || BaseDamage > 1000.0f)
-	{
-		Context.AddError(FString::Printf(
-			TEXT("BaseDamage out of range: %.2f (expected 1.0-1000.0)"), BaseDamage));
-		bIsValid = false;
-	}
+	// Validate base health using template
+	bIsValid &= DelveDeepValidation::ValidateRange(BaseHealth, 1.0f, 10000.0f, TEXT("BaseHealth"), Context);
 	
-	// Validate move speed
-	if (MoveSpeed < 50.0f || MoveSpeed > 1000.0f)
-	{
-		Context.AddError(FString::Printf(
-			TEXT("MoveSpeed out of range: %.2f (expected 50.0-1000.0)"), MoveSpeed));
-		bIsValid = false;
-	}
+	// Validate base damage using template
+	bIsValid &= DelveDeepValidation::ValidateRange(BaseDamage, 1.0f, 1000.0f, TEXT("BaseDamage"), Context);
 	
-	// Validate base armor
-	if (BaseArmor < 0.0f || BaseArmor > 100.0f)
-	{
-		Context.AddError(FString::Printf(
-			TEXT("BaseArmor out of range: %.2f (expected 0.0-100.0)"), BaseArmor));
-		bIsValid = false;
-	}
+	// Validate move speed using template
+	bIsValid &= DelveDeepValidation::ValidateRange(MoveSpeed, 50.0f, 1000.0f, TEXT("MoveSpeed"), Context);
 	
-	// Validate max resource
-	if (MaxResource < 0.0f || MaxResource > 1000.0f)
-	{
-		Context.AddError(FString::Printf(
-			TEXT("MaxResource out of range: %.2f (expected 0.0-1000.0)"), MaxResource));
-		bIsValid = false;
-	}
+	// Validate base armor using template
+	bIsValid &= DelveDeepValidation::ValidateRange(BaseArmor, 0.0f, 100.0f, TEXT("BaseArmor"), Context);
 	
-	// Validate resource regen rate
-	if (ResourceRegenRate < 0.0f || ResourceRegenRate > 100.0f)
-	{
-		Context.AddError(FString::Printf(
-			TEXT("ResourceRegenRate out of range: %.2f (expected 0.0-100.0)"), ResourceRegenRate));
-		bIsValid = false;
-	}
+	// Validate max resource using template
+	bIsValid &= DelveDeepValidation::ValidateRange(MaxResource, 0.0f, 1000.0f, TEXT("MaxResource"), Context);
 	
-	// Validate base attack speed
-	if (BaseAttackSpeed < 0.1f || BaseAttackSpeed > 10.0f)
-	{
-		Context.AddError(FString::Printf(
-			TEXT("BaseAttackSpeed out of range: %.2f (expected 0.1-10.0)"), BaseAttackSpeed));
-		bIsValid = false;
-	}
+	// Validate resource regen rate using template
+	bIsValid &= DelveDeepValidation::ValidateRange(ResourceRegenRate, 0.0f, 100.0f, TEXT("ResourceRegenRate"), Context);
 	
-	// Validate attack range
-	if (AttackRange < 10.0f || AttackRange > 1000.0f)
-	{
-		Context.AddError(FString::Printf(
-			TEXT("AttackRange out of range: %.2f (expected 10.0-1000.0)"), AttackRange));
-		bIsValid = false;
-	}
+	// Validate base attack speed using template
+	bIsValid &= DelveDeepValidation::ValidateRange(BaseAttackSpeed, 0.1f, 10.0f, TEXT("BaseAttackSpeed"), Context);
 	
-	// Validate starting weapon reference
-	if (StartingWeapon.IsNull())
-	{
-		Context.AddWarning(TEXT("No starting weapon assigned"));
-	}
+	// Validate attack range using template
+	bIsValid &= DelveDeepValidation::ValidateRange(AttackRange, 10.0f, 1000.0f, TEXT("AttackRange"), Context);
+	
+	// Validate starting weapon reference (warning severity for optional field)
+	DelveDeepValidation::ValidateSoftReference(StartingWeapon, TEXT("StartingWeapon"), Context, true, EValidationSeverity::Warning);
 	
 	// Validate starting abilities
 	if (StartingAbilities.Num() == 0)
 	{
-		Context.AddWarning(TEXT("No starting abilities assigned"));
+		Context.AddIssue(EValidationSeverity::Warning, TEXT("No starting abilities assigned"));
 	}
 	
 	for (int32 i = 0; i < StartingAbilities.Num(); ++i)
@@ -105,6 +66,12 @@ bool UDelveDeepCharacterData::Validate(FValidationContext& Context) const
 				TEXT("Null reference in starting abilities at index %d"), i));
 			bIsValid = false;
 		}
+	}
+	
+	// Add success info message if validation passed
+	if (bIsValid)
+	{
+		Context.AddInfo(TEXT("Character data validation passed"));
 	}
 	
 	return bIsValid;

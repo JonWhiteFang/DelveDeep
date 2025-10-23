@@ -5,14 +5,32 @@
 #include "CoreMinimal.h"
 
 /**
- * Console commands for testing and debugging the DelveDeep configuration system.
- * 
- * Available commands:
- * - DelveDeep.ValidateAllData: Validates all loaded configuration data and logs the report
- * - DelveDeep.ShowConfigStats: Displays performance statistics for the configuration system
- * - DelveDeep.ListLoadedAssets: Lists all cached configuration assets by type
- * - DelveDeep.ReloadConfigData: Forces a full reload of all configuration data
- * - DelveDeep.DumpConfigData <AssetName>: Dumps all properties of a specified configuration asset
+ * Console commands for validation system testing and debugging.
+ * Provides commands for validating objects, managing rules, cache, and metrics.
  */
+class DELVEDEEP_API FDelveDeepValidationCommands
+{
+public:
+	/** Registers all validation console commands */
+	static void RegisterCommands();
 
-DECLARE_LOG_CATEGORY_EXTERN(LogDelveDeepConfig, Log, All);
+	/** Unregisters all validation console commands */
+	static void UnregisterCommands();
+
+private:
+	// Command implementations
+	static void ValidateObject(const TArray<FString>& Args);
+	static void ListValidationRules(const TArray<FString>& Args);
+	static void ListRulesForClass(const TArray<FString>& Args);
+	static void ShowValidationCache(const TArray<FString>& Args);
+	static void ClearValidationCache(const TArray<FString>& Args);
+	static void ShowValidationMetrics(const TArray<FString>& Args);
+	static void ResetValidationMetrics(const TArray<FString>& Args);
+	static void ExportValidationMetrics(const TArray<FString>& Args);
+	static void TestValidationSeverity(const TArray<FString>& Args);
+	static void ProfileValidation(const TArray<FString>& Args);
+
+	// Helper functions
+	static class UDelveDeepValidationSubsystem* GetValidationSubsystem();
+	static UObject* LoadObjectFromPath(const FString& ObjectPath);
+};

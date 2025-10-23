@@ -9,6 +9,13 @@
 #include "Misc/Paths.h"
 #include "HAL/PlatformFileManager.h"
 
+// Performance profiling stats
+DECLARE_STATS_GROUP(TEXT("DelveDeepValidation"), STATGROUP_DelveDeepValidation, STATCAT_Advanced);
+DECLARE_CYCLE_STAT(TEXT("Validate Object"), STAT_ValidateObject, STATGROUP_DelveDeepValidation);
+DECLARE_CYCLE_STAT(TEXT("Execute Rule"), STAT_ExecuteRule, STATGROUP_DelveDeepValidation);
+DECLARE_CYCLE_STAT(TEXT("Cache Lookup"), STAT_CacheLookup, STATGROUP_DelveDeepValidation);
+DECLARE_CYCLE_STAT(TEXT("Generate Report"), STAT_GenerateReport, STATGROUP_DelveDeepValidation);
+
 void UDelveDeepValidationSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
@@ -143,6 +150,8 @@ void UDelveDeepValidationSubsystem::UnregisterAllRulesForClass(UClass* TargetCla
 
 bool UDelveDeepValidationSubsystem::ValidateObject(const UObject* Object, FValidationContext& OutContext)
 {
+	SCOPE_CYCLE_COUNTER(STAT_ValidateObject);
+	
 	if (!Object || !IsValid(Object))
 	{
 		OutContext.AddError(TEXT("Cannot validate null or invalid object"));
@@ -192,6 +201,8 @@ bool UDelveDeepValidationSubsystem::ValidateObject(const UObject* Object, FValid
 
 bool UDelveDeepValidationSubsystem::ValidateObjectWithCache(const UObject* Object, FValidationContext& OutContext, bool bForceRevalidate)
 {
+	SCOPE_CYCLE_COUNTER(STAT_CacheLookup);
+	
 	if (!Object || !IsValid(Object))
 	{
 		OutContext.AddError(TEXT("Cannot validate null or invalid object"));
@@ -365,7 +376,11 @@ bool UDelveDeepValidationSubsystem::ExecuteRulesForObject(const UObject* Object,
 			double RuleStartTime = FPlatformTime::Seconds();
 			
 			// Execute rule
-			bool bRulePassed = Rule.ValidationDelegate.Execute(Object, RuleContext);
+			bool bRulePassed = false;
+			{
+				SCOPE_CYCLE_COUNTER(STAT_ExecuteRule);
+				bRulePassed = Rule.ValidationDelegate.Execute(Object, RuleContext);
+			}
 			
 			// Calculate rule execution time
 			double RuleExecutionTime = FPlatformTime::Seconds() - RuleStartTime;
