@@ -154,8 +154,9 @@ bool UDelveDeepValidationSubsystem::ValidateObject(const UObject* Object, FValid
 	OutContext.OperationName = FString::Printf(TEXT("ValidateObject(%s)"), *Object->GetClass()->GetName());
 	OutContext.CreationTime = FDateTime::Now();
 	
-	// Broadcast pre-validation delegate
+	// Broadcast pre-validation delegates
 	OnPreValidation.Broadcast(Object, OutContext);
+	OnPreValidationBP.Broadcast(Object, OutContext);
 	
 	// Track start time for metrics
 	double StartTime = FPlatformTime::Seconds();
@@ -178,11 +179,13 @@ bool UDelveDeepValidationSubsystem::ValidateObject(const UObject* Object, FValid
 		if (Issue.Severity == EValidationSeverity::Critical || Issue.Severity == EValidationSeverity::Error)
 		{
 			OnCriticalIssue.Broadcast(Object, Issue);
+			OnCriticalIssueBP.Broadcast(Object, Issue);
 		}
 	}
 	
-	// Broadcast post-validation delegate
+	// Broadcast post-validation delegates
 	OnPostValidation.Broadcast(Object, OutContext);
+	OnPostValidationBP.Broadcast(Object, OutContext);
 	
 	return bResult;
 }
@@ -220,6 +223,50 @@ bool UDelveDeepValidationSubsystem::ValidateObjectWithCache(const UObject* Objec
 	UE_LOG(LogDelveDeepConfig, Verbose, TEXT("Validation result cached for object '%s'"), *Object->GetName());
 	
 	return bResult;
+}
+
+int32 UDelveDeepValidationSubsystem::ValidateObjects(const TArray<UObject*>& Objects, TArray<FValidationContext>& OutContexts, bool bUseCache)
+{
+	// Pre-allocate output array
+	OutContexts.SetNum(Objects.Num());
+	
+	// Track number of passed validations
+	TAtomic<int32> PassedCount{0};
+	
+	// Validate objects in parallel
+	ParallelFor(Objects.Num(), [&](int32 Index)
+	{
+		UObject* Object = Objects[Index];
+		FValidationContext& Context = OutContexts[Index];
+		
+		if (!Object || !IsValid(Object))
+		{
+			Context.AddError(TEXT("Cannot validate null or invalid object"));
+			return;
+		}
+		
+		// Validate with or without cache
+		bool bPassed = false;
+		if (bUseCache)
+		{
+			bPassed = ValidateObjectWithCache(Object, Context, false);
+		}
+		else
+		{
+			bPassed = ValidateObject(Object, Context);
+		}
+		
+		// Increment passed count if validation succeeded
+		if (bPassed)
+		{
+			PassedCount++;
+		}
+	});
+	
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("Batch validation completed: %d/%d objects passed"), 
+		PassedCount.Load(), Objects.Num());
+	
+	return PassedCount.Load();
 }
 
 void UDelveDeepValidationSubsystem::InvalidateCache(const UObject* Object)
@@ -325,9 +372,12 @@ bool UDelveDeepValidationSubsystem::ExecuteRulesForObject(const UObject* Object,
 			
 			RuleContext.CompletionTime = FDateTime::Now();
 			
-			// Track rule execution metrics
-			Metrics.RuleExecutionTimes.FindOrAdd(Rule.RuleName) += RuleExecutionTime;
-			Metrics.RuleExecutionCounts.FindOrAdd(Rule.RuleName)++;
+			// Track rule execution metrics (thread-safe)
+			{
+				FScopeLock Lock(&MetricsCriticalSection);
+				Metrics.RuleExecutionTimes.FindOrAdd(Rule.RuleName) += RuleExecutionTime;
+				Metrics.RuleExecutionCounts.FindOrAdd(Rule.RuleName)++;
+			}
 			
 			// Add rule context as child
 			Context.AddChildContext(RuleContext);
@@ -378,10 +428,9 @@ uint32 UDelveDeepValidationSubsystem::CalculateObjectHash(const UObject* Object)
 
 void UDelveDeepValidationSubsystem::UpdateMetrics(const FValidationContext& Context, double ExecutionTime)
 {
-	// Update total validation count
+	// Update atomic counters (thread-safe without lock)
 	Metrics.TotalValidations++;
 	
-	// Update passed/failed counts
 	if (Context.IsValid())
 	{
 		Metrics.PassedValidations++;
@@ -391,42 +440,47 @@ void UDelveDeepValidationSubsystem::UpdateMetrics(const FValidationContext& Cont
 		Metrics.FailedValidations++;
 	}
 	
-	// Track error frequency
-	for (const FString& Error : Context.ValidationErrors)
+	// Update maps (requires lock for thread safety)
 	{
-		Metrics.ErrorFrequency.FindOrAdd(Error)++;
-	}
-	
-	// Track error frequency from new Issues array
-	for (const FValidationIssue& Issue : Context.Issues)
-	{
-		if (Issue.Severity == EValidationSeverity::Error || Issue.Severity == EValidationSeverity::Critical)
-		{
-			Metrics.ErrorFrequency.FindOrAdd(Issue.Message)++;
-		}
-	}
-	
-	// Track system execution time
-	if (!Context.SystemName.IsEmpty())
-	{
-		Metrics.SystemExecutionTimes.FindOrAdd(Context.SystemName) += ExecutionTime;
-		Metrics.SystemExecutionCounts.FindOrAdd(Context.SystemName)++;
-	}
-	
-	// Track child context metrics recursively
-	for (const FValidationContext& ChildContext : Context.ChildContexts)
-	{
-		// Track error frequency from child contexts
-		for (const FString& Error : ChildContext.ValidationErrors)
+		FScopeLock Lock(&MetricsCriticalSection);
+		
+		// Track error frequency
+		for (const FString& Error : Context.ValidationErrors)
 		{
 			Metrics.ErrorFrequency.FindOrAdd(Error)++;
 		}
 		
-		for (const FValidationIssue& Issue : ChildContext.Issues)
+		// Track error frequency from new Issues array
+		for (const FValidationIssue& Issue : Context.Issues)
 		{
 			if (Issue.Severity == EValidationSeverity::Error || Issue.Severity == EValidationSeverity::Critical)
 			{
 				Metrics.ErrorFrequency.FindOrAdd(Issue.Message)++;
+			}
+		}
+		
+		// Track system execution time
+		if (!Context.SystemName.IsEmpty())
+		{
+			Metrics.SystemExecutionTimes.FindOrAdd(Context.SystemName) += ExecutionTime;
+			Metrics.SystemExecutionCounts.FindOrAdd(Context.SystemName)++;
+		}
+		
+		// Track child context metrics recursively
+		for (const FValidationContext& ChildContext : Context.ChildContexts)
+		{
+			// Track error frequency from child contexts
+			for (const FString& Error : ChildContext.ValidationErrors)
+			{
+				Metrics.ErrorFrequency.FindOrAdd(Error)++;
+			}
+			
+			for (const FValidationIssue& Issue : ChildContext.Issues)
+			{
+				if (Issue.Severity == EValidationSeverity::Error || Issue.Severity == EValidationSeverity::Critical)
+				{
+					Metrics.ErrorFrequency.FindOrAdd(Issue.Message)++;
+				}
 			}
 		}
 	}
@@ -434,17 +488,23 @@ void UDelveDeepValidationSubsystem::UpdateMetrics(const FValidationContext& Cont
 
 FString UDelveDeepValidationSubsystem::GetValidationMetricsReport() const
 {
+	FScopeLock Lock(&MetricsCriticalSection);
+	
 	FString Report;
 	Report += TEXT("=== Validation Metrics Report ===\n\n");
 	
-	// Overall statistics
-	Report += FString::Printf(TEXT("Total Validations: %d\n"), Metrics.TotalValidations);
+	// Overall statistics (atomic reads)
+	int32 TotalValidations = Metrics.TotalValidations.Load();
+	int32 PassedValidations = Metrics.PassedValidations.Load();
+	int32 FailedValidations = Metrics.FailedValidations.Load();
+	
+	Report += FString::Printf(TEXT("Total Validations: %d\n"), TotalValidations);
 	Report += FString::Printf(TEXT("Passed: %d (%.1f%%)\n"), 
-		Metrics.PassedValidations, 
-		Metrics.TotalValidations > 0 ? (Metrics.PassedValidations * 100.0f / Metrics.TotalValidations) : 0.0f);
+		PassedValidations, 
+		TotalValidations > 0 ? (PassedValidations * 100.0f / TotalValidations) : 0.0f);
 	Report += FString::Printf(TEXT("Failed: %d (%.1f%%)\n\n"), 
-		Metrics.FailedValidations,
-		Metrics.TotalValidations > 0 ? (Metrics.FailedValidations * 100.0f / Metrics.TotalValidations) : 0.0f);
+		FailedValidations,
+		TotalValidations > 0 ? (FailedValidations * 100.0f / TotalValidations) : 0.0f);
 	
 	// Error frequency
 	if (Metrics.ErrorFrequency.Num() > 0)
@@ -536,11 +596,13 @@ FString UDelveDeepValidationSubsystem::GetValidationMetricsReport() const
 
 FValidationMetricsData UDelveDeepValidationSubsystem::GetValidationMetrics() const
 {
+	FScopeLock Lock(&MetricsCriticalSection);
+	
 	FValidationMetricsData Data;
 	
-	Data.TotalValidations = Metrics.TotalValidations;
-	Data.PassedValidations = Metrics.PassedValidations;
-	Data.FailedValidations = Metrics.FailedValidations;
+	Data.TotalValidations = Metrics.TotalValidations.Load();
+	Data.PassedValidations = Metrics.PassedValidations.Load();
+	Data.FailedValidations = Metrics.FailedValidations.Load();
 	Data.ErrorFrequency = Metrics.ErrorFrequency;
 	
 	// Calculate average rule execution times

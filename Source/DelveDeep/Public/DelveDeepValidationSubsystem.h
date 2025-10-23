@@ -66,6 +66,17 @@ public:
 	bool ValidateObjectWithCache(const UObject* Object, FValidationContext& OutContext, bool bForceRevalidate = false);
 
 	/**
+	 * Validates multiple objects in parallel for improved performance.
+	 * Independent objects are validated concurrently using multi-threading.
+	 * @param Objects Array of objects to validate
+	 * @param OutContexts Array of validation contexts (one per object)
+	 * @param bUseCache If true, uses cached results where available
+	 * @return Number of objects that passed validation
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
+	int32 ValidateObjects(const TArray<UObject*>& Objects, TArray<FValidationContext>& OutContexts, bool bUseCache = true);
+
+	/**
 	 * Invalidates the cache for a specific object.
 	 * @param Object The object to invalidate cache for
 	 */
@@ -134,7 +145,7 @@ public:
 	 */
 	const TMap<UClass*, TArray<FValidationRuleDefinition>>& GetAllRules() const { return ValidationRules; }
 
-	// Validation delegates
+	// Validation delegates (C++)
 
 	/**
 	 * Delegate fired before validation begins for an object.
@@ -162,6 +173,35 @@ public:
 	
 	/** Critical issue delegate instance */
 	FOnCriticalIssue OnCriticalIssue;
+
+	// Blueprint-assignable delegates
+
+	/**
+	 * Blueprint delegate fired before validation begins for an object.
+	 */
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPreValidationBP, const UObject*, Object, FValidationContext&, Context);
+	
+	/** Blueprint pre-validation delegate instance */
+	UPROPERTY(BlueprintAssignable, Category = "DelveDeep|Validation|Events")
+	FOnPreValidationBP OnPreValidationBP;
+
+	/**
+	 * Blueprint delegate fired after validation completes for an object.
+	 */
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPostValidationBP, const UObject*, Object, const FValidationContext&, Context);
+	
+	/** Blueprint post-validation delegate instance */
+	UPROPERTY(BlueprintAssignable, Category = "DelveDeep|Validation|Events")
+	FOnPostValidationBP OnPostValidationBP;
+
+	/**
+	 * Blueprint delegate fired when a critical or error severity issue is added during validation.
+	 */
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnCriticalIssueBP, const UObject*, Object, const FValidationIssue&, Issue);
+	
+	/** Blueprint critical issue delegate instance */
+	UPROPERTY(BlueprintAssignable, Category = "DelveDeep|Validation|Events")
+	FOnCriticalIssueBP OnCriticalIssueBP;
 
 private:
 	/**
@@ -204,29 +244,32 @@ private:
 	struct FValidationMetrics
 	{
 		/** Total number of validations performed */
-		int32 TotalValidations = 0;
+		TAtomic<int32> TotalValidations{0};
 
 		/** Number of validations that passed */
-		int32 PassedValidations = 0;
+		TAtomic<int32> PassedValidations{0};
 
 		/** Number of validations that failed */
-		int32 FailedValidations = 0;
+		TAtomic<int32> FailedValidations{0};
 
-		/** Frequency of each unique error message */
+		/** Frequency of each unique error message (requires lock for thread safety) */
 		TMap<FString, int32> ErrorFrequency;
 
-		/** Total execution time per rule (in seconds) */
+		/** Total execution time per rule (in seconds, requires lock for thread safety) */
 		TMap<FName, double> RuleExecutionTimes;
 
-		/** Number of times each rule was executed */
+		/** Number of times each rule was executed (requires lock for thread safety) */
 		TMap<FName, int32> RuleExecutionCounts;
 
-		/** Total execution time per system (in seconds) */
+		/** Total execution time per system (in seconds, requires lock for thread safety) */
 		TMap<FString, double> SystemExecutionTimes;
 
-		/** Number of times each system was validated */
+		/** Number of times each system was validated (requires lock for thread safety) */
 		TMap<FString, int32> SystemExecutionCounts;
 	};
 
 	FValidationMetrics Metrics;
+
+	/** Critical section for thread-safe metrics updates */
+	mutable FCriticalSection MetricsCriticalSection;
 };

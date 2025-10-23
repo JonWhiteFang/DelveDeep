@@ -112,12 +112,14 @@ public:
 	 * Adds an error to the validation context.
 	 * @param Error The error message to add
 	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
 	void AddError(const FString& Error);
 
 	/**
 	 * Adds a warning to the validation context.
 	 * @param Warning The warning message to add
 	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
 	void AddWarning(const FString& Warning);
 
 	/**
@@ -128,6 +130,7 @@ public:
 	 * @param SourceLine The line number in the source file (optional)
 	 * @param SourceFunction The function name where the issue was added (optional)
 	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
 	void AddIssue(EValidationSeverity Severity, const FString& Message, 
 				  const FString& SourceFile = TEXT(""), int32 SourceLine = 0, 
 				  const FString& SourceFunction = TEXT(""));
@@ -136,30 +139,35 @@ public:
 	 * Adds a critical issue to the validation context.
 	 * @param Message The critical issue message
 	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
 	void AddCritical(const FString& Message);
 
 	/**
 	 * Adds an informational message to the validation context.
 	 * @param Message The informational message
 	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
 	void AddInfo(const FString& Message);
 
 	/**
 	 * Checks if the validation context has any critical issues.
 	 * @return True if there are critical issues, false otherwise
 	 */
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Validation")
 	bool HasCriticalIssues() const;
 
 	/**
 	 * Checks if the validation context has any errors.
 	 * @return True if there are errors, false otherwise
 	 */
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Validation")
 	bool HasErrors() const;
 
 	/**
 	 * Checks if the validation context has any warnings.
 	 * @return True if there are warnings, false otherwise
 	 */
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Validation")
 	bool HasWarnings() const;
 
 	/**
@@ -167,12 +175,14 @@ public:
 	 * @param Severity The severity level to count
 	 * @return The number of issues with the specified severity
 	 */
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Validation")
 	int32 GetIssueCount(EValidationSeverity Severity) const;
 
 	/**
 	 * Checks if the validation context has no errors or critical issues.
 	 * @return True if there are no validation errors or critical issues, false otherwise
 	 */
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Validation")
 	bool IsValid() const;
 
 	/**
