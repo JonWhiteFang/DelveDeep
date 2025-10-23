@@ -101,6 +101,17 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Configuration")
 	void GetPerformanceStats(int32& OutCacheHits, int32& OutCacheMisses, float& OutAvgQueryTime) const;
 
+#if !UE_BUILD_SHIPPING
+	// Hot-reload notification delegate
+	DECLARE_MULTICAST_DELEGATE_OneParam(FOnConfigDataReloaded, const FString& /* AssetName */);
+	
+	/**
+	 * Event broadcast when configuration data is hot-reloaded in development builds.
+	 * Provides the name of the reloaded asset.
+	 */
+	FOnConfigDataReloaded OnConfigDataReloaded;
+#endif
+
 private:
 	// Asset caches
 	UPROPERTY()

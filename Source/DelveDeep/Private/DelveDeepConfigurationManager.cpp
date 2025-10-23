@@ -324,12 +324,192 @@ void UDelveDeepConfigurationManager::GetPerformanceStats(int32& OutCacheHits, in
 #if !UE_BUILD_SHIPPING
 void UDelveDeepConfigurationManager::SetupHotReload()
 {
-	// TODO: Implement hot-reload support for development builds
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("Setting up hot-reload for development builds..."));
+
+	// Register for asset update notifications
+	FAssetRegistryModule& AssetRegistryModule = 
+		FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	
+	AssetReloadHandle = AssetRegistryModule.Get().OnAssetUpdated().AddUObject(
+		this, &UDelveDeepConfigurationManager::OnAssetReloaded);
+
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("Hot-reload enabled for configuration data assets"));
 }
 
 void UDelveDeepConfigurationManager::OnAssetReloaded(const FAssetData& AssetData)
 {
-	// TODO: Implement asset reload handling
+	double StartTime = FPlatformTime::Seconds();
+
+	// Check if this is a data asset we care about
+	FName AssetClass = AssetData.AssetClassPath.GetAssetName();
+	FName AssetName = FName(*AssetData.AssetName.ToString());
+
+	bool bReloaded = false;
+	FString AssetTypeName;
+
+	// Check if it's a character data asset
+	if (AssetClass == UDelveDeepCharacterData::StaticClass()->GetFName())
+	{
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("Hot-reloading character data: %s"), *AssetName.ToString());
+		
+		// Reload the asset
+		UDelveDeepCharacterData* CharacterData = Cast<UDelveDeepCharacterData>(AssetData.GetAsset());
+		if (CharacterData)
+		{
+			// Update cache
+			CharacterDataCache.Add(AssetName, CharacterData);
+			
+			// Re-validate
+			FValidationContext Context;
+			Context.SystemName = TEXT("HotReload");
+			Context.OperationName = TEXT("ReloadCharacterData");
+			
+			if (ValidateCharacterData(CharacterData, Context))
+			{
+				UE_LOG(LogDelveDeepConfig, Display, TEXT("  Character data validated successfully"));
+			}
+			else
+			{
+				UE_LOG(LogDelveDeepConfig, Warning, TEXT("  Character data validation failed:\n%s"), *Context.GetReport());
+			}
+			
+			bReloaded = true;
+			AssetTypeName = TEXT("Character");
+		}
+	}
+	// Check if it's an upgrade data asset
+	else if (AssetClass == UDelveDeepUpgradeData::StaticClass()->GetFName())
+	{
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("Hot-reloading upgrade data: %s"), *AssetName.ToString());
+		
+		UDelveDeepUpgradeData* UpgradeData = Cast<UDelveDeepUpgradeData>(AssetData.GetAsset());
+		if (UpgradeData)
+		{
+			UpgradeDataCache.Add(AssetName, UpgradeData);
+			
+			FValidationContext Context;
+			Context.SystemName = TEXT("HotReload");
+			Context.OperationName = TEXT("ReloadUpgradeData");
+			
+			if (ValidateUpgradeData(UpgradeData, Context))
+			{
+				UE_LOG(LogDelveDeepConfig, Display, TEXT("  Upgrade data validated successfully"));
+			}
+			else
+			{
+				UE_LOG(LogDelveDeepConfig, Warning, TEXT("  Upgrade data validation failed:\n%s"), *Context.GetReport());
+			}
+			
+			bReloaded = true;
+			AssetTypeName = TEXT("Upgrade");
+		}
+	}
+	// Check if it's a weapon data asset
+	else if (AssetClass == UDelveDeepWeaponData::StaticClass()->GetFName())
+	{
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("Hot-reloading weapon data: %s"), *AssetName.ToString());
+		
+		UDelveDeepWeaponData* WeaponData = Cast<UDelveDeepWeaponData>(AssetData.GetAsset());
+		if (WeaponData)
+		{
+			WeaponDataCache.Add(AssetName, WeaponData);
+			
+			FValidationContext Context;
+			Context.SystemName = TEXT("HotReload");
+			Context.OperationName = TEXT("ReloadWeaponData");
+			
+			if (ValidateWeaponData(WeaponData, Context))
+			{
+				UE_LOG(LogDelveDeepConfig, Display, TEXT("  Weapon data validated successfully"));
+			}
+			else
+			{
+				UE_LOG(LogDelveDeepConfig, Warning, TEXT("  Weapon data validation failed:\n%s"), *Context.GetReport());
+			}
+			
+			bReloaded = true;
+			AssetTypeName = TEXT("Weapon");
+		}
+	}
+	// Check if it's an ability data asset
+	else if (AssetClass == UDelveDeepAbilityData::StaticClass()->GetFName())
+	{
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("Hot-reloading ability data: %s"), *AssetName.ToString());
+		
+		UDelveDeepAbilityData* AbilityData = Cast<UDelveDeepAbilityData>(AssetData.GetAsset());
+		if (AbilityData)
+		{
+			AbilityDataCache.Add(AssetName, AbilityData);
+			
+			FValidationContext Context;
+			Context.SystemName = TEXT("HotReload");
+			Context.OperationName = TEXT("ReloadAbilityData");
+			
+			if (ValidateAbilityData(AbilityData, Context))
+			{
+				UE_LOG(LogDelveDeepConfig, Display, TEXT("  Ability data validated successfully"));
+			}
+			else
+			{
+				UE_LOG(LogDelveDeepConfig, Warning, TEXT("  Ability data validation failed:\n%s"), *Context.GetReport());
+			}
+			
+			bReloaded = true;
+			AssetTypeName = TEXT("Ability");
+		}
+	}
+	// Check if it's a data table (monster configs)
+	else if (AssetClass == UDataTable::StaticClass()->GetFName())
+	{
+		UDataTable* DataTable = Cast<UDataTable>(AssetData.GetAsset());
+		if (DataTable && DataTable->GetRowStruct() && 
+			DataTable->GetRowStruct()->IsChildOf(FDelveDeepMonsterConfig::StaticStruct()))
+		{
+			UE_LOG(LogDelveDeepConfig, Display, TEXT("Hot-reloading monster config table: %s"), *AssetName.ToString());
+			
+			MonsterConfigTable = DataTable;
+			
+			// Validate all rows
+			FValidationContext Context;
+			Context.SystemName = TEXT("HotReload");
+			Context.OperationName = TEXT("ReloadMonsterConfigs");
+			
+			TArray<FName> RowNames = DataTable->GetRowNames();
+			bool bAllValid = true;
+			for (const FName& RowName : RowNames)
+			{
+				const FDelveDeepMonsterConfig* Config = DataTable->FindRow<FDelveDeepMonsterConfig>(RowName, TEXT("HotReload"));
+				if (Config && !ValidateMonsterConfig(Config, Context))
+				{
+					bAllValid = false;
+				}
+			}
+			
+			if (bAllValid)
+			{
+				UE_LOG(LogDelveDeepConfig, Display, TEXT("  Monster config table validated successfully (%d rows)"), RowNames.Num());
+			}
+			else
+			{
+				UE_LOG(LogDelveDeepConfig, Warning, TEXT("  Monster config table validation failed:\n%s"), *Context.GetReport());
+			}
+			
+			bReloaded = true;
+			AssetTypeName = TEXT("MonsterConfig");
+		}
+	}
+
+	if (bReloaded)
+	{
+		double EndTime = FPlatformTime::Seconds();
+		double ReloadTime = (EndTime - StartTime) * 1000.0; // Convert to milliseconds
+		
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("Hot-reload completed in %.2f ms for %s: %s"), 
+			ReloadTime, *AssetTypeName, *AssetName.ToString());
+		
+		// Broadcast notification event
+		OnConfigDataReloaded.Broadcast(AssetName.ToString());
+	}
 }
 #endif
 
