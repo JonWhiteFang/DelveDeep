@@ -110,7 +110,7 @@
   - Create console command "DelveDeep.DumpConfigData" that logs all properties of specified asset
   - _Requirements: 5.3, 10.3_
 
-- [ ] 7. Add module dependencies and build configuration
+- [x] 7. Add module dependencies and build configuration
   - Update DelveDeep.Build.cs to include GameplayTags in PublicDependencyModuleNames
   - Add AssetRegistry to PrivateDependencyModuleNames for hot-reload support
   - Verify all required modules are present (Core, CoreUObject, Engine)
