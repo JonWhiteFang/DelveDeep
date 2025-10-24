@@ -2,6 +2,7 @@
 
 #include "DelveDeepTelemetrySubsystem.h"
 #include "DelveDeepAssetLoadTracker.h"
+#include "DelveDeepValidation.h"
 #include "Engine/World.h"
 #include "Engine/GameInstance.h"
 #include "Misc/Paths.h"
@@ -24,7 +25,20 @@ void UDelveDeepTelemetrySubsystem::Initialize(FSubsystemCollectionBase& Collecti
 {
 	Super::Initialize(Collection);
 
-	UE_LOG(LogDelveDeepTelemetry, Display, TEXT("Telemetry Subsystem initializing..."));
+#if UE_BUILD_SHIPPING
+	// In shipping builds, telemetry is minimal to reduce overhead
+	UE_LOG(LogDelveDeepTelemetry, Verbose, TEXT("Telemetry Subsystem initializing (Shipping - Minimal Mode)..."));
+	
+	// Only initialize essential frame tracking in shipping
+	FrameTracker.ResetStatistics();
+	
+	bInitialized = true;
+	bTelemetryEnabled = false; // Disabled by default in shipping
+	
+	UE_LOG(LogDelveDeepTelemetry, Verbose, TEXT("Telemetry Subsystem initialized (Minimal Mode)"));
+#else
+	// In development builds, enable full telemetry
+	UE_LOG(LogDelveDeepTelemetry, Display, TEXT("Telemetry Subsystem initializing (Development - Full Mode)..."));
 
 	// Reset frame tracker
 	FrameTracker.ResetStatistics();
@@ -41,7 +55,8 @@ void UDelveDeepTelemetrySubsystem::Initialize(FSubsystemCollectionBase& Collecti
 	bInitialized = true;
 	bTelemetryEnabled = true;
 
-	UE_LOG(LogDelveDeepTelemetry, Display, TEXT("Telemetry Subsystem initialized successfully"));
+	UE_LOG(LogDelveDeepTelemetry, Display, TEXT("Telemetry Subsystem initialized successfully (Full Mode)"));
+#endif
 }
 
 void UDelveDeepTelemetrySubsystem::Deinitialize()
@@ -58,7 +73,20 @@ void UDelveDeepTelemetrySubsystem::Tick(float DeltaTime)
 {
 	SCOPE_CYCLE_COUNTER(STAT_DelveDeep_TelemetrySystem);
 
-	if (!bTelemetryEnabled || !bInitialized)
+	if (!bInitialized)
+	{
+		return;
+	}
+
+#if UE_BUILD_SHIPPING
+	// In shipping builds, only track basic frame performance if enabled
+	if (bTelemetryEnabled)
+	{
+		FrameTracker.RecordFrame(DeltaTime);
+	}
+#else
+	// In development builds, track full telemetry if enabled
+	if (!bTelemetryEnabled)
 	{
 		return;
 	}
@@ -118,6 +146,7 @@ void UDelveDeepTelemetrySubsystem::Tick(float DeltaTime)
 			StopProfilingSession();
 		}
 	}
+#endif
 }
 
 TStatId UDelveDeepTelemetrySubsystem::GetStatId() const
@@ -163,6 +192,36 @@ TArray<float> UDelveDeepTelemetrySubsystem::GetFrameTimeHistory(int32 NumFrames)
 
 void UDelveDeepTelemetrySubsystem::RegisterSystemBudget(FName SystemName, float BudgetMs)
 {
+	FValidationContext Context;
+	Context.SystemName = TEXT("Telemetry");
+	Context.OperationName = TEXT("RegisterSystemBudget");
+
+	// Validate system name
+	if (SystemName.IsNone())
+	{
+		Context.AddError(TEXT("System name cannot be empty"));
+		UE_LOG(LogDelveDeepTelemetry, Error, TEXT("%s"), *Context.GetReport());
+		return;
+	}
+
+	// Validate budget value is positive and within reasonable range
+	if (BudgetMs <= 0.0f)
+	{
+		Context.AddError(FString::Printf(
+			TEXT("Budget must be positive: %.2f ms"),
+			BudgetMs));
+		UE_LOG(LogDelveDeepTelemetry, Error, TEXT("%s"), *Context.GetReport());
+		return;
+	}
+
+	if (BudgetMs > 100.0f)
+	{
+		Context.AddWarning(FString::Printf(
+			TEXT("Budget unusually high: %.2f ms (expected 0.1-100 ms)"),
+			BudgetMs));
+		UE_LOG(LogDelveDeepTelemetry, Warning, TEXT("%s"), *Context.GetReport());
+	}
+
 	SystemProfiler.RegisterSystem(SystemName, BudgetMs);
 }
 
@@ -311,6 +370,11 @@ int64 UDelveDeepTelemetrySubsystem::GetPeakMemoryUsage() const
 
 void UDelveDeepTelemetrySubsystem::EnablePerformanceOverlay(EOverlayMode Mode)
 {
+#if UE_BUILD_SHIPPING
+	// Performance overlay is disabled in shipping builds to minimize overhead
+	UE_LOG(LogDelveDeepTelemetry, Warning, TEXT("Performance overlay is not available in shipping builds"));
+	return;
+#else
 	if (!PerformanceOverlay.IsValid())
 	{
 		PerformanceOverlay = MakeShared<FDelveDeepPerformanceOverlay>();
@@ -320,6 +384,7 @@ void UDelveDeepTelemetrySubsystem::EnablePerformanceOverlay(EOverlayMode Mode)
 	bOverlayEnabled = true;
 
 	UE_LOG(LogDelveDeepTelemetry, Display, TEXT("Performance overlay enabled (Mode: %d)"), static_cast<int32>(Mode));
+#endif
 }
 
 void UDelveDeepTelemetrySubsystem::DisablePerformanceOverlay()
@@ -359,18 +424,43 @@ EOverlayMode UDelveDeepTelemetrySubsystem::GetOverlayMode() const
 
 void UDelveDeepTelemetrySubsystem::RenderPerformanceOverlay(UCanvas* Canvas)
 {
-	if (!bOverlayEnabled || !PerformanceOverlay.IsValid() || !Canvas)
+	if (!bOverlayEnabled || !PerformanceOverlay.IsValid())
 	{
 		return;
 	}
 
-	// Get current performance data
-	const FFramePerformanceData FrameData = GetCurrentFrameData();
-	const TArray<FSystemPerformanceData> SystemData = GetAllSystemPerformance();
-	const FMemorySnapshot MemoryData = GetCurrentMemorySnapshot();
+	// Validate canvas
+	if (!Canvas || !IsValid(Canvas))
+	{
+		UE_LOG(LogDelveDeepTelemetry, Warning, TEXT("Cannot render overlay: invalid canvas"));
+		bOverlayEnabled = false; // Disable overlay to prevent repeated warnings
+		return;
+	}
 
-	// Render overlay
-	PerformanceOverlay->Render(Canvas, FrameData, SystemData, MemoryData);
+	// Graceful degradation: catch rendering exceptions
+	try
+	{
+		// Get current performance data
+		const FFramePerformanceData FrameData = GetCurrentFrameData();
+		const TArray<FSystemPerformanceData> SystemData = GetAllSystemPerformance();
+		const FMemorySnapshot MemoryData = GetCurrentMemorySnapshot();
+
+		// Render overlay
+		PerformanceOverlay->Render(Canvas, FrameData, SystemData, MemoryData);
+	}
+	catch (const std::exception& e)
+	{
+		UE_LOG(LogDelveDeepTelemetry, Error,
+			TEXT("Exception during overlay rendering: %s. Disabling overlay."),
+			ANSI_TO_TCHAR(e.what()));
+		bOverlayEnabled = false;
+	}
+	catch (...)
+	{
+		UE_LOG(LogDelveDeepTelemetry, Error,
+			TEXT("Unknown exception during overlay rendering. Disabling overlay."));
+		bOverlayEnabled = false;
+	}
 }
 
 
@@ -378,6 +468,11 @@ void UDelveDeepTelemetrySubsystem::RenderPerformanceOverlay(UCanvas* Canvas)
 
 bool UDelveDeepTelemetrySubsystem::StartProfilingSession(FName SessionName)
 {
+#if UE_BUILD_SHIPPING
+	// Profiling sessions are disabled in shipping builds to minimize overhead
+	UE_LOG(LogDelveDeepTelemetry, Warning, TEXT("Profiling sessions are not available in shipping builds"));
+	return false;
+#else
 	if (bProfilingActive)
 	{
 		UE_LOG(LogDelveDeepTelemetry, Warning,
@@ -408,10 +503,16 @@ bool UDelveDeepTelemetrySubsystem::StartProfilingSession(FName SessionName)
 		*SessionName.ToString(), FProfilingSession::MaxDurationSeconds);
 
 	return true;
+#endif
 }
 
 bool UDelveDeepTelemetrySubsystem::StopProfilingSession()
 {
+#if UE_BUILD_SHIPPING
+	// Profiling sessions are disabled in shipping builds
+	UE_LOG(LogDelveDeepTelemetry, Warning, TEXT("Profiling sessions are not available in shipping builds"));
+	return false;
+#else
 	if (!bProfilingActive)
 	{
 		UE_LOG(LogDelveDeepTelemetry, Warning, TEXT("No profiling session is currently active"));
@@ -446,6 +547,7 @@ bool UDelveDeepTelemetrySubsystem::StopProfilingSession()
 	}
 
 	return true;
+#endif
 }
 
 bool UDelveDeepTelemetrySubsystem::IsProfilingActive() const

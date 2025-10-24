@@ -133,6 +133,68 @@ DelveDeep.Events.ValidateAllPayloads  # Test payload validation
 
 **Active Spec**: [.kiro/specs/centralized-event-system/](.kiro/specs/centralized-event-system/)
 
+#### Performance Telemetry System 🔄
+
+**Status**: In Progress (October 24, 2025)
+
+**Core Documentation**:
+- **[TelemetryIntegrationGuide.md](Documentation/Systems/TelemetryIntegrationGuide.md)**: Integration examples and troubleshooting
+- **[TelemetryBuildConfigurations.md](Documentation/Systems/TelemetryBuildConfigurations.md)**: Build configuration differences
+- **[Performance-Testing.md](Documentation/Systems/Performance-Testing.md)**: Performance testing procedures
+- **[DelveDeepStats.h](Source/DelveDeep/Public/DelveDeepStats.h)**: Stat group definitions
+
+**Key Features**:
+- Frame performance tracking (FPS, frame time, spike detection)
+- System profiling with budget tracking
+- Memory tracking and leak detection
+- Performance baseline capture and comparison
+- Real-time performance overlay (Minimal, Standard, Detailed modes)
+- Profiling sessions with detailed metrics
+- Gameplay metrics tracking (entity counts, events)
+- Asset loading performance tracking
+- Conditional compilation for build configurations
+- Comprehensive error handling and validation
+
+**Performance Targets**:
+- Telemetry overhead: <0.5ms per frame (development)
+- Telemetry overhead: <0.1ms per frame (shipping)
+- Overlay rendering: <0.1ms per frame
+- Memory snapshot: <1ms per capture
+- Report generation: <100ms for 5-minute data
+
+**Console Commands**:
+```bash
+# Frame tracking
+DelveDeep.Telemetry.ShowFPS
+DelveDeep.Telemetry.ShowFrameStats
+
+# System profiling
+DelveDeep.Telemetry.ShowSystemStats
+DelveDeep.Telemetry.ShowBudgets
+
+# Memory tracking
+DelveDeep.Telemetry.ShowMemory
+DelveDeep.Telemetry.CheckMemoryLeaks
+
+# Baseline management
+DelveDeep.Telemetry.CaptureBaseline <Name>
+DelveDeep.Telemetry.CompareBaseline <Name>
+
+# Reporting
+DelveDeep.Telemetry.GenerateReport [Duration]
+DelveDeep.Telemetry.ExportCSV <Path>
+
+# Profiling
+DelveDeep.Telemetry.StartProfiling <SessionName>
+DelveDeep.Telemetry.StopProfiling
+
+# Visualization
+DelveDeep.Telemetry.EnableOverlay [Mode]
+DelveDeep.Telemetry.DisableOverlay
+```
+
+**Active Spec**: [.kiro/specs/performance-telemetry/](.kiro/specs/performance-telemetry/)
+
 ### Planned Systems
 
 #### Phase 1: Core Foundation (3/5 Complete)

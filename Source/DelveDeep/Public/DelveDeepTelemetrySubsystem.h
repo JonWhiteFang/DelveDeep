@@ -507,7 +507,12 @@ private:
 	UDelveDeepPerformanceBudget* CurrentBudgetAsset;
 
 	// Telemetry state
+	// In shipping builds, telemetry is disabled by default to minimize overhead
+#if UE_BUILD_SHIPPING
+	bool bTelemetryEnabled = false;
+#else
 	bool bTelemetryEnabled = true;
+#endif
 	bool bInitialized = false;
 
 	// Baseline storage
