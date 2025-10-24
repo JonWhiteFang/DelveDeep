@@ -172,7 +172,7 @@
   - Profile with stat DelveDeep.Events command
   - _Requirements: 1.3, 4.1, 6.5, 9.1, 9.3, 9.4, 9.5_
 
-- [ ] 21. Write integration tests
+- [x] 21. Write integration tests
   - Test event flow from combat system to UI and progression systems
   - Test cross-system communication with 3+ systems
   - Verify event ordering across multiple systems
