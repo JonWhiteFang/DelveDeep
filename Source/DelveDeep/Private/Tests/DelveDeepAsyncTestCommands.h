@@ -50,10 +50,11 @@ bool FAdvanceTimeCommand::Update()
  * Latent command that waits for a condition to become true.
  * Includes timeout protection to prevent hanging tests.
  */
-DEFINE_LATENT_AUTOMATION_COMMAND_TWO_PARAMETER(
+DEFINE_LATENT_AUTOMATION_COMMAND_THREE_PARAMETER(
 	FWaitForConditionCommand,
 	TFunction<bool()>, Condition,
-	float, TimeoutSeconds);
+	float, TimeoutSeconds,
+	double, StartTime);
 
 bool FWaitForConditionCommand::Update()
 {
@@ -64,7 +65,6 @@ bool FWaitForConditionCommand::Update()
 	}
 
 	// Track elapsed time
-	static double StartTime = FPlatformTime::Seconds();
 	double CurrentTime = FPlatformTime::Seconds();
 	double ElapsedTime = CurrentTime - StartTime;
 
@@ -121,7 +121,7 @@ bool FVerifyCallbackCommand::Update()
  *   ADD_WAIT_FOR_CONDITION([&]() { return bEventReceived; }, 5.0f);
  */
 #define ADD_WAIT_FOR_CONDITION(Condition, Timeout) \
-	ADD_LATENT_AUTOMATION_COMMAND(FWaitForConditionCommand(Condition, Timeout))
+	ADD_LATENT_AUTOMATION_COMMAND(FWaitForConditionCommand(Condition, Timeout, FPlatformTime::Seconds()))
 
 /**
  * Macro for verifying callback invocation.
@@ -144,18 +144,17 @@ bool FVerifyCallbackCommand::Update()
  * Latent command that waits for a specific number of frames.
  * Useful for testing frame-dependent operations.
  */
-DEFINE_LATENT_AUTOMATION_COMMAND_ONE_PARAMETER(
+DEFINE_LATENT_AUTOMATION_COMMAND_TWO_PARAMETER(
 	FWaitFramesCommand,
-	int32, FrameCount);
+	int32, FrameCount,
+	int32, CurrentFrame);
 
 bool FWaitFramesCommand::Update()
 {
-	static int32 CurrentFrame = 0;
 	CurrentFrame++;
 	
 	if (CurrentFrame >= FrameCount)
 	{
-		CurrentFrame = 0;
 		return true;
 	}
 	
@@ -171,20 +170,20 @@ bool FWaitFramesCommand::Update()
  *   ADD_WAIT_FRAMES(5);  // Wait 5 frames
  */
 #define ADD_WAIT_FRAMES(FrameCount) \
-	ADD_LATENT_AUTOMATION_COMMAND(FWaitFramesCommand(FrameCount))
+	ADD_LATENT_AUTOMATION_COMMAND(FWaitFramesCommand(FrameCount, 0))
 
 /**
  * Latent command that executes a function after a delay.
  * Useful for testing deferred operations.
  */
-DEFINE_LATENT_AUTOMATION_COMMAND_TWO_PARAMETER(
+DEFINE_LATENT_AUTOMATION_COMMAND_THREE_PARAMETER(
 	FDelayedExecutionCommand,
 	TFunction<void()>, Function,
-	float, DelaySeconds);
+	float, DelaySeconds,
+	double, StartTime);
 
 bool FDelayedExecutionCommand::Update()
 {
-	static double StartTime = FPlatformTime::Seconds();
 	double CurrentTime = FPlatformTime::Seconds();
 	double ElapsedTime = CurrentTime - StartTime;
 
@@ -194,7 +193,6 @@ bool FDelayedExecutionCommand::Update()
 		{
 			Function();
 		}
-		StartTime = 0.0;
 		return true;
 	}
 
@@ -211,4 +209,4 @@ bool FDelayedExecutionCommand::Update()
  *   ADD_DELAYED_EXECUTION([&]() { DoSomething(); }, 2.0f);
  */
 #define ADD_DELAYED_EXECUTION(Function, Delay) \
-	ADD_LATENT_AUTOMATION_COMMAND(FDelayedExecutionCommand(Function, Delay))
+	ADD_LATENT_AUTOMATION_COMMAND(FDelayedExecutionCommand(Function, Delay, FPlatformTime::Seconds()))
