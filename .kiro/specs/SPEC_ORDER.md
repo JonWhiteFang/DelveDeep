@@ -63,10 +63,35 @@ This document outlines the recommended order for implementing specs in the Delve
 
 **Archived Spec**: [.kiro/specs/archived/enhanced-validation-system/](archived/enhanced-validation-system/)
 
-### 3. Centralized Event System
-**Priority:** Critical - Required for loose coupling
-**Dependencies:** None
+### 3. Centralized Event System ✅ COMPLETE
+**Priority:** Critical - Required for loose coupling  
+**Dependencies:** None  
+**Status:** ✅ Complete (Archived: October 24, 2025)  
 **Description:** Implement gameplay event bus using GameplayTags for system-to-system communication without tight coupling.
+
+**Implemented Features**:
+- UDelveDeepEventSubsystem for centralized event management
+- Event payload system with base and specialized types (Damage, Health, Kill, Attack)
+- Priority-based listener execution (High, Normal, Low)
+- Event filtering (actor-specific and spatial)
+- Deferred event processing with queue management
+- Performance metrics tracking and profiling
+- Event history for debugging (last 100 events)
+- Console commands for debugging and testing
+- GameplayTag hierarchy for event categorization
+- Blueprint integration via function library
+- Network replication metadata for future multiplayer
+- Comprehensive validation using FValidationContext
+
+**Performance Results**:
+- Event broadcast: <1ms for 50 listeners ✓
+- System overhead: <0.1ms per event ✓
+- Deferred processing: <10ms for 1000 events ✓
+
+**Documentation**:
+- [CentralizedEventSystem.md](../../Documentation/Systems/CentralizedEventSystem.md)
+
+**Archived Spec**: [.kiro/specs/archived/centralized-event-system/](archived/centralized-event-system/)
 
 ### 4. Performance Telemetry
 **Priority:** High - Required for optimization
