@@ -6,6 +6,9 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "DelveDeepStats.h"
 #include "DelveDeepFramePerformanceTracker.h"
+#include "DelveDeepSystemProfiler.h"
+#include "DelveDeepMemoryTracker.h"
+#include "DelveDeepPerformanceBudget.h"
 #include "DelveDeepTelemetrySubsystem.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogDelveDeepTelemetry, Log, All);
@@ -80,11 +83,142 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
 	TArray<float> GetFrameTimeHistory(int32 NumFrames = 120) const;
 
+	// System Profiling
+
+	/**
+	 * Register a system with a performance budget
+	 * @param SystemName Name of the system to register
+	 * @param BudgetMs Performance budget in milliseconds
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
+	void RegisterSystemBudget(FName SystemName, float BudgetMs);
+
+	/**
+	 * Load budgets from a performance budget data asset
+	 * @param BudgetAsset Performance budget data asset to load
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
+	void LoadBudgetsFromAsset(UDelveDeepPerformanceBudget* BudgetAsset);
+
+	/**
+	 * Record system execution time (typically called by SCOPE_CYCLE_COUNTER)
+	 * @param SystemName Name of the system
+	 * @param CycleTimeMs Execution time in milliseconds
+	 */
+	void RecordSystemTime(FName SystemName, double CycleTimeMs);
+
+	/**
+	 * Get performance data for a specific system
+	 * @param SystemName Name of the system
+	 * @return System performance data
+	 */
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Telemetry")
+	FSystemPerformanceData GetSystemPerformance(FName SystemName) const;
+
+	/**
+	 * Get performance data for all registered systems
+	 * @return Array of system performance data
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
+	TArray<FSystemPerformanceData> GetAllSystemPerformance() const;
+
+	/**
+	 * Get budget utilization percentage for a system
+	 * @param SystemName Name of the system
+	 * @return Budget utilization (0.0 to 1.0+, >1.0 means over budget)
+	 */
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Telemetry")
+	float GetSystemBudgetUtilization(FName SystemName) const;
+
+	/**
+	 * Check if a system is currently violating its budget
+	 * @param SystemName Name of the system
+	 * @return True if system is over budget
+	 */
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Telemetry")
+	bool IsSystemBudgetViolated(FName SystemName) const;
+
+	/**
+	 * Get budget violation history
+	 * @return Array of recent budget violations
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
+	TArray<FBudgetViolation> GetBudgetViolationHistory() const;
+
+	// Memory Tracking
+
+	/**
+	 * Get current memory snapshot
+	 * @return Current memory snapshot
+	 */
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Telemetry")
+	FMemorySnapshot GetCurrentMemorySnapshot() const;
+
+	/**
+	 * Get memory usage for a specific system
+	 * @param SystemName Name of the system
+	 * @return Memory usage in bytes
+	 */
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Telemetry")
+	uint64 GetSystemMemoryUsage(FName SystemName) const;
+
+	/**
+	 * Track memory allocation for a system
+	 * @param SystemName Name of the system
+	 * @param AllocationSize Size of allocation in bytes
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
+	void TrackSystemAllocation(FName SystemName, int64 AllocationSize);
+
+	/**
+	 * Track memory deallocation for a system
+	 * @param SystemName Name of the system
+	 * @param DeallocationSize Size of deallocation in bytes
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
+	void TrackSystemDeallocation(FName SystemName, int64 DeallocationSize);
+
+	/**
+	 * Check if a memory leak is detected
+	 * @return True if leak detected
+	 */
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Telemetry")
+	bool IsMemoryLeakDetected() const;
+
+	/**
+	 * Get memory growth rate in MB per minute
+	 * @return Growth rate
+	 */
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Telemetry")
+	float GetMemoryGrowthRate() const;
+
+	/**
+	 * Get peak memory usage
+	 * @return Peak memory in bytes
+	 */
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Telemetry")
+	int64 GetPeakMemoryUsage() const;
+
 private:
 	// Frame tracking
 	FFramePerformanceTracker FrameTracker;
 
+	// System profiling
+	FSystemProfiler SystemProfiler;
+
+	// Memory tracking
+	FMemoryTracker MemoryTracker;
+
+	// Budget configuration
+	UPROPERTY()
+	UDelveDeepPerformanceBudget* CurrentBudgetAsset;
+
 	// Telemetry state
 	bool bTelemetryEnabled = true;
 	bool bInitialized = false;
+
+	/**
+	 * Register default system budgets
+	 */
+	void RegisterDefaultBudgets();
 };

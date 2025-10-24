@@ -26,7 +26,7 @@
   - Track consecutive slow frames for performance alert triggering
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
 
-- [ ] 4. Implement system profiler with budget tracking
+- [x] 4. Implement system profiler with budget tracking
   - Create FSystemProfiler class with TMap for system performance data
   - Implement RegisterSystem() method to register systems with budgets
   - Create RecordSystemTime() method to track cycle times per system
@@ -35,7 +35,7 @@
   - Maintain violation history with TArray (last 100 violations)
   - _Requirements: 2.1, 2.3, 2.4, 2.5, 4.1, 4.2, 4.3, 4.4, 4.5_
 
-- [ ] 5. Implement memory tracking system
+- [x] 5. Implement memory tracking system
   - Create FMemoryTracker class with FMemorySnapshot structure
   - Implement UpdateMemorySnapshot() to capture total and per-system memory
   - Track native memory, managed memory, and per-system allocations
@@ -44,7 +44,7 @@
   - Update memory metrics every 100 frames to minimize overhead
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
 
-- [ ] 6. Implement performance budget configuration
+- [x] 6. Implement performance budget configuration
   - Create FPerformanceBudget struct with SystemName, BudgetMilliseconds, bEnforceStrict
   - Load budget configuration from data assets on subsystem initialization
   - Implement RegisterSystemBudget() method for runtime budget registration
