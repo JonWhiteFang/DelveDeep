@@ -162,7 +162,7 @@
   - Test payload validation and error handling
   - _Requirements: 1.1, 1.3, 1.5, 2.1, 2.2, 2.3, 3.2, 4.2, 4.5, 6.1, 6.3, 8.1_
 
-- [ ] 20. Write performance tests
+- [x] 20. Write performance tests
   - Measure event broadcast time with 1, 10, 50, 100 listeners
   - Verify <1ms broadcast time for 50 listeners
   - Verify <0.1ms overhead per event

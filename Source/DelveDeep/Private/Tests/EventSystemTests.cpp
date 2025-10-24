@@ -1047,4 +1047,463 @@ bool FDelveDeepEventBroadcastPerformanceTest::RunTest(const FString& Parameters)
 	return true;
 }
 
+/**
+ * Performance Test: Measure event broadcast time with varying listener counts
+ * Tests with 1, 10, 50, and 100 listeners to verify performance targets
+ * Target: <1ms for 50 listeners, <0.1ms overhead per event
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepEventPerformanceScalingTest, 
+	"DelveDeep.EventSystem.Performance.BroadcastScaling", 
+	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+
+bool FDelveDeepEventPerformanceScalingTest::RunTest(const FString& Parameters)
+{
+	FEventSystemTestFixture Fixture;
+	UDelveDeepEventSubsystem* EventSubsystem = Fixture.EventSubsystem;
+
+	// Create test event tag
+	FGameplayTag TestEventTag = FGameplayTag::RequestGameplayTag(FName("DelveDeep.Event.Performance.Test"));
+
+	// Test configurations: listener counts to test
+	TArray<int32> ListenerCounts = {1, 10, 50, 100};
+
+	for (int32 ListenerCount : ListenerCounts)
+	{
+		// Clear previous listeners
+		EventSubsystem->UnregisterAllListeners(Fixture.GameInstance);
+		EventSubsystem->ResetPerformanceMetrics();
+
+		// Register listeners
+		for (int32 i = 0; i < ListenerCount; ++i)
+		{
+			EventSubsystem->RegisterListener(
+				TestEventTag,
+				[](const FDelveDeepEventPayload& Payload) 
+				{ 
+					// Minimal work to simulate realistic listener
+					volatile float Temp = Payload.Timestamp.GetTicks() * 0.001f;
+				},
+				Fixture.GameInstance
+			);
+		}
+
+		// Warm up cache
+		FDelveDeepEventPayload WarmupPayload;
+		WarmupPayload.EventTag = TestEventTag;
+		EventSubsystem->BroadcastEvent(WarmupPayload);
+
+		// Measure broadcast time over multiple iterations
+		const int32 IterationCount = 100;
+		double TotalTime = 0.0;
+		double MinTime = DBL_MAX;
+		double MaxTime = 0.0;
+
+		for (int32 i = 0; i < IterationCount; ++i)
+		{
+			FDelveDeepEventPayload Payload;
+			Payload.EventTag = TestEventTag;
+
+			double StartTime = FPlatformTime::Seconds();
+			EventSubsystem->BroadcastEvent(Payload);
+			double EndTime = FPlatformTime::Seconds();
+
+			double IterationTime = (EndTime - StartTime) * 1000.0; // Convert to ms
+			TotalTime += IterationTime;
+			MinTime = FMath::Min(MinTime, IterationTime);
+			MaxTime = FMath::Max(MaxTime, IterationTime);
+		}
+
+		double AvgTime = TotalTime / IterationCount;
+		double OverheadPerEvent = AvgTime; // Since we're broadcasting one event
+
+		// Log results
+		UE_LOG(LogDelveDeepEventTests, Display, TEXT("Performance with %d listeners:"), ListenerCount);
+		UE_LOG(LogDelveDeepEventTests, Display, TEXT("  Average: %.4f ms"), AvgTime);
+		UE_LOG(LogDelveDeepEventTests, Display, TEXT("  Min: %.4f ms"), MinTime);
+		UE_LOG(LogDelveDeepEventTests, Display, TEXT("  Max: %.4f ms"), MaxTime);
+		UE_LOG(LogDelveDeepEventTests, Display, TEXT("  Overhead per event: %.4f ms"), OverheadPerEvent);
+
+		// Verify performance targets
+		if (ListenerCount == 50)
+		{
+			TestTrue(TEXT("Broadcast time should be <1ms for 50 listeners"), AvgTime < 1.0);
+		}
+
+		// Verify overhead target (<0.1ms per event)
+		TestTrue(FString::Printf(TEXT("Overhead should be <0.1ms per event with %d listeners"), ListenerCount), 
+			OverheadPerEvent < 0.1);
+	}
+
+	return true;
+}
+
+/**
+ * Performance Test: Measure deferred event processing time
+ * Tests processing of 1000 queued events
+ * Target: <10ms for 1000 events
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepEventDeferredPerformanceTest, 
+	"DelveDeep.EventSystem.Performance.DeferredProcessing", 
+	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+
+bool FDelveDeepEventDeferredPerformanceTest::RunTest(const FString& Parameters)
+{
+	FEventSystemTestFixture Fixture;
+	UDelveDeepEventSubsystem* EventSubsystem = Fixture.EventSubsystem;
+
+	// Create test event tag
+	FGameplayTag TestEventTag = FGameplayTag::RequestGameplayTag(FName("DelveDeep.Event.Performance.Deferred"));
+
+	// Register listener
+	int32 CallCount = 0;
+	EventSubsystem->RegisterListener(
+		TestEventTag,
+		[&CallCount](const FDelveDeepEventPayload& Payload) { CallCount++; },
+		Fixture.GameInstance
+	);
+
+	// Enable deferred mode
+	EventSubsystem->EnableDeferredMode();
+
+	// Queue 1000 events
+	const int32 EventCount = 1000;
+	FDelveDeepEventPayload Payload;
+	Payload.EventTag = TestEventTag;
+
+	for (int32 i = 0; i < EventCount; ++i)
+	{
+		EventSubsystem->BroadcastEvent(Payload);
+	}
+
+	// Measure processing time
+	double StartTime = FPlatformTime::Seconds();
+	EventSubsystem->ProcessDeferredEvents();
+	double EndTime = FPlatformTime::Seconds();
+
+	double ProcessingTimeMs = (EndTime - StartTime) * 1000.0;
+
+	// Verify all events were processed
+	TestEqual(TEXT("All deferred events should be processed"), CallCount, EventCount);
+
+	// Verify performance target (<10ms for 1000 events)
+	TestTrue(TEXT("Processing time should be <10ms for 1000 events"), ProcessingTimeMs < 10.0);
+
+	UE_LOG(LogDelveDeepEventTests, Display, TEXT("Deferred processing time for %d events: %.4f ms"), 
+		EventCount, ProcessingTimeMs);
+	UE_LOG(LogDelveDeepEventTests, Display, TEXT("Average time per event: %.4f ms"), 
+		ProcessingTimeMs / EventCount);
+
+	// Disable deferred mode
+	EventSubsystem->DisableDeferredMode();
+
+	return true;
+}
+
+/**
+ * Performance Test: Measure memory usage with large listener counts
+ * Tests memory footprint with 1000+ listeners
+ * Verifies no memory leaks during stress testing
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepEventMemoryUsageTest, 
+	"DelveDeep.EventSystem.Performance.MemoryUsage", 
+	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+
+bool FDelveDeepEventMemoryUsageTest::RunTest(const FString& Parameters)
+{
+	FEventSystemTestFixture Fixture;
+	UDelveDeepEventSubsystem* EventSubsystem = Fixture.EventSubsystem;
+
+	// Create test event tag
+	FGameplayTag TestEventTag = FGameplayTag::RequestGameplayTag(FName("DelveDeep.Event.Performance.Memory"));
+
+	// Get initial memory stats
+	FPlatformMemoryStats InitialStats = FPlatformMemory::GetStats();
+	uint64 InitialUsedPhysical = InitialStats.UsedPhysical;
+
+	// Register 1000 listeners
+	const int32 ListenerCount = 1000;
+	TArray<FDelegateHandle> Handles;
+	Handles.Reserve(ListenerCount);
+
+	for (int32 i = 0; i < ListenerCount; ++i)
+	{
+		FDelegateHandle Handle = EventSubsystem->RegisterListener(
+			TestEventTag,
+			[](const FDelveDeepEventPayload& Payload) { /* Minimal work */ },
+			Fixture.GameInstance
+		);
+		Handles.Add(Handle);
+	}
+
+	// Get memory stats after registration
+	FPlatformMemoryStats AfterRegistrationStats = FPlatformMemory::GetStats();
+	uint64 AfterRegistrationUsedPhysical = AfterRegistrationStats.UsedPhysical;
+
+	// Calculate memory used by listeners
+	int64 MemoryUsedByListeners = static_cast<int64>(AfterRegistrationUsedPhysical - InitialUsedPhysical);
+	double MemoryPerListener = static_cast<double>(MemoryUsedByListeners) / ListenerCount;
+
+	UE_LOG(LogDelveDeepEventTests, Display, TEXT("Memory usage with %d listeners:"), ListenerCount);
+	UE_LOG(LogDelveDeepEventTests, Display, TEXT("  Total memory: %.2f KB"), MemoryUsedByListeners / 1024.0);
+	UE_LOG(LogDelveDeepEventTests, Display, TEXT("  Per listener: %.2f bytes"), MemoryPerListener);
+
+	// Verify reasonable memory usage (target: <200 bytes per listener)
+	TestTrue(TEXT("Memory per listener should be reasonable (<500 bytes)"), MemoryPerListener < 500.0);
+
+	// Stress test: Broadcast many events
+	const int32 StressEventCount = 10000;
+	FDelveDeepEventPayload Payload;
+	Payload.EventTag = TestEventTag;
+
+	for (int32 i = 0; i < StressEventCount; ++i)
+	{
+		EventSubsystem->BroadcastEvent(Payload);
+	}
+
+	// Get memory stats after stress test
+	FPlatformMemoryStats AfterStressStats = FPlatformMemory::GetStats();
+	uint64 AfterStressUsedPhysical = AfterStressStats.UsedPhysical;
+
+	// Unregister all listeners
+	for (const FDelegateHandle& Handle : Handles)
+	{
+		EventSubsystem->UnregisterListener(Handle);
+	}
+	Handles.Empty();
+
+	// Force garbage collection
+	CollectGarbage(GARBAGE_COLLECTION_KEEPFLAGS);
+
+	// Get memory stats after cleanup
+	FPlatformMemoryStats AfterCleanupStats = FPlatformMemory::GetStats();
+	uint64 AfterCleanupUsedPhysical = AfterCleanupStats.UsedPhysical;
+
+	// Check for memory leaks (memory should return close to initial)
+	int64 MemoryDifference = static_cast<int64>(AfterCleanupUsedPhysical - InitialUsedPhysical);
+	double MemoryLeakMB = MemoryDifference / (1024.0 * 1024.0);
+
+	UE_LOG(LogDelveDeepEventTests, Display, TEXT("Memory after cleanup:"));
+	UE_LOG(LogDelveDeepEventTests, Display, TEXT("  Difference from initial: %.2f MB"), MemoryLeakMB);
+
+	// Verify no significant memory leaks (allow some variance due to system allocations)
+	TestTrue(TEXT("No significant memory leaks detected"), FMath::Abs(MemoryLeakMB) < 10.0);
+
+	return true;
+}
+
+/**
+ * Performance Test: Comprehensive stress test
+ * Tests system under heavy load with multiple event types and listeners
+ * Verifies stability and performance under stress
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepEventStressTest, 
+	"DelveDeep.EventSystem.Performance.StressTest", 
+	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+
+bool FDelveDeepEventStressTest::RunTest(const FString& Parameters)
+{
+	FEventSystemTestFixture Fixture;
+	UDelveDeepEventSubsystem* EventSubsystem = Fixture.EventSubsystem;
+
+	// Create multiple event tags
+	TArray<FGameplayTag> EventTags;
+	EventTags.Add(FGameplayTag::RequestGameplayTag(FName("DelveDeep.Event.Combat.Damage")));
+	EventTags.Add(FGameplayTag::RequestGameplayTag(FName("DelveDeep.Event.Combat.Attack")));
+	EventTags.Add(FGameplayTag::RequestGameplayTag(FName("DelveDeep.Event.Character.Health")));
+	EventTags.Add(FGameplayTag::RequestGameplayTag(FName("DelveDeep.Event.Progression.Experience")));
+	EventTags.Add(FGameplayTag::RequestGameplayTag(FName("DelveDeep.Event.World.Depth")));
+
+	// Register multiple listeners per event tag
+	const int32 ListenersPerTag = 20;
+	int32 TotalCallCount = 0;
+
+	for (const FGameplayTag& EventTag : EventTags)
+	{
+		for (int32 i = 0; i < ListenersPerTag; ++i)
+		{
+			EventSubsystem->RegisterListener(
+				EventTag,
+				[&TotalCallCount](const FDelveDeepEventPayload& Payload) 
+				{ 
+					TotalCallCount++;
+					// Simulate some work
+					volatile float Temp = FMath::Sin(Payload.Timestamp.GetTicks() * 0.001f);
+				},
+				Fixture.GameInstance,
+				// Vary priorities
+				(i % 3 == 0) ? EDelveDeepEventPriority::High : 
+				(i % 3 == 1) ? EDelveDeepEventPriority::Normal : 
+				EDelveDeepEventPriority::Low
+			);
+		}
+	}
+
+	const int32 TotalListeners = EventTags.Num() * ListenersPerTag;
+	UE_LOG(LogDelveDeepEventTests, Display, TEXT("Stress test with %d listeners across %d event types"), 
+		TotalListeners, EventTags.Num());
+
+	// Stress test: Broadcast many events
+	const int32 EventsPerTag = 1000;
+	double TotalBroadcastTime = 0.0;
+
+	for (const FGameplayTag& EventTag : EventTags)
+	{
+		for (int32 i = 0; i < EventsPerTag; ++i)
+		{
+			FDelveDeepEventPayload Payload;
+			Payload.EventTag = EventTag;
+
+			double StartTime = FPlatformTime::Seconds();
+			EventSubsystem->BroadcastEvent(Payload);
+			double EndTime = FPlatformTime::Seconds();
+
+			TotalBroadcastTime += (EndTime - StartTime);
+		}
+	}
+
+	const int32 TotalEvents = EventTags.Num() * EventsPerTag;
+	double AvgBroadcastTimeMs = (TotalBroadcastTime / TotalEvents) * 1000.0;
+
+	// Verify all listeners were called
+	const int32 ExpectedCallCount = TotalEvents * ListenersPerTag;
+	TestEqual(TEXT("All listeners should be called"), TotalCallCount, ExpectedCallCount);
+
+	// Verify performance under stress
+	TestTrue(TEXT("Average broadcast time should be reasonable under stress"), AvgBroadcastTimeMs < 1.0);
+
+	UE_LOG(LogDelveDeepEventTests, Display, TEXT("Stress test results:"));
+	UE_LOG(LogDelveDeepEventTests, Display, TEXT("  Total events broadcast: %d"), TotalEvents);
+	UE_LOG(LogDelveDeepEventTests, Display, TEXT("  Total listener invocations: %d"), TotalCallCount);
+	UE_LOG(LogDelveDeepEventTests, Display, TEXT("  Average broadcast time: %.4f ms"), AvgBroadcastTimeMs);
+	UE_LOG(LogDelveDeepEventTests, Display, TEXT("  Total time: %.2f seconds"), TotalBroadcastTime);
+
+	// Get performance metrics
+	const FEventSystemMetrics& Metrics = EventSubsystem->GetPerformanceMetrics();
+	UE_LOG(LogDelveDeepEventTests, Display, TEXT("System metrics:"));
+	UE_LOG(LogDelveDeepEventTests, Display, TEXT("  Total events: %d"), Metrics.TotalEventsBroadcast);
+	UE_LOG(LogDelveDeepEventTests, Display, TEXT("  Total invocations: %d"), Metrics.TotalListenerInvocations);
+	UE_LOG(LogDelveDeepEventTests, Display, TEXT("  Avg time/broadcast: %.4f ms"), Metrics.AverageTimePerBroadcast);
+	UE_LOG(LogDelveDeepEventTests, Display, TEXT("  Avg time/listener: %.4f ms"), Metrics.AverageTimePerListener);
+
+	return true;
+}
+
+/**
+ * Performance Test: Test deferred mode with queue overflow
+ * Tests behavior when deferred queue reaches capacity
+ * Verifies queue management and overflow handling
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepEventDeferredQueueOverflowTest, 
+	"DelveDeep.EventSystem.Performance.DeferredQueueOverflow", 
+	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+
+bool FDelveDeepEventDeferredQueueOverflowTest::RunTest(const FString& Parameters)
+{
+	FEventSystemTestFixture Fixture;
+	UDelveDeepEventSubsystem* EventSubsystem = Fixture.EventSubsystem;
+
+	// Create test event tag
+	FGameplayTag TestEventTag = FGameplayTag::RequestGameplayTag(FName("DelveDeep.Event.Performance.Overflow"));
+
+	// Register listener
+	int32 CallCount = 0;
+	EventSubsystem->RegisterListener(
+		TestEventTag,
+		[&CallCount](const FDelveDeepEventPayload& Payload) { CallCount++; },
+		Fixture.GameInstance
+	);
+
+	// Enable deferred mode
+	EventSubsystem->EnableDeferredMode();
+
+	// Queue events up to and beyond capacity (MaxDeferredEvents = 1000)
+	const int32 EventCount = 1500; // Exceed capacity
+	FDelveDeepEventPayload Payload;
+	Payload.EventTag = TestEventTag;
+
+	for (int32 i = 0; i < EventCount; ++i)
+	{
+		EventSubsystem->BroadcastEvent(Payload);
+	}
+
+	// Process deferred events
+	EventSubsystem->ProcessDeferredEvents();
+
+	// Verify that events were processed (may be capped at MaxDeferredEvents)
+	TestTrue(TEXT("Some events should be processed"), CallCount > 0);
+	TestTrue(TEXT("Call count should not exceed queue capacity"), CallCount <= 1000);
+
+	UE_LOG(LogDelveDeepEventTests, Display, TEXT("Queue overflow test:"));
+	UE_LOG(LogDelveDeepEventTests, Display, TEXT("  Events queued: %d"), EventCount);
+	UE_LOG(LogDelveDeepEventTests, Display, TEXT("  Events processed: %d"), CallCount);
+
+	// Disable deferred mode
+	EventSubsystem->DisableDeferredMode();
+
+	return true;
+}
+
+/**
+ * Performance Test: Measure overhead with stat groups
+ * Tests profiling integration with stat DelveDeep.Events
+ * Verifies stat counters are working correctly
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepEventStatGroupTest, 
+	"DelveDeep.EventSystem.Performance.StatGroups", 
+	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+
+bool FDelveDeepEventStatGroupTest::RunTest(const FString& Parameters)
+{
+	FEventSystemTestFixture Fixture;
+	UDelveDeepEventSubsystem* EventSubsystem = Fixture.EventSubsystem;
+
+	// Create test event tag
+	FGameplayTag TestEventTag = FGameplayTag::RequestGameplayTag(FName("DelveDeep.Event.Performance.Stats"));
+
+	// Register listeners
+	const int32 ListenerCount = 10;
+	for (int32 i = 0; i < ListenerCount; ++i)
+	{
+		EventSubsystem->RegisterListener(
+			TestEventTag,
+			[](const FDelveDeepEventPayload& Payload) { /* Minimal work */ },
+			Fixture.GameInstance
+		);
+	}
+
+	// Reset metrics
+	EventSubsystem->ResetPerformanceMetrics();
+
+	// Broadcast events with stat tracking
+	const int32 EventCount = 100;
+	FDelveDeepEventPayload Payload;
+	Payload.EventTag = TestEventTag;
+
+	for (int32 i = 0; i < EventCount; ++i)
+	{
+		// SCOPE_CYCLE_COUNTER should be active in the BroadcastEvent implementation
+		EventSubsystem->BroadcastEvent(Payload);
+	}
+
+	// Get performance metrics
+	const FEventSystemMetrics& Metrics = EventSubsystem->GetPerformanceMetrics();
+
+	// Verify metrics are being tracked
+	TestEqual(TEXT("Total events should match"), Metrics.TotalEventsBroadcast, EventCount);
+	TestEqual(TEXT("Total invocations should match"), Metrics.TotalListenerInvocations, EventCount * ListenerCount);
+	TestTrue(TEXT("Average time should be positive"), Metrics.AverageTimePerBroadcast > 0.0);
+
+	UE_LOG(LogDelveDeepEventTests, Display, TEXT("Stat group test results:"));
+	UE_LOG(LogDelveDeepEventTests, Display, TEXT("  Events broadcast: %d"), Metrics.TotalEventsBroadcast);
+	UE_LOG(LogDelveDeepEventTests, Display, TEXT("  Listener invocations: %d"), Metrics.TotalListenerInvocations);
+	UE_LOG(LogDelveDeepEventTests, Display, TEXT("  Avg time/broadcast: %.4f ms"), Metrics.AverageTimePerBroadcast);
+	UE_LOG(LogDelveDeepEventTests, Display, TEXT("  Avg time/listener: %.4f ms"), Metrics.AverageTimePerListener);
+	UE_LOG(LogDelveDeepEventTests, Display, TEXT("  Peak listeners: %d"), Metrics.PeakListenersPerEvent);
+
+	// Note: Actual stat group counters (STAT_BroadcastEvent, etc.) are tracked by UE's profiling system
+	// and can be viewed with "stat DelveDeep.Events" console command
+
+	return true;
+}
+
 #endif // WITH_DEV_AUTOMATION_TESTS
