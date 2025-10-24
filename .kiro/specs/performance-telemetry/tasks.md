@@ -180,7 +180,7 @@
   - Test report generation with sample data
   - _Requirements: 1.1, 1.2, 1.4, 2.5, 3.3, 4.3, 5.3, 6.4_
 
-- [ ] 21. Write performance tests
+- [x] 21. Write performance tests
   - Measure telemetry overhead per frame (target: <0.5ms)
   - Measure overlay rendering overhead (target: <0.1ms)
   - Test memory snapshot capture time (target: <1ms)
@@ -189,7 +189,7 @@
   - Profile profiling session overhead
   - _Requirements: 1.3, 7.2, 8.1_
 
-- [ ] 22. Write integration tests
+- [x] 22. Write integration tests
   - Test telemetry tracking of event system performance
   - Test telemetry tracking of configuration system performance
   - Verify budget allocations sum correctly across all systems
