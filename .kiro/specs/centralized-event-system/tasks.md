@@ -151,7 +151,7 @@
   - Update DOCUMENTATION_INDEX.md with event system documentation
   - _Requirements: 1.1, 2.1, 3.1, 4.1_
 
-- [ ] 19. Write unit tests for core functionality
+- [x] 19. Write unit tests for core functionality
   - Test event broadcasting to single and multiple listeners
   - Test priority-based listener execution order
   - Test hierarchical GameplayTag matching
