@@ -3,6 +3,12 @@
 #include "DelveDeepTelemetrySubsystem.h"
 #include "Engine/World.h"
 #include "Engine/GameInstance.h"
+#include "Misc/Paths.h"
+#include "Misc/FileHelper.h"
+#include "HAL/PlatformFileManager.h"
+#include "Serialization/JsonSerializer.h"
+#include "Serialization/JsonWriter.h"
+#include "Dom/JsonObject.h"
 
 DEFINE_LOG_CATEGORY(LogDelveDeepTelemetry);
 

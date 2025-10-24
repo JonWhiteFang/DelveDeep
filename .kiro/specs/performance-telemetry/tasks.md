@@ -52,7 +52,7 @@
   - Add validation for budget values (must be positive, reasonable range)
   - _Requirements: 4.1, 4.2, 4.4_
 
-- [ ] 7. Implement performance baseline system
+- [x] 7. Implement performance baseline system
   - Create FPerformanceBaseline struct with frame data, system data, memory data
   - Implement CaptureBaseline() method to record current performance metrics
   - Create CompareToBaseline() method to calculate percentage differences
@@ -61,7 +61,7 @@
   - Store baselines in TMap with FName keys for quick lookup
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
 
-- [ ] 8. Implement performance reporting system
+- [x] 8. Implement performance reporting system
   - Create FPerformanceReport struct with comprehensive statistics
   - Implement GeneratePerformanceReport() to aggregate data over time period
   - Calculate frame time percentiles (50th, 95th, 99th)
@@ -70,7 +70,7 @@
   - Include metadata (build version, map name, timestamp)
   - _Requirements: 6.1, 6.2, 6.4, 6.5_
 
-- [ ] 9. Implement report export functionality
+- [x] 9. Implement report export functionality
   - Create ExportReportToCSV() method with proper column headers and escaping
   - Implement ExportReportToJSON() with hierarchical data structure
   - Add gzip compression for large exports to reduce file size

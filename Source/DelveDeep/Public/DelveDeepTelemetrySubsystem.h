@@ -9,6 +9,8 @@
 #include "DelveDeepSystemProfiler.h"
 #include "DelveDeepMemoryTracker.h"
 #include "DelveDeepPerformanceBudget.h"
+#include "DelveDeepPerformanceBaseline.h"
+#include "DelveDeepPerformanceReport.h"
 #include "DelveDeepTelemetrySubsystem.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogDelveDeepTelemetry, Log, All);
@@ -199,6 +201,96 @@ public:
 	UFUNCTION(BlueprintPure, Category = "DelveDeep|Telemetry")
 	int64 GetPeakMemoryUsage() const;
 
+	// Baseline Management
+
+	/**
+	 * Capture a performance baseline with the given name
+	 * @param BaselineName Name for this baseline
+	 * @return True if baseline was captured successfully
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
+	bool CaptureBaseline(FName BaselineName);
+
+	/**
+	 * Compare current performance to a saved baseline
+	 * @param BaselineName Name of the baseline to compare against
+	 * @param OutComparison Comparison results
+	 * @return True if comparison was successful
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
+	bool CompareToBaseline(FName BaselineName, FPerformanceComparison& OutComparison);
+
+	/**
+	 * Get a list of all available baseline names
+	 * @return Array of baseline names
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
+	TArray<FName> GetAvailableBaselines() const;
+
+	/**
+	 * Get a specific baseline by name
+	 * @param BaselineName Name of the baseline
+	 * @param OutBaseline The baseline data
+	 * @return True if baseline was found
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
+	bool GetBaseline(FName BaselineName, FPerformanceBaseline& OutBaseline) const;
+
+	/**
+	 * Save a baseline to disk
+	 * @param BaselineName Name of the baseline to save
+	 * @param FilePath Path where to save the baseline (optional, uses default if empty)
+	 * @return True if save was successful
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
+	bool SaveBaseline(FName BaselineName, const FString& FilePath = TEXT(""));
+
+	/**
+	 * Load a baseline from disk
+	 * @param BaselineName Name to assign to the loaded baseline
+	 * @param FilePath Path to the baseline file
+	 * @return True if load was successful
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
+	bool LoadBaseline(FName BaselineName, const FString& FilePath);
+
+	/**
+	 * Delete a baseline
+	 * @param BaselineName Name of the baseline to delete
+	 * @return True if baseline was deleted
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
+	bool DeleteBaseline(FName BaselineName);
+
+	// Performance Reporting
+
+	/**
+	 * Generate a performance report for the specified duration
+	 * @param OutReport Generated performance report
+	 * @param DurationSeconds Duration to report on (default: 300 seconds = 5 minutes)
+	 * @return True if report was generated successfully
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
+	bool GeneratePerformanceReport(FPerformanceReport& OutReport, float DurationSeconds = 300.0f);
+
+	/**
+	 * Export a performance report to CSV format
+	 * @param Report The report to export
+	 * @param FilePath Path where to save the CSV file
+	 * @return True if export was successful
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
+	bool ExportReportToCSV(const FPerformanceReport& Report, const FString& FilePath);
+
+	/**
+	 * Export a performance report to JSON format
+	 * @param Report The report to export
+	 * @param FilePath Path where to save the JSON file
+	 * @return True if export was successful
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
+	bool ExportReportToJSON(const FPerformanceReport& Report, const FString& FilePath);
+
 private:
 	// Frame tracking
 	FFramePerformanceTracker FrameTracker;
@@ -217,8 +309,25 @@ private:
 	bool bTelemetryEnabled = true;
 	bool bInitialized = false;
 
+	// Baseline storage
+	TMap<FName, FPerformanceBaseline> Baselines;
+
 	/**
 	 * Register default system budgets
 	 */
 	void RegisterDefaultBudgets();
+
+	/**
+	 * Get the default baseline save directory
+	 * @return Default directory path
+	 */
+	FString GetDefaultBaselineDirectory() const;
+
+	/**
+	 * Validate a baseline for compatibility with current build
+	 * @param Baseline The baseline to validate
+	 * @param Context Validation context for error reporting
+	 * @return True if baseline is valid
+	 */
+	bool ValidateBaseline(const FPerformanceBaseline& Baseline, FValidationContext& Context) const;
 };
