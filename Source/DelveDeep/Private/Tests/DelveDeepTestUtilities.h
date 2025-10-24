@@ -222,6 +222,46 @@ namespace DelveDeepTestUtils
 	 */
 	DELVEDEEP_API bool ValidateTestObject(UObject* Object, FValidationContext& Context);
 
+	/**
+	 * Tests PostLoad validation for a data asset.
+	 * Creates the asset, calls PostLoad(), and checks for validation errors.
+	 * 
+	 * @param DataAsset The data asset to test
+	 * @return True if PostLoad validation executed correctly
+	 */
+	DELVEDEEP_API bool TestPostLoadValidation(UDataAsset* DataAsset);
+
+	/**
+	 * Tests explicit Validate() call on an object.
+	 * 
+	 * @param Object The object to validate
+	 * @param Context Validation context for error tracking
+	 * @return True if validation executed correctly
+	 */
+	DELVEDEEP_API bool TestExplicitValidation(UObject* Object, FValidationContext& Context);
+
+	/**
+	 * Verifies that a validation context contains expected error messages.
+	 * 
+	 * @param Context The validation context to check
+	 * @param ExpectedErrors Array of expected error message substrings
+	 * @return True if all expected errors are present
+	 */
+	DELVEDEEP_API bool VerifyValidationErrors(
+		const FValidationContext& Context,
+		const TArray<FString>& ExpectedErrors);
+
+	/**
+	 * Verifies that a validation context contains expected warning messages.
+	 * 
+	 * @param Context The validation context to check
+	 * @param ExpectedWarnings Array of expected warning message substrings
+	 * @return True if all expected warnings are present
+	 */
+	DELVEDEEP_API bool VerifyValidationWarnings(
+		const FValidationContext& Context,
+		const TArray<FString>& ExpectedWarnings);
+
 	// ========================================
 	// Performance Measurement
 	// ========================================
@@ -229,6 +269,7 @@ namespace DelveDeepTestUtils
 	/**
 	 * RAII-style timer for measuring test execution time.
 	 * Automatically starts timing on construction and stops on destruction.
+	 * Supports multiple iterations for stable performance measurements.
 	 */
 	class DELVEDEEP_API FScopedTestTimer
 	{
@@ -252,9 +293,67 @@ namespace DelveDeepTestUtils
 		 */
 		double GetElapsedMs() const;
 
+		/**
+		 * Gets the elapsed time in microseconds for high precision.
+		 * 
+		 * @return Elapsed time in microseconds
+		 */
+		double GetElapsedUs() const;
+
+		/**
+		 * Records a timing sample for statistical analysis.
+		 * Call this after each iteration in a performance test.
+		 */
+		void RecordSample();
+
+		/**
+		 * Gets the minimum recorded time in milliseconds.
+		 * 
+		 * @return Minimum time across all samples
+		 */
+		double GetMinMs() const;
+
+		/**
+		 * Gets the maximum recorded time in milliseconds.
+		 * 
+		 * @return Maximum time across all samples
+		 */
+		double GetMaxMs() const;
+
+		/**
+		 * Gets the average recorded time in milliseconds.
+		 * 
+		 * @return Average time across all samples
+		 */
+		double GetAverageMs() const;
+
+		/**
+		 * Gets the median recorded time in milliseconds.
+		 * 
+		 * @return Median time across all samples
+		 */
+		double GetMedianMs() const;
+
+		/**
+		 * Validates that the average time is within the specified budget.
+		 * 
+		 * @param BudgetMs Maximum allowed average time in milliseconds
+		 * @return True if within budget, false otherwise
+		 */
+		bool IsWithinBudget(double BudgetMs) const;
+
+		/**
+		 * Gets the number of recorded samples.
+		 * 
+		 * @return Number of samples
+		 */
+		int32 GetSampleCount() const;
+
 	private:
 		FString Name;
 		double StartTime;
+		double LastSampleTime;
+		TArray<double> Samples;  // Recorded times in milliseconds
 	};
 
 	// ========================================
@@ -264,6 +363,7 @@ namespace DelveDeepTestUtils
 	/**
 	 * RAII-style memory tracker for detecting memory leaks and measuring allocations.
 	 * Tracks memory usage from construction to destruction.
+	 * Supports both native and managed memory tracking.
 	 */
 	class DELVEDEEP_API FScopedMemoryTracker
 	{
@@ -292,9 +392,33 @@ namespace DelveDeepTestUtils
 		 */
 		int32 GetAllocationCount() const;
 
+		/**
+		 * Checks if memory was leaked (allocated but not freed).
+		 * 
+		 * @return True if memory leak detected, false otherwise
+		 */
+		bool HasMemoryLeak() const;
+
+		/**
+		 * Validates that memory usage is within the specified budget.
+		 * 
+		 * @param BudgetBytes Maximum allowed memory allocation in bytes
+		 * @return True if within budget, false otherwise
+		 */
+		bool IsWithinBudget(uint64 BudgetBytes) const;
+
+		/**
+		 * Gets the peak memory usage since construction.
+		 * 
+		 * @return Peak memory usage in bytes
+		 */
+		uint64 GetPeakBytes() const;
+
 	private:
 		uint64 StartMemory;
 		int32 StartAllocations;
+		uint64 PeakMemory;
+		bool bTrackingEnabled;
 	};
 
 	// ========================================

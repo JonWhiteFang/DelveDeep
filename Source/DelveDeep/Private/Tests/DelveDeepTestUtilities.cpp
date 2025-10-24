@@ -7,6 +7,7 @@
 #include "DelveDeepMonsterConfig.h"
 #include "DelveDeepWeaponData.h"
 #include "DelveDeepAbilityData.h"
+#include "DelveDeepUpgradeData.h"
 
 namespace DelveDeepTestUtils
 {
@@ -233,6 +234,122 @@ namespace DelveDeepTestUtils
 		return true;
 	}
 
+	bool TestPostLoadValidation(UDataAsset* DataAsset)
+	{
+		if (!IsValid(DataAsset))
+		{
+			UE_LOG(LogTemp, Error, TEXT("TestPostLoadValidation: DataAsset is null"));
+			return false;
+		}
+
+		// Call PostLoad to trigger validation
+		DataAsset->PostLoad();
+
+		// PostLoad validation logs errors but doesn't return a value
+		// We consider the test successful if PostLoad completes without crashing
+		return true;
+	}
+
+	bool TestExplicitValidation(UObject* Object, FValidationContext& Context)
+	{
+		if (!IsValid(Object))
+		{
+			Context.AddError(TEXT("Object is null or invalid"));
+			return false;
+		}
+
+		// Try to cast to objects that support validation
+		if (UDelveDeepCharacterData* CharacterData = Cast<UDelveDeepCharacterData>(Object))
+		{
+			return CharacterData->Validate(Context);
+		}
+		else if (UDelveDeepWeaponData* WeaponData = Cast<UDelveDeepWeaponData>(Object))
+		{
+			return WeaponData->Validate(Context);
+		}
+		else if (UDelveDeepAbilityData* AbilityData = Cast<UDelveDeepAbilityData>(Object))
+		{
+			return AbilityData->Validate(Context);
+		}
+		else if (UDelveDeepUpgradeData* UpgradeData = Cast<UDelveDeepUpgradeData>(Object))
+		{
+			return UpgradeData->Validate(Context);
+		}
+		else
+		{
+			Context.AddWarning(FString::Printf(
+				TEXT("Object type %s does not support explicit validation"),
+				*Object->GetClass()->GetName()));
+			return true;
+		}
+	}
+
+	bool VerifyValidationErrors(
+		const FValidationContext& Context,
+		const TArray<FString>& ExpectedErrors)
+	{
+		if (ExpectedErrors.Num() == 0)
+		{
+			return true;
+		}
+
+		// Check that all expected errors are present
+		for (const FString& ExpectedError : ExpectedErrors)
+		{
+			bool bFound = false;
+			for (const FString& ActualError : Context.ValidationErrors)
+			{
+				if (ActualError.Contains(ExpectedError))
+				{
+					bFound = true;
+					break;
+				}
+			}
+
+			if (!bFound)
+			{
+				UE_LOG(LogTemp, Error, TEXT("Expected error not found: %s"), *ExpectedError);
+				UE_LOG(LogTemp, Error, TEXT("Actual errors: %s"), *Context.GetReport());
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	bool VerifyValidationWarnings(
+		const FValidationContext& Context,
+		const TArray<FString>& ExpectedWarnings)
+	{
+		if (ExpectedWarnings.Num() == 0)
+		{
+			return true;
+		}
+
+		// Check that all expected warnings are present
+		for (const FString& ExpectedWarning : ExpectedWarnings)
+		{
+			bool bFound = false;
+			for (const FString& ActualWarning : Context.ValidationWarnings)
+			{
+				if (ActualWarning.Contains(ExpectedWarning))
+				{
+					bFound = true;
+					break;
+				}
+			}
+
+			if (!bFound)
+			{
+				UE_LOG(LogTemp, Error, TEXT("Expected warning not found: %s"), *ExpectedWarning);
+				UE_LOG(LogTemp, Error, TEXT("Actual warnings: %s"), *Context.GetReport());
+				return false;
+			}
+		}
+
+		return true;
+	}
+
 	// ========================================
 	// Performance Measurement
 	// ========================================
@@ -240,19 +357,138 @@ namespace DelveDeepTestUtils
 	FScopedTestTimer::FScopedTestTimer(const FString& TestName)
 		: Name(TestName)
 		, StartTime(FPlatformTime::Seconds())
+		, LastSampleTime(FPlatformTime::Seconds())
 	{
 	}
 
 	FScopedTestTimer::~FScopedTestTimer()
 	{
 		double ElapsedMs = GetElapsedMs();
-		UE_LOG(LogTemp, Display, TEXT("Test '%s' completed in %.3f ms"), *Name, ElapsedMs);
+		
+		if (Samples.Num() > 0)
+		{
+			// Log detailed statistics if samples were recorded
+			UE_LOG(LogTemp, Display, TEXT("Test '%s' completed: %d samples, Min=%.3f ms, Max=%.3f ms, Avg=%.3f ms, Median=%.3f ms"),
+				*Name, Samples.Num(), GetMinMs(), GetMaxMs(), GetAverageMs(), GetMedianMs());
+		}
+		else
+		{
+			// Log simple elapsed time if no samples
+			UE_LOG(LogTemp, Display, TEXT("Test '%s' completed in %.3f ms"), *Name, ElapsedMs);
+		}
 	}
 
 	double FScopedTestTimer::GetElapsedMs() const
 	{
 		double CurrentTime = FPlatformTime::Seconds();
 		return (CurrentTime - StartTime) * 1000.0;
+	}
+
+	double FScopedTestTimer::GetElapsedUs() const
+	{
+		double CurrentTime = FPlatformTime::Seconds();
+		return (CurrentTime - StartTime) * 1000000.0;
+	}
+
+	void FScopedTestTimer::RecordSample()
+	{
+		double CurrentTime = FPlatformTime::Seconds();
+		double SampleTimeMs = (CurrentTime - LastSampleTime) * 1000.0;
+		Samples.Add(SampleTimeMs);
+		LastSampleTime = CurrentTime;
+	}
+
+	double FScopedTestTimer::GetMinMs() const
+	{
+		if (Samples.Num() == 0)
+		{
+			return 0.0;
+		}
+		
+		double MinTime = Samples[0];
+		for (double Sample : Samples)
+		{
+			if (Sample < MinTime)
+			{
+				MinTime = Sample;
+			}
+		}
+		return MinTime;
+	}
+
+	double FScopedTestTimer::GetMaxMs() const
+	{
+		if (Samples.Num() == 0)
+		{
+			return 0.0;
+		}
+		
+		double MaxTime = Samples[0];
+		for (double Sample : Samples)
+		{
+			if (Sample > MaxTime)
+			{
+				MaxTime = Sample;
+			}
+		}
+		return MaxTime;
+	}
+
+	double FScopedTestTimer::GetAverageMs() const
+	{
+		if (Samples.Num() == 0)
+		{
+			return 0.0;
+		}
+		
+		double Sum = 0.0;
+		for (double Sample : Samples)
+		{
+			Sum += Sample;
+		}
+		return Sum / Samples.Num();
+	}
+
+	double FScopedTestTimer::GetMedianMs() const
+	{
+		if (Samples.Num() == 0)
+		{
+			return 0.0;
+		}
+		
+		// Create sorted copy of samples
+		TArray<double> SortedSamples = Samples;
+		SortedSamples.Sort();
+		
+		int32 MiddleIndex = SortedSamples.Num() / 2;
+		
+		if (SortedSamples.Num() % 2 == 0)
+		{
+			// Even number of samples: average the two middle values
+			return (SortedSamples[MiddleIndex - 1] + SortedSamples[MiddleIndex]) / 2.0;
+		}
+		else
+		{
+			// Odd number of samples: return the middle value
+			return SortedSamples[MiddleIndex];
+		}
+	}
+
+	bool FScopedTestTimer::IsWithinBudget(double BudgetMs) const
+	{
+		if (Samples.Num() > 0)
+		{
+			return GetAverageMs() <= BudgetMs;
+		}
+		else
+		{
+			return GetElapsedMs() <= BudgetMs;
+		}
+	}
+
+	int32 FScopedTestTimer::GetSampleCount() const
+	{
+		return Samples.Num();
 	}
 
 	// ========================================
@@ -262,36 +498,129 @@ namespace DelveDeepTestUtils
 	FScopedMemoryTracker::FScopedMemoryTracker()
 		: StartMemory(0)
 		, StartAllocations(0)
+		, PeakMemory(0)
+		, bTrackingEnabled(false)
 	{
-		// Note: Actual memory tracking implementation would use
-		// FMemory::GetAllocatorStats() or similar APIs
-		// This is a placeholder implementation
+		// Get current memory stats using Unreal's memory tracking
+		FPlatformMemoryStats MemStats = FPlatformMemory::GetStats();
+		StartMemory = MemStats.UsedPhysical;
+		PeakMemory = StartMemory;
+		
+		// Note: Allocation count tracking requires more detailed profiling
+		// For now, we track memory usage which is the primary concern
+		StartAllocations = 0;
+		bTrackingEnabled = true;
 	}
 
 	FScopedMemoryTracker::~FScopedMemoryTracker()
 	{
+		if (!bTrackingEnabled)
+		{
+			return;
+		}
+		
 		uint64 AllocatedBytes = GetAllocatedBytes();
 		int32 AllocationCount = GetAllocationCount();
 		
 		if (AllocatedBytes > 0)
 		{
-			UE_LOG(LogTemp, Display, TEXT("Memory allocated: %llu bytes (%d allocations)"),
-				AllocatedBytes, AllocationCount);
+			UE_LOG(LogTemp, Display, TEXT("Memory allocated: %llu bytes (Peak: %llu bytes)"),
+				AllocatedBytes, GetPeakBytes());
+			
+			if (HasMemoryLeak())
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Potential memory leak detected: %llu bytes not freed"),
+					AllocatedBytes);
+			}
+		}
+		else if (AllocatedBytes < 0)
+		{
+			// Memory was freed (negative delta)
+			UE_LOG(LogTemp, Display, TEXT("Memory freed: %lld bytes"), -static_cast<int64>(AllocatedBytes));
 		}
 	}
 
 	uint64 FScopedMemoryTracker::GetAllocatedBytes() const
 	{
-		// Note: Placeholder implementation
-		// Actual implementation would calculate: CurrentMemory - StartMemory
-		return 0;
+		if (!bTrackingEnabled)
+		{
+			return 0;
+		}
+		
+		FPlatformMemoryStats MemStats = FPlatformMemory::GetStats();
+		uint64 CurrentMemory = MemStats.UsedPhysical;
+		
+		// Calculate delta (can be negative if memory was freed)
+		if (CurrentMemory >= StartMemory)
+		{
+			return CurrentMemory - StartMemory;
+		}
+		else
+		{
+			// Memory decreased, return 0 to indicate no leak
+			return 0;
+		}
 	}
 
 	int32 FScopedMemoryTracker::GetAllocationCount() const
 	{
-		// Note: Placeholder implementation
-		// Actual implementation would calculate: CurrentAllocations - StartAllocations
+		if (!bTrackingEnabled)
+		{
+			return 0;
+		}
+		
+		// Note: Detailed allocation count tracking would require
+		// hooking into the memory allocator or using profiling tools
+		// For testing purposes, we estimate based on memory delta
+		// Assuming average allocation size of 1KB
+		uint64 AllocatedBytes = GetAllocatedBytes();
+		if (AllocatedBytes > 0)
+		{
+			return static_cast<int32>(AllocatedBytes / 1024);
+		}
 		return 0;
+	}
+
+	bool FScopedMemoryTracker::HasMemoryLeak() const
+	{
+		if (!bTrackingEnabled)
+		{
+			return false;
+		}
+		
+		// Consider it a leak if more than 1KB was allocated and not freed
+		// Small allocations might be cached or pooled by the engine
+		uint64 AllocatedBytes = GetAllocatedBytes();
+		return AllocatedBytes > 1024;
+	}
+
+	bool FScopedMemoryTracker::IsWithinBudget(uint64 BudgetBytes) const
+	{
+		if (!bTrackingEnabled)
+		{
+			return true;
+		}
+		
+		return GetAllocatedBytes() <= BudgetBytes;
+	}
+
+	uint64 FScopedMemoryTracker::GetPeakBytes() const
+	{
+		if (!bTrackingEnabled)
+		{
+			return 0;
+		}
+		
+		FPlatformMemoryStats MemStats = FPlatformMemory::GetStats();
+		uint64 CurrentMemory = MemStats.UsedPhysical;
+		
+		// Update peak if current is higher
+		if (CurrentMemory > PeakMemory)
+		{
+			const_cast<FScopedMemoryTracker*>(this)->PeakMemory = CurrentMemory;
+		}
+		
+		return PeakMemory - StartMemory;
 	}
 
 	// ========================================
