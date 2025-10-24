@@ -14,6 +14,7 @@
 #include "DelveDeepPerformanceOverlay.h"
 #include "DelveDeepProfilingSession.h"
 #include "DelveDeepGameplayMetrics.h"
+#include "DelveDeepAssetLoadTracker.h"
 #include "DelveDeepTelemetrySubsystem.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogDelveDeepTelemetry, Log, All);
@@ -434,6 +435,63 @@ public:
 	UFUNCTION(BlueprintPure, Category = "DelveDeep|Telemetry")
 	int32 GetRecommendedEntityLimit(FName EntityType) const;
 
+	// Asset Loading Tracking
+
+	/**
+	 * Record an asset load operation
+	 * @param AssetPath Path to the loaded asset
+	 * @param LoadTimeMs Load time in milliseconds
+	 * @param AssetSize Asset size in bytes
+	 * @param bSynchronous Whether this was a synchronous load
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
+	void RecordAssetLoad(const FString& AssetPath, float LoadTimeMs, int64 AssetSize, bool bSynchronous = true);
+
+	/**
+	 * Get asset load statistics for a specific type
+	 * @param AssetType Type of asset
+	 * @return Statistics for that asset type
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
+	FAssetLoadStatistics GetAssetLoadStatistics(FName AssetType) const;
+
+	/**
+	 * Get asset load statistics for all types
+	 * @return Array of statistics for all asset types
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
+	TArray<FAssetLoadStatistics> GetAllAssetLoadStatistics() const;
+
+	/**
+	 * Get recent asset load records
+	 * @param Count Number of recent records to retrieve (default: 100)
+	 * @return Array of recent load records
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
+	TArray<FAssetLoadRecord> GetRecentAssetLoads(int32 Count = 100) const;
+
+	/**
+	 * Get slowest asset loads
+	 * @param Count Number of slowest loads to retrieve (default: 10)
+	 * @return Array of slowest load records
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
+	TArray<FAssetLoadRecord> GetSlowestAssetLoads(int32 Count = 10) const;
+
+	/**
+	 * Get total number of asset loads
+	 * @return Total load count
+	 */
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Telemetry")
+	int32 GetTotalAssetLoads() const;
+
+	/**
+	 * Get total number of slow loads (>100ms)
+	 * @return Slow load count
+	 */
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Telemetry")
+	int32 GetTotalSlowLoads() const;
+
 private:
 	// Frame tracking
 	FFramePerformanceTracker FrameTracker;
@@ -466,6 +524,9 @@ private:
 
 	// Gameplay metrics
 	FDelveDeepGameplayMetrics GameplayMetrics;
+
+	// Asset load tracking
+	FDelveDeepAssetLoadTracker AssetLoadTracker;
 
 	/**
 	 * Register default system budgets

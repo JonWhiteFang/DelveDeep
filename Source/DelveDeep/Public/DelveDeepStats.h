@@ -89,3 +89,132 @@ DECLARE_DWORD_COUNTER_STAT_EXTERN(TEXT("Deferred Events"), STAT_DelveDeep_Deferr
 DECLARE_DWORD_COUNTER_STAT_EXTERN(TEXT("Cache Hits"), STAT_DelveDeep_CacheHits, STATGROUP_DelveDeepConfig, DELVEDEEP_API);
 DECLARE_DWORD_COUNTER_STAT_EXTERN(TEXT("Cache Misses"), STAT_DelveDeep_CacheMisses, STATGROUP_DelveDeepConfig, DELVEDEEP_API);
 DECLARE_DWORD_COUNTER_STAT_EXTERN(TEXT("Loaded Assets"), STAT_DelveDeep_LoadedAssets, STATGROUP_DelveDeepConfig, DELVEDEEP_API);
+
+/**
+ * Unreal Insights Integration
+ * 
+ * Use TRACE_CPUPROFILER_EVENT_SCOPE macros for Unreal Insights profiling.
+ * These macros create named scopes that appear in the Insights profiler.
+ * 
+ * Usage:
+ *   void MyFunction()
+ *   {
+ *       TRACE_CPUPROFILER_EVENT_SCOPE(DelveDeep_MyFunction);
+ *       // Function code here
+ *   }
+ * 
+ * To capture Insights data:
+ *   1. Run with -trace=cpu
+ *   2. Open Unreal Insights
+ *   3. Load the trace file from Saved/Profiling/UnrealInsights
+ */
+
+// Insights trace channel
+#if !UE_BUILD_SHIPPING
+	#define DELVEDEEP_TRACE_ENABLED 1
+#else
+	#define DELVEDEEP_TRACE_ENABLED 0
+#endif
+
+// Trace macros for major systems
+#if DELVEDEEP_TRACE_ENABLED
+	#define TRACE_DELVEDEEP_COMBAT() TRACE_CPUPROFILER_EVENT_SCOPE(DelveDeep_CombatSystem)
+	#define TRACE_DELVEDEEP_AI() TRACE_CPUPROFILER_EVENT_SCOPE(DelveDeep_AISystem)
+	#define TRACE_DELVEDEEP_WORLD() TRACE_CPUPROFILER_EVENT_SCOPE(DelveDeep_WorldSystem)
+	#define TRACE_DELVEDEEP_UI() TRACE_CPUPROFILER_EVENT_SCOPE(DelveDeep_UISystem)
+	#define TRACE_DELVEDEEP_EVENTS() TRACE_CPUPROFILER_EVENT_SCOPE(DelveDeep_EventSystem)
+	#define TRACE_DELVEDEEP_CONFIG() TRACE_CPUPROFILER_EVENT_SCOPE(DelveDeep_ConfigSystem)
+	#define TRACE_DELVEDEEP_TELEMETRY() TRACE_CPUPROFILER_EVENT_SCOPE(DelveDeep_TelemetrySystem)
+	
+	// Subsystem traces
+	#define TRACE_DELVEDEEP_DAMAGE() TRACE_CPUPROFILER_EVENT_SCOPE(DelveDeep_DamageCalculation)
+	#define TRACE_DELVEDEEP_TARGETING() TRACE_CPUPROFILER_EVENT_SCOPE(DelveDeep_TargetingSystem)
+	#define TRACE_DELVEDEEP_BEHAVIORTREE() TRACE_CPUPROFILER_EVENT_SCOPE(DelveDeep_BehaviorTree)
+	#define TRACE_DELVEDEEP_PATHFINDING() TRACE_CPUPROFILER_EVENT_SCOPE(DelveDeep_Pathfinding)
+	#define TRACE_DELVEDEEP_PROCGEN() TRACE_CPUPROFILER_EVENT_SCOPE(DelveDeep_ProceduralGeneration)
+	#define TRACE_DELVEDEEP_COLLISION() TRACE_CPUPROFILER_EVENT_SCOPE(DelveDeep_CollisionDetection)
+	#define TRACE_DELVEDEEP_HUD() TRACE_CPUPROFILER_EVENT_SCOPE(DelveDeep_HUDUpdate)
+	#define TRACE_DELVEDEEP_MENU() TRACE_CPUPROFILER_EVENT_SCOPE(DelveDeep_MenuRendering)
+	#define TRACE_DELVEDEEP_EVENT_BROADCAST() TRACE_CPUPROFILER_EVENT_SCOPE(DelveDeep_EventBroadcast)
+	#define TRACE_DELVEDEEP_EVENT_PROCESS() TRACE_CPUPROFILER_EVENT_SCOPE(DelveDeep_EventProcessing)
+	#define TRACE_DELVEDEEP_DATAQUERY() TRACE_CPUPROFILER_EVENT_SCOPE(DelveDeep_DataAssetQuery)
+	#define TRACE_DELVEDEEP_VALIDATION() TRACE_CPUPROFILER_EVENT_SCOPE(DelveDeep_Validation)
+#else
+	#define TRACE_DELVEDEEP_COMBAT()
+	#define TRACE_DELVEDEEP_AI()
+	#define TRACE_DELVEDEEP_WORLD()
+	#define TRACE_DELVEDEEP_UI()
+	#define TRACE_DELVEDEEP_EVENTS()
+	#define TRACE_DELVEDEEP_CONFIG()
+	#define TRACE_DELVEDEEP_TELEMETRY()
+	#define TRACE_DELVEDEEP_DAMAGE()
+	#define TRACE_DELVEDEEP_TARGETING()
+	#define TRACE_DELVEDEEP_BEHAVIORTREE()
+	#define TRACE_DELVEDEEP_PATHFINDING()
+	#define TRACE_DELVEDEEP_PROCGEN()
+	#define TRACE_DELVEDEEP_COLLISION()
+	#define TRACE_DELVEDEEP_HUD()
+	#define TRACE_DELVEDEEP_MENU()
+	#define TRACE_DELVEDEEP_EVENT_BROADCAST()
+	#define TRACE_DELVEDEEP_EVENT_PROCESS()
+	#define TRACE_DELVEDEEP_DATAQUERY()
+	#define TRACE_DELVEDEEP_VALIDATION()
+#endif
+
+/**
+ * CSV Profiler Integration
+ * 
+ * Use CSV_SCOPED_TIMING_STAT and CSV_CUSTOM_STAT macros for CSV profiling.
+ * CSV profiling exports performance data to CSV files for analysis in Excel or other tools.
+ * 
+ * Usage:
+ *   void MyFunction()
+ *   {
+ *       CSV_SCOPED_TIMING_STAT(DelveDeep, MyFunction);
+ *       // Function code here
+ *   }
+ * 
+ * To capture CSV data:
+ *   1. Run with -csvGpuStats or use console commands:
+ *      stat startfile
+ *      stat stopfile
+ *   2. CSV files are saved to Saved/Profiling/CSV
+ */
+
+// CSV profiler category
+CSV_DECLARE_CATEGORY_MODULE_EXTERN(DELVEDEEP_API, DelveDeep);
+
+// CSV timing macros for major systems
+#if !UE_BUILD_SHIPPING
+	#define CSV_DELVEDEEP_COMBAT() CSV_SCOPED_TIMING_STAT(DelveDeep, CombatSystem)
+	#define CSV_DELVEDEEP_AI() CSV_SCOPED_TIMING_STAT(DelveDeep, AISystem)
+	#define CSV_DELVEDEEP_WORLD() CSV_SCOPED_TIMING_STAT(DelveDeep, WorldSystem)
+	#define CSV_DELVEDEEP_UI() CSV_SCOPED_TIMING_STAT(DelveDeep, UISystem)
+	#define CSV_DELVEDEEP_EVENTS() CSV_SCOPED_TIMING_STAT(DelveDeep, EventSystem)
+	#define CSV_DELVEDEEP_CONFIG() CSV_SCOPED_TIMING_STAT(DelveDeep, ConfigSystem)
+	#define CSV_DELVEDEEP_TELEMETRY() CSV_SCOPED_TIMING_STAT(DelveDeep, TelemetrySystem)
+#else
+	#define CSV_DELVEDEEP_COMBAT()
+	#define CSV_DELVEDEEP_AI()
+	#define CSV_DELVEDEEP_WORLD()
+	#define CSV_DELVEDEEP_UI()
+	#define CSV_DELVEDEEP_EVENTS()
+	#define CSV_DELVEDEEP_CONFIG()
+	#define CSV_DELVEDEEP_TELEMETRY()
+#endif
+
+// CSV custom stat macros for entity counts and gameplay metrics
+#if !UE_BUILD_SHIPPING
+	#define CSV_DELVEDEEP_ENTITY_COUNT(EntityType, Count) \
+		CSV_CUSTOM_STAT(DelveDeep, EntityType, Count, ECsvCustomStatOp::Set)
+	
+	#define CSV_DELVEDEEP_EVENT_COUNT(Count) \
+		CSV_CUSTOM_STAT(DelveDeep, EventsPerFrame, Count, ECsvCustomStatOp::Set)
+	
+	#define CSV_DELVEDEEP_CACHE_HIT_RATE(Rate) \
+		CSV_CUSTOM_STAT(DelveDeep, CacheHitRate, Rate, ECsvCustomStatOp::Set)
+#else
+	#define CSV_DELVEDEEP_ENTITY_COUNT(EntityType, Count)
+	#define CSV_DELVEDEEP_EVENT_COUNT(Count)
+	#define CSV_DELVEDEEP_CACHE_HIT_RATE(Rate)
+#endif

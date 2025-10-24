@@ -60,3 +60,6 @@ DEFINE_STAT(STAT_DelveDeep_DeferredEvents);
 DEFINE_STAT(STAT_DelveDeep_CacheHits);
 DEFINE_STAT(STAT_DelveDeep_CacheMisses);
 DEFINE_STAT(STAT_DelveDeep_LoadedAssets);
+
+// Define CSV profiler category
+CSV_DEFINE_CATEGORY(DelveDeep, true);

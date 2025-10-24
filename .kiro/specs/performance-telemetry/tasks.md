@@ -106,7 +106,7 @@
   - Update entity counts every 10 frames to minimize overhead
   - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
 
-- [ ] 13. Implement asset loading performance tracking
+- [x] 13. Implement asset loading performance tracking
   - Create FAssetLoadRecord struct with asset path, load time, size, type
   - Implement RecordAssetLoad() method to capture load operations
   - Categorize assets by type (texture, mesh, sound, data asset)
@@ -115,7 +115,7 @@
   - Provide GetAssetLoadStatistics() for querying load performance
   - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5_
 
-- [ ] 14. Implement console commands for telemetry
+- [x] 14. Implement console commands for telemetry
   - Create DelveDeep.Telemetry.ShowFPS command to display FPS statistics
   - Create DelveDeep.Telemetry.ShowSystemStats command for system breakdown
   - Create DelveDeep.Telemetry.ShowBudgets command to display budget utilization
@@ -127,7 +127,7 @@
   - Create DelveDeep.Telemetry.EnableOverlay and DisableOverlay commands
   - _Requirements: 1.1, 2.1, 3.1, 4.4, 5.3, 6.1, 7.1, 8.1_
 
-- [ ] 15. Implement Unreal Insights integration
+- [x] 15. Implement Unreal Insights integration
   - Add TRACE_CPUPROFILER_EVENT_SCOPE macros for major systems
   - Create named scopes for DelveDeep_CombatSystem, DelveDeep_AISystem, etc.
   - Ensure compatibility with Unreal Insights profiler
@@ -135,7 +135,7 @@
   - Create custom CSV stats for entity counts and gameplay metrics
   - _Requirements: 9.3, 9.4_
 
-- [ ] 16. Implement Blueprint integration
+- [x] 16. Implement Blueprint integration
   - Create UDelveDeepTelemetryBlueprintLibrary function library class
   - Implement GetTelemetrySubsystem() Blueprint-callable function with WorldContext
   - Create GetCurrentFPS() Blueprint helper function

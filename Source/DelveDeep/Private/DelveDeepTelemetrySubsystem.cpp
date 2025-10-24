@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "DelveDeepTelemetrySubsystem.h"
+#include "DelveDeepAssetLoadTracker.h"
 #include "Engine/World.h"
 #include "Engine/GameInstance.h"
 #include "Misc/Paths.h"
@@ -714,4 +715,49 @@ bool UDelveDeepTelemetrySubsystem::IsEntityCountExceedingLimit(FName EntityType)
 int32 UDelveDeepTelemetrySubsystem::GetRecommendedEntityLimit(FName EntityType) const
 {
 	return GameplayMetrics.GetRecommendedLimit(EntityType);
+}
+
+// Asset Loading Tracking
+
+void UDelveDeepTelemetrySubsystem::RecordAssetLoad(const FString& AssetPath, float LoadTimeMs, int64 AssetSize, bool bSynchronous)
+{
+	if (AssetSize < 0)
+	{
+		UE_LOG(LogDelveDeepTelemetry, Warning,
+			TEXT("Invalid asset size for '%s': %lld (must be non-negative)"),
+			*AssetPath, AssetSize);
+		return;
+	}
+
+	AssetLoadTracker.RecordAssetLoad(AssetPath, LoadTimeMs, static_cast<uint64>(AssetSize), bSynchronous);
+}
+
+FAssetLoadStatistics UDelveDeepTelemetrySubsystem::GetAssetLoadStatistics(FName AssetType) const
+{
+	return AssetLoadTracker.GetAssetLoadStatistics(AssetType);
+}
+
+TArray<FAssetLoadStatistics> UDelveDeepTelemetrySubsystem::GetAllAssetLoadStatistics() const
+{
+	return AssetLoadTracker.GetAllAssetLoadStatistics();
+}
+
+TArray<FAssetLoadRecord> UDelveDeepTelemetrySubsystem::GetRecentAssetLoads(int32 Count) const
+{
+	return AssetLoadTracker.GetRecentAssetLoads(Count);
+}
+
+TArray<FAssetLoadRecord> UDelveDeepTelemetrySubsystem::GetSlowestAssetLoads(int32 Count) const
+{
+	return AssetLoadTracker.GetSlowestAssetLoads(Count);
+}
+
+int32 UDelveDeepTelemetrySubsystem::GetTotalAssetLoads() const
+{
+	return AssetLoadTracker.GetTotalAssetLoads();
+}
+
+int32 UDelveDeepTelemetrySubsystem::GetTotalSlowLoads() const
+{
+	return AssetLoadTracker.GetTotalSlowLoads();
 }
