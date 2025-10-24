@@ -133,9 +133,9 @@ DelveDeep.Events.ValidateAllPayloads  # Test payload validation
 
 **Active Spec**: [.kiro/specs/centralized-event-system/](.kiro/specs/centralized-event-system/)
 
-#### Performance Telemetry System 🔄
+#### Performance Telemetry System ✅
 
-**Status**: In Progress (October 24, 2025)
+**Status**: Complete (October 24, 2025)
 
 **Core Documentation**:
 - **[TelemetryIntegrationGuide.md](Documentation/Systems/TelemetryIntegrationGuide.md)**: Integration examples and troubleshooting
@@ -193,15 +193,15 @@ DelveDeep.Telemetry.EnableOverlay [Mode]
 DelveDeep.Telemetry.DisableOverlay
 ```
 
-**Active Spec**: [.kiro/specs/performance-telemetry/](.kiro/specs/performance-telemetry/)
+**Archived Spec**: [.kiro/specs/archived/performance-telemetry/](.kiro/specs/archived/performance-telemetry/)
 
 ### Planned Systems
 
-#### Phase 1: Core Foundation (3/5 Complete)
+#### Phase 1: Core Foundation (4/5 Complete)
 - [x] Data-Driven Configuration System ✅ (October 23, 2025)
 - [x] Enhanced Validation System ✅ (October 23, 2025)
 - [x] Centralized Event System ✅ (October 24, 2025)
-- [ ] Performance Telemetry
+- [x] Performance Telemetry System ✅ (October 24, 2025)
 - [ ] Automated Testing Framework
 
 #### Phase 2: Core Gameplay
@@ -457,18 +457,18 @@ Content/
 
 ## Project Status
 
-**Current Phase**: Phase 1 - Core Foundation (3/5 Complete)
+**Current Phase**: Phase 1 - Core Foundation (4/5 Complete)
 
 **Completed**:
 - ✅ Data-Driven Configuration System (October 23, 2025)
 - ✅ Enhanced Validation System (October 23, 2025)
 - ✅ Centralized Event System (October 24, 2025)
+- ✅ Performance Telemetry System (October 24, 2025)
 
 **In Progress**:
 - None
 
 **Next Up**:
-- Performance Telemetry
 - Automated Testing Framework
 
 ## Quick Reference
@@ -499,9 +499,9 @@ Content/
 
 **Last Updated**: October 24, 2025
 
-**Project Status**: Phase 1 Foundation - 3/5 Systems Complete
+**Project Status**: Phase 1 Foundation - 4/5 Systems Complete
 
-**Completed Systems**: Data-Driven Configuration (Oct 23), Enhanced Validation (Oct 23), Centralized Event System (Oct 24)
+**Completed Systems**: Data-Driven Configuration (Oct 23), Enhanced Validation (Oct 23), Centralized Event System (Oct 24), Performance Telemetry (Oct 24)
 
 **Target Platform**: Windows, macOS (future: Linux, Console)
 
