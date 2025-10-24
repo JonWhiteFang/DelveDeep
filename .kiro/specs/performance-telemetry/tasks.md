@@ -170,7 +170,7 @@
   - Update DOCUMENTATION_INDEX.md with telemetry system documentation
   - _Requirements: 2.1, 4.1, 5.1, 6.1_
 
-- [ ] 20. Write unit tests for core functionality
+- [x] 20. Write unit tests for core functionality
   - Test FPS calculation accuracy with known frame times
   - Test spike detection with various frame time patterns
   - Test budget violation detection and logging
