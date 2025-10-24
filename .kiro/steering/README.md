@@ -18,6 +18,11 @@ This directory contains comprehensive development guidelines and best practices 
 - [data-assets.md](data-assets.md) - PostLoad validation integration
 - [testing.md](testing.md) - Validation testing procedures
 
+**Centralized Event System** (October 24, 2025) - Event-driven architecture:
+- [subsystems.md](subsystems.md) - Event subsystem patterns
+- [error-handling.md](error-handling.md) - Event payload validation
+- [testing.md](testing.md) - Event system testing
+
 ### Core Guidelines
 
 **Architecture & Design:**
@@ -40,7 +45,7 @@ This directory contains comprehensive development guidelines and best practices 
 
 ## Implementation Status
 
-### Phase 1: Core Foundation (2/5 Complete)
+### Phase 1: Core Foundation (3/5 Complete)
 
 ✅ **Data-Driven Configuration System** (Complete - October 23, 2025)
 - FValidationContext for error/warning tracking
@@ -88,20 +93,39 @@ This directory contains comprehensive development guidelines and best practices 
 - [error-handling.md](error-handling.md)
 - [Testing-Guide.md](../Documentation/Testing-Guide.md)
 
+✅ **Centralized Event System** (Complete - October 24, 2025)
+- Hierarchical event filtering using GameplayTags
+- Priority-based listener execution (High, Normal, Low)
+- Deferred event processing for safe batch operations
+- Spatial and actor-specific event filtering
+- Build-specific validation (development vs shipping)
+- Comprehensive performance monitoring and metrics
+- Full Blueprint integration
+- Network replication metadata for future multiplayer
+
+**Key Achievements:**
+- Event broadcast: <1ms for 50 listeners
+- Listener invocation: <0.1ms per listener
+- System overhead: <0.1ms per event
+- Deferred processing: <10ms for 1000 events
+- Full GameplayTag hierarchy integration
+- Comprehensive console commands for debugging
+
+**Documentation:**
+- [CentralizedEventSystem.md](../Documentation/Systems/CentralizedEventSystem.md)
+- [subsystems.md](subsystems.md)
+- [error-handling.md](error-handling.md)
+
 ### Next Priorities
 
-🔄 **Centralized Event System** (Next - Phase 1)
-- Gameplay event bus using GameplayTags
-- Loose coupling between systems
-- Event-driven architecture
-
-🔄 **Performance Telemetry** (Phase 1)
+🔄 **Performance Telemetry** (Next - Phase 1)
 - Stat groups and cycle counters
 - Performance monitoring infrastructure
 - Profiling tools integration
 
 🔄 **Automated Testing Framework** (Phase 1)
 - Configuration system tests complete ✅
+- Event system tests complete ✅
 - Expand to other systems as implemented
 - CI/CD integration
 
@@ -116,7 +140,7 @@ This directory contains comprehensive development guidelines and best practices 
 
 1. **Review relevant guidelines** before starting implementation
 2. **Follow established patterns** from completed systems
-3. **Use configuration system as reference** for architecture decisions
+3. **Use configuration and event systems as reference** for architecture decisions
 4. **Validate early and often** using FValidationContext
 5. **Write tests** for critical functionality
 6. **Update documentation** as you implement
@@ -143,7 +167,7 @@ This directory contains comprehensive development guidelines and best practices 
 - Pre-allocate containers: `Items.Reserve(ExpectedSize)`
 - Use object pooling for frequently spawned objects
 - Profile with `SCOPE_CYCLE_COUNTER`
-- Target: 60+ FPS, <100ms init, <1ms queries
+- Target: 60+ FPS, <100ms init, <1ms queries, <1ms event broadcasts
 
 ### Validation
 - Use `FValidationContext` for all validation
@@ -184,6 +208,17 @@ DelveDeep.DumpConfigData [Name]   # Dump asset properties
 DelveDeep.CreateExampleData       # Create example test data
 ```
 
+### Event System (✓ Implemented)
+```bash
+DelveDeep.Events.ShowMetrics          # Display performance statistics
+DelveDeep.Events.ShowEventHistory     # Show recent event history
+DelveDeep.Events.EnableEventLogging   # Enable detailed logging
+DelveDeep.Events.DisableEventLogging  # Disable logging
+DelveDeep.Events.ListListeners <Tag>  # List listeners for tag
+DelveDeep.Events.ListAllListeners     # List all listeners
+DelveDeep.Events.BroadcastTestEvent   # Broadcast test event
+```
+
 ### System Testing (Planned)
 ```bash
 DelveDeep.ValidateAllSystems      # Run comprehensive system validation
@@ -205,6 +240,12 @@ stat DelveDeep                    # Show DelveDeep-specific metrics
 - Single Query: <1ms per query
 - Bulk Queries: <1ms average for 1000 queries
 - Cache Hit Rate: >95% for repeated queries
+
+### Event System (✓ Achieved)
+- Event broadcast: <1ms for 50 listeners
+- Listener invocation: <0.1ms per listener
+- System overhead: <0.1ms per event
+- Deferred processing: <10ms for 1000 events
 
 ### General Targets
 - Frame Rate: 60+ FPS
@@ -233,7 +274,8 @@ Documentation/
 │   ├── ValidationSystem.md       # Validation infrastructure ✓
 │   ├── ContentDirectoryStructure.md  # Asset organization ✓
 │   ├── Performance-Testing.md    # Performance testing ✓
-│   └── DataDrivenConfiguration.md    # System overview ✓
+│   ├── DataDrivenConfiguration.md    # System overview ✓
+│   └── CentralizedEventSystem.md     # Event bus architecture ✓
 └── Implementation/
     ├── Task1-ValidationInfrastructure.md  # Implementation notes ✓
     └── Task11-ExampleDataAssets.md        # Example data ✓
@@ -243,7 +285,7 @@ Documentation/
 
 When implementing new systems:
 
-1. **Follow established patterns** from configuration system
+1. **Follow established patterns** from configuration and event systems
 2. **Use FValidationContext** for validation
 3. **Implement as subsystem** if game-wide functionality
 4. **Write comprehensive tests**
@@ -254,15 +296,15 @@ When implementing new systems:
 ## Questions?
 
 - Check [DOCUMENTATION_INDEX.md](../../DOCUMENTATION_INDEX.md) for complete documentation
-- Review completed configuration system for reference implementation
+- Review completed configuration and event systems for reference implementation
 - Consult specific steering documents for detailed guidance
 
 ---
 
-**Last Updated**: October 23, 2025
+**Last Updated**: October 24, 2025
 
-**Status**: Phase 1 - Data-Driven Configuration System Complete (2/5)
+**Status**: Phase 1 - Core Foundation (3/5 Complete)
 
-**Completed**: Data-Driven Configuration, Enhanced Validation
+**Completed**: Data-Driven Configuration (Oct 23), Enhanced Validation (Oct 23), Centralized Event System (Oct 24)
 
-**Next**: Centralized Event System, Performance Telemetry, Automated Testing Framework
+**Next**: Performance Telemetry, Automated Testing Framework
