@@ -146,6 +146,28 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Events")
 	TArray<FGameplayTag> GetNetworkRelevantEvents() const;
 
+	/**
+	 * Enables payload validation for event broadcasting.
+	 * Only available in development builds (!UE_BUILD_SHIPPING).
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Events")
+	void EnableValidation();
+
+	/**
+	 * Disables payload validation for event broadcasting.
+	 * Only available in development builds (!UE_BUILD_SHIPPING).
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Events")
+	void DisableValidation();
+
+	/**
+	 * Checks if payload validation is currently enabled.
+	 * Always returns false in shipping builds.
+	 * @return True if validation is enabled, false otherwise
+	 */
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Events")
+	bool IsValidationEnabled() const;
+
 private:
 	/** Event registry: Maps GameplayTag to listener lists */
 	UPROPERTY()
@@ -187,6 +209,9 @@ private:
 
 	/** Whether event logging is enabled */
 	bool bEventLoggingEnabled = false;
+
+	/** Whether payload validation is enabled (development builds only) */
+	bool bValidationEnabled = true;
 
 	/** Set of event tags that are marked as network-relevant */
 	TSet<FGameplayTag> NetworkRelevantEventTags;

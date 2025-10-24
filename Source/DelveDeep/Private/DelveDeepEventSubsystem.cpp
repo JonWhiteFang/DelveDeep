@@ -461,13 +461,17 @@ void UDelveDeepEventSubsystem::BroadcastEventImmediate(const FDelveDeepEventPayl
 	}
 
 	// Validate payload in development builds
+	// In shipping builds, validation is skipped for performance
 #if !UE_BUILD_SHIPPING
-	FValidationContext ValidationContext;
-	if (!Payload.Validate(ValidationContext))
+	if (bValidationEnabled)
 	{
-		UE_LOG(LogDelveDeepEvents, Error, TEXT("BroadcastEvent: Payload validation failed for tag %s: %s"),
-			*Payload.EventTag.ToString(), *ValidationContext.GetReport());
-		return;
+		FValidationContext ValidationContext;
+		if (!Payload.Validate(ValidationContext))
+		{
+			UE_LOG(LogDelveDeepEvents, Error, TEXT("BroadcastEvent: Payload validation failed for tag %s: %s"),
+				*Payload.EventTag.ToString(), *ValidationContext.GetReport());
+			return;
+		}
 	}
 #endif
 
@@ -653,6 +657,47 @@ TArray<FGameplayTag> UDelveDeepEventSubsystem::GetNetworkRelevantEvents() const
 	TArray<FGameplayTag> Result;
 	NetworkRelevantEventTags.GenerateValueArray(Result);
 	return Result;
+}
+
+void UDelveDeepEventSubsystem::EnableValidation()
+{
+#if !UE_BUILD_SHIPPING
+	if (bValidationEnabled)
+	{
+		UE_LOG(LogDelveDeepEvents, Warning, TEXT("Validation already enabled"));
+		return;
+	}
+
+	bValidationEnabled = true;
+	UE_LOG(LogDelveDeepEvents, Display, TEXT("Event payload validation enabled"));
+#else
+	UE_LOG(LogDelveDeepEvents, Warning, TEXT("Validation is not available in shipping builds"));
+#endif
+}
+
+void UDelveDeepEventSubsystem::DisableValidation()
+{
+#if !UE_BUILD_SHIPPING
+	if (!bValidationEnabled)
+	{
+		UE_LOG(LogDelveDeepEvents, Warning, TEXT("Validation already disabled"));
+		return;
+	}
+
+	bValidationEnabled = false;
+	UE_LOG(LogDelveDeepEvents, Display, TEXT("Event payload validation disabled"));
+#else
+	UE_LOG(LogDelveDeepEvents, Warning, TEXT("Validation is not available in shipping builds"));
+#endif
+}
+
+bool UDelveDeepEventSubsystem::IsValidationEnabled() const
+{
+#if !UE_BUILD_SHIPPING
+	return bValidationEnabled;
+#else
+	return false;
+#endif
 }
 
 void UDelveDeepEventSubsystem::AddToHistory(const FEventRecord& Record)

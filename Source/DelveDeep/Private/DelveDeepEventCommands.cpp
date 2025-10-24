@@ -61,6 +61,18 @@ static FAutoConsoleCommand ValidateAllPayloadsCmd(
 	FConsoleCommandWithArgsDelegate::CreateStatic(&FDelveDeepEventCommands::ValidateAllPayloads)
 );
 
+static FAutoConsoleCommand EnableValidationCmd(
+	TEXT("DelveDeep.Events.EnableValidation"),
+	TEXT("Enables payload validation for event broadcasting (development builds only)"),
+	FConsoleCommandWithArgsDelegate::CreateStatic(&FDelveDeepEventCommands::EnableValidation)
+);
+
+static FAutoConsoleCommand DisableValidationCmd(
+	TEXT("DelveDeep.Events.DisableValidation"),
+	TEXT("Disables payload validation for event broadcasting (development builds only)"),
+	FConsoleCommandWithArgsDelegate::CreateStatic(&FDelveDeepEventCommands::DisableValidation)
+);
+
 static FAutoConsoleCommand ClearAllListenersCmd(
 	TEXT("DelveDeep.Events.ClearAllListeners"),
 	TEXT("Clears all registered listeners (use with caution!)"),
@@ -286,6 +298,28 @@ void FDelveDeepEventCommands::ValidateAllPayloads(const TArray<FString>& Args)
 	}
 
 	UE_LOG(LogDelveDeepEvents, Display, TEXT("Payload validation complete"));
+}
+
+void FDelveDeepEventCommands::EnableValidation(const TArray<FString>& Args)
+{
+	UDelveDeepEventSubsystem* EventSubsystem = GetEventSubsystem();
+	if (!EventSubsystem)
+	{
+		return;
+	}
+
+	EventSubsystem->EnableValidation();
+}
+
+void FDelveDeepEventCommands::DisableValidation(const TArray<FString>& Args)
+{
+	UDelveDeepEventSubsystem* EventSubsystem = GetEventSubsystem();
+	if (!EventSubsystem)
+	{
+		return;
+	}
+
+	EventSubsystem->DisableValidation();
 }
 
 void FDelveDeepEventCommands::ClearAllListeners(const TArray<FString>& Args)

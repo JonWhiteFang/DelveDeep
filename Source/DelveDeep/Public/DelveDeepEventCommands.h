@@ -45,6 +45,12 @@ private:
 	/** Validates all event payloads */
 	static void ValidateAllPayloads(const TArray<FString>& Args);
 
+	/** Enables payload validation (development builds only) */
+	static void EnableValidation(const TArray<FString>& Args);
+
+	/** Disables payload validation (development builds only) */
+	static void DisableValidation(const TArray<FString>& Args);
+
 	/** Clears all registered listeners */
 	static void ClearAllListeners(const TArray<FString>& Args);
 
