@@ -142,15 +142,15 @@ namespace DelveDeepTestUtils
 	// ========================================
 
 	/**
-	 * Creates test character data with default or specified values.
+	 * Creates test character data asset with default or specified values.
 	 * 
 	 * @param Name Character name
 	 * @param Health Base health value
 	 * @param Damage Base damage value
-	 * @return Test character data struct
+	 * @return Test character data asset
 	 */
-	DELVEDEEP_API struct FDelveDeepCharacterData CreateTestCharacterData(
-		const FString& Name,
+	DELVEDEEP_API UDelveDeepCharacterData* CreateTestCharacterData(
+		const FString& Name = TEXT("TestCharacter"),
 		float Health = 100.0f,
 		float Damage = 10.0f);
 
@@ -168,11 +168,46 @@ namespace DelveDeepTestUtils
 		float Damage = 5.0f);
 
 	/**
-	 * Creates invalid test data for validation testing.
+	 * Creates test weapon data asset with default or specified values.
 	 * 
-	 * @return Test data with invalid values
+	 * @param Name Weapon name
+	 * @param Damage Base damage value
+	 * @param AttackSpeed Attack speed value
+	 * @return Test weapon data asset
 	 */
-	DELVEDEEP_API struct FDelveDeepCharacterData CreateInvalidCharacterData();
+	DELVEDEEP_API UDelveDeepWeaponData* CreateTestWeaponData(
+		const FString& Name = TEXT("TestWeapon"),
+		float Damage = 10.0f,
+		float AttackSpeed = 1.0f);
+
+	/**
+	 * Creates test ability data asset with default or specified values.
+	 * 
+	 * @param Name Ability name
+	 * @param Cooldown Cooldown duration
+	 * @param ResourceCost Resource cost
+	 * @return Test ability data asset
+	 */
+	DELVEDEEP_API UDelveDeepAbilityData* CreateTestAbilityData(
+		const FString& Name = TEXT("TestAbility"),
+		float Cooldown = 5.0f,
+		float ResourceCost = 10.0f);
+
+	/**
+	 * Creates invalid character data for validation testing.
+	 * Sets values outside valid ranges to trigger validation errors.
+	 * 
+	 * @return Test character data with invalid values
+	 */
+	DELVEDEEP_API UDelveDeepCharacterData* CreateInvalidCharacterData();
+
+	/**
+	 * Creates invalid monster config for validation testing.
+	 * Sets values outside valid ranges to trigger validation errors.
+	 * 
+	 * @return Test monster config with invalid values
+	 */
+	DELVEDEEP_API FDelveDeepMonsterConfig CreateInvalidMonsterConfig();
 
 	// ========================================
 	// Validation Helpers
