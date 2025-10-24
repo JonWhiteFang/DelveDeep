@@ -11,6 +11,9 @@
 #include "DelveDeepPerformanceBudget.h"
 #include "DelveDeepPerformanceBaseline.h"
 #include "DelveDeepPerformanceReport.h"
+#include "DelveDeepPerformanceOverlay.h"
+#include "DelveDeepProfilingSession.h"
+#include "DelveDeepGameplayMetrics.h"
 #include "DelveDeepTelemetrySubsystem.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogDelveDeepTelemetry, Log, All);
@@ -291,6 +294,146 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
 	bool ExportReportToJSON(const FPerformanceReport& Report, const FString& FilePath);
 
+	// Performance Overlay
+
+	/**
+	 * Enable the performance overlay
+	 * @param Mode Display mode (Minimal, Standard, or Detailed)
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
+	void EnablePerformanceOverlay(EOverlayMode Mode = EOverlayMode::Standard);
+
+	/**
+	 * Disable the performance overlay
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
+	void DisablePerformanceOverlay();
+
+	/**
+	 * Check if the performance overlay is enabled
+	 * @return True if overlay is enabled
+	 */
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Telemetry")
+	bool IsOverlayEnabled() const;
+
+	/**
+	 * Set the overlay display mode
+	 * @param Mode Display mode to set
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
+	void SetOverlayMode(EOverlayMode Mode);
+
+	/**
+	 * Get the current overlay display mode
+	 * @return Current display mode
+	 */
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Telemetry")
+	EOverlayMode GetOverlayMode() const;
+
+	/**
+	 * Render the performance overlay (typically called from HUD)
+	 * @param Canvas Canvas to draw on
+	 */
+	void RenderPerformanceOverlay(UCanvas* Canvas);
+
+	// Profiling Sessions
+
+	/**
+	 * Start a profiling session with detailed metric collection
+	 * @param SessionName Name for this profiling session
+	 * @return True if session was started successfully
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
+	bool StartProfilingSession(FName SessionName);
+
+	/**
+	 * Stop the current profiling session
+	 * @return True if session was stopped successfully
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
+	bool StopProfilingSession();
+
+	/**
+	 * Check if a profiling session is currently active
+	 * @return True if session is active
+	 */
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Telemetry")
+	bool IsProfilingActive() const;
+
+	/**
+	 * Get the current profiling session
+	 * @param OutSession Current session data
+	 * @return True if session is active
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
+	bool GetCurrentSession(FProfilingSession& OutSession) const;
+
+	/**
+	 * Generate a report from the current profiling session
+	 * @param OutReport Generated report
+	 * @return True if report was generated successfully
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
+	bool GenerateProfilingReport(FProfilingSessionReport& OutReport);
+
+	/**
+	 * Save the current profiling session to disk
+	 * @param FilePath Path where to save the session (optional, uses default if empty)
+	 * @return True if save was successful
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
+	bool SaveProfilingSession(const FString& FilePath = TEXT(""));
+
+	// Gameplay Metrics
+
+	/**
+	 * Track entity count for a specific type
+	 * @param EntityType Type of entity (e.g., "Monsters", "Projectiles")
+	 * @param Count Current count
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
+	void TrackEntityCount(FName EntityType, int32 Count);
+
+	/**
+	 * Get current entity count
+	 * @param EntityType Type of entity
+	 * @return Current count
+	 */
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Telemetry")
+	int32 GetEntityCount(FName EntityType) const;
+
+	/**
+	 * Get peak entity count
+	 * @param EntityType Type of entity
+	 * @return Peak count
+	 */
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Telemetry")
+	int32 GetPeakEntityCount(FName EntityType) const;
+
+	/**
+	 * Get average entity count over last minute
+	 * @param EntityType Type of entity
+	 * @return Average count
+	 */
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Telemetry")
+	float GetAverageEntityCount(FName EntityType) const;
+
+	/**
+	 * Check if entity count exceeds recommended limit
+	 * @param EntityType Type of entity
+	 * @return True if count exceeds limit
+	 */
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Telemetry")
+	bool IsEntityCountExceedingLimit(FName EntityType) const;
+
+	/**
+	 * Get recommended limit for entity type
+	 * @param EntityType Type of entity
+	 * @return Recommended limit (0 if no limit set)
+	 */
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Telemetry")
+	int32 GetRecommendedEntityLimit(FName EntityType) const;
+
 private:
 	// Frame tracking
 	FFramePerformanceTracker FrameTracker;
@@ -312,6 +455,18 @@ private:
 	// Baseline storage
 	TMap<FName, FPerformanceBaseline> Baselines;
 
+	// Performance overlay
+	TSharedPtr<FDelveDeepPerformanceOverlay> PerformanceOverlay;
+	bool bOverlayEnabled = false;
+
+	// Profiling session
+	FProfilingSession CurrentSession;
+	bool bProfilingActive = false;
+	int32 ProfilingFrameCounter = 0;
+
+	// Gameplay metrics
+	FDelveDeepGameplayMetrics GameplayMetrics;
+
 	/**
 	 * Register default system budgets
 	 */
@@ -330,4 +485,17 @@ private:
 	 * @return True if baseline is valid
 	 */
 	bool ValidateBaseline(const FPerformanceBaseline& Baseline, FValidationContext& Context) const;
+
+	/**
+	 * Get the default profiling save directory
+	 * @return Default directory path
+	 */
+	FString GetDefaultProfilingDirectory() const;
+
+	/**
+	 * Format bytes to human-readable string
+	 * @param Bytes Number of bytes
+	 * @return Formatted string (e.g., "1.5 MB")
+	 */
+	FString FormatBytes(uint64 Bytes) const;
 };

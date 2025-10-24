@@ -78,7 +78,7 @@
   - Log export completion with file path and size
   - _Requirements: 6.3, 12.1, 12.2, 12.3, 12.4, 12.5_
 
-- [ ] 10. Implement real-time performance overlay
+- [x] 10. Implement real-time performance overlay
   - Create FPerformanceOverlay class with EOverlayMode enum (Minimal, Standard, Detailed)
   - Implement Render() method to draw overlay on UCanvas
   - Create RenderMinimal() for FPS-only display
@@ -88,7 +88,7 @@
   - Ensure overlay rendering overhead is <0.1ms per frame
   - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
 
-- [ ] 11. Implement profiling session system
+- [x] 11. Implement profiling session system
   - Create FProfilingSession struct with session name, start/end time, frame data
   - Implement StartProfilingSession() to begin detailed metric collection
   - Increase sampling rate during profiling for per-frame data capture
@@ -97,7 +97,7 @@
   - Auto-save profiling data with timestamp-based filename
   - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5_
 
-- [ ] 12. Implement gameplay metrics tracking
+- [x] 12. Implement gameplay metrics tracking
   - Create TMap for entity counts (monsters, projectiles, particles)
   - Implement TrackEntityCount() method to update entity counts
   - Create GetEntityCount() method to query current counts
