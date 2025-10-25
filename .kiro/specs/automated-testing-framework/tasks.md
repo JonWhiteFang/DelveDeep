@@ -126,7 +126,7 @@
   - Update test names to follow naming conventions
   - _Requirements: 1.1, 3.3, 7.1, 8.1, 13.1_
 
-- [ ] 15. Migrate existing event system tests
+- [x] 15. Migrate existing event system tests
   - Move EventSystemTests.cpp to EventTests/ directory
   - Update test to use new assertion macros
   - Refactor to use FSubsystemTestFixture
