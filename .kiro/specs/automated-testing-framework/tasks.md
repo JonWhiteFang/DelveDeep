@@ -117,7 +117,7 @@
   - Add README.md in Tests/ directory explaining organization
   - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
 
-- [ ] 14. Migrate existing configuration tests
+- [x] 14. Migrate existing configuration tests
   - Move ConfigurationManagerTests.cpp to ConfigurationTests/ directory
   - Update test to use new assertion macros (EXPECT_EQ, ASSERT_NOT_NULL)
   - Refactor to use FSubsystemTestFixture for setup/teardown

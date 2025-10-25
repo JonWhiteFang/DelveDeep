@@ -1,5 +1,8 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
+#include "DelveDeepTestMacros.h"
+#include "DelveDeepTestFixtures.h"
+#include "DelveDeepTestUtilities.h"
 #include "DelveDeepConfigurationManager.h"
 #include "DelveDeepCharacterData.h"
 #include "DelveDeepMonsterConfig.h"
@@ -8,52 +11,26 @@
 #include "DelveDeepAbilityData.h"
 #include "Engine/DataTable.h"
 #include "Misc/AutomationTest.h"
-#include "HAL/PlatformTime.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
-
-/**
- * Test fixture for configuration manager tests
- * Provides common setup and teardown for configuration manager testing
- */
-class FConfigurationManagerTestFixture
-{
-public:
-	FConfigurationManagerTestFixture()
-	{
-		// Create test game instance
-		GameInstance = NewObject<UGameInstance>();
-		check(GameInstance);
-		
-		// Get configuration manager subsystem (auto-initializes)
-		ConfigManager = GameInstance->GetSubsystem<UDelveDeepConfigurationManager>();
-		check(ConfigManager);
-	}
-
-	~FConfigurationManagerTestFixture()
-	{
-		// Cleanup
-		ConfigManager = nullptr;
-		GameInstance = nullptr;
-	}
-
-	UGameInstance* GameInstance;
-	UDelveDeepConfigurationManager* ConfigManager;
-};
 
 /**
  * Test asset caching on first query
  * Verifies that assets are properly cached when first accessed
  */
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepConfigManagerAssetCachingTest, 
-	"DelveDeep.ConfigurationManager.AssetCaching", 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FConfigurationManagerAssetCachingTest, 
+	"DelveDeep.Configuration.AssetCaching", 
 	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
 
-bool FDelveDeepConfigManagerAssetCachingTest::RunTest(const FString& Parameters)
+bool FConfigurationManagerAssetCachingTest::RunTest(const FString& Parameters)
 {
 	// Create test fixture
-	FConfigurationManagerTestFixture Fixture;
-	UDelveDeepConfigurationManager* ConfigManager = Fixture.ConfigManager;
+	FSubsystemTestFixture Fixture;
+	Fixture.BeforeEach();
+
+	// Get configuration manager
+	UDelveDeepConfigurationManager* ConfigManager = Fixture.GetSubsystem<UDelveDeepConfigurationManager>();
+	ASSERT_NOT_NULL(ConfigManager);
 
 	// Get initial performance stats
 	int32 InitialCacheHits = 0;
@@ -61,21 +38,11 @@ bool FDelveDeepConfigManagerAssetCachingTest::RunTest(const FString& Parameters)
 	float InitialAvgQueryTime = 0.0f;
 	ConfigManager->GetPerformanceStats(InitialCacheHits, InitialCacheMisses, InitialAvgQueryTime);
 
-	// Create and manually add a test character data asset to the cache
-	UDelveDeepCharacterData* TestCharacterData = NewObject<UDelveDeepCharacterData>();
-	TestCharacterData->CharacterName = FText::FromString(TEXT("TestWarrior"));
-	TestCharacterData->BaseHealth = 100.0f;
-	TestCharacterData->BaseDamage = 15.0f;
-	TestCharacterData->MoveSpeed = 300.0f;
-
-	// Access the private cache through reflection or by testing the public interface
-	// Since we can't directly access the cache, we'll test the behavior through queries
-	
 	// Query for a non-existent asset (should result in cache miss)
 	const UDelveDeepCharacterData* Result = ConfigManager->GetCharacterData(FName("NonExistentCharacter"));
 	
 	// Verify result is nullptr for non-existent asset
-	TestNull(TEXT("Non-existent character should return nullptr"), Result);
+	EXPECT_NULL(Result);
 
 	// Get updated performance stats
 	int32 AfterCacheHits = 0;
@@ -84,9 +51,10 @@ bool FDelveDeepConfigManagerAssetCachingTest::RunTest(const FString& Parameters)
 	ConfigManager->GetPerformanceStats(AfterCacheHits, AfterCacheMisses, AfterAvgQueryTime);
 
 	// Verify cache miss was recorded
-	TestEqual(TEXT("Cache misses should increase by 1"), AfterCacheMisses, InitialCacheMisses + 1);
-	TestEqual(TEXT("Cache hits should remain unchanged"), AfterCacheHits, InitialCacheHits);
+	EXPECT_EQ(AfterCacheMisses, InitialCacheMisses + 1);
+	EXPECT_EQ(AfterCacheHits, InitialCacheHits);
 
+	Fixture.AfterEach();
 	return true;
 }
 
@@ -94,19 +62,19 @@ bool FDelveDeepConfigManagerAssetCachingTest::RunTest(const FString& Parameters)
  * Test cached asset returned on subsequent queries
  * Verifies that subsequent queries return cached data without reloading
  */
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepConfigManagerCachedAssetTest, 
-	"DelveDeep.ConfigurationManager.CachedAssetReturn", 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FConfigurationManagerCachedAssetTest, 
+	"DelveDeep.Configuration.CachedAssetReturn", 
 	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
 
-bool FDelveDeepConfigManagerCachedAssetTest::RunTest(const FString& Parameters)
+bool FConfigurationManagerCachedAssetTest::RunTest(const FString& Parameters)
 {
 	// Create test fixture
-	FConfigurationManagerTestFixture Fixture;
-	UDelveDeepConfigurationManager* ConfigManager = Fixture.ConfigManager;
+	FSubsystemTestFixture Fixture;
+	Fixture.BeforeEach();
 
-	// Note: Since we're in a code-only environment without actual data assets,
-	// we'll test the caching behavior by querying the same non-existent asset multiple times
-	// and verifying that cache misses increase appropriately
+	// Get configuration manager
+	UDelveDeepConfigurationManager* ConfigManager = Fixture.GetSubsystem<UDelveDeepConfigurationManager>();
+	ASSERT_NOT_NULL(ConfigManager);
 
 	// Get initial stats
 	int32 InitialCacheHits = 0;
@@ -121,9 +89,9 @@ bool FDelveDeepConfigManagerCachedAssetTest::RunTest(const FString& Parameters)
 	const UDelveDeepCharacterData* Result3 = ConfigManager->GetCharacterData(TestAssetName);
 
 	// All results should be nullptr (asset doesn't exist)
-	TestNull(TEXT("First query should return nullptr"), Result1);
-	TestNull(TEXT("Second query should return nullptr"), Result2);
-	TestNull(TEXT("Third query should return nullptr"), Result3);
+	EXPECT_NULL(Result1);
+	EXPECT_NULL(Result2);
+	EXPECT_NULL(Result3);
 
 	// Get updated stats
 	int32 AfterCacheHits = 0;
@@ -132,12 +100,12 @@ bool FDelveDeepConfigManagerCachedAssetTest::RunTest(const FString& Parameters)
 	ConfigManager->GetPerformanceStats(AfterCacheHits, AfterCacheMisses, AfterAvgQueryTime);
 
 	// Verify that all three queries were tracked
-	// Since the asset doesn't exist, all should be cache misses
-	TestEqual(TEXT("Cache misses should increase by 3"), AfterCacheMisses, InitialCacheMisses + 3);
+	EXPECT_EQ(AfterCacheMisses, InitialCacheMisses + 3);
 
 	// Verify query count increased
-	TestTrue(TEXT("Average query time should be calculated"), AfterAvgQueryTime >= 0.0f);
+	EXPECT_GE(AfterAvgQueryTime, 0.0f);
 
+	Fixture.AfterEach();
 	return true;
 }
 
@@ -145,15 +113,19 @@ bool FDelveDeepConfigManagerCachedAssetTest::RunTest(const FString& Parameters)
  * Test cache hit rate tracking accuracy
  * Verifies that cache hit and miss tracking is accurate
  */
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepConfigManagerCacheHitRateTest, 
-	"DelveDeep.ConfigurationManager.CacheHitRateTracking", 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FConfigurationManagerCacheHitRateTest, 
+	"DelveDeep.Configuration.CacheHitRateTracking", 
 	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
 
-bool FDelveDeepConfigManagerCacheHitRateTest::RunTest(const FString& Parameters)
+bool FConfigurationManagerCacheHitRateTest::RunTest(const FString& Parameters)
 {
 	// Create test fixture
-	FConfigurationManagerTestFixture Fixture;
-	UDelveDeepConfigurationManager* ConfigManager = Fixture.ConfigManager;
+	FSubsystemTestFixture Fixture;
+	Fixture.BeforeEach();
+
+	// Get configuration manager
+	UDelveDeepConfigurationManager* ConfigManager = Fixture.GetSubsystem<UDelveDeepConfigurationManager>();
+	ASSERT_NOT_NULL(ConfigManager);
 
 	// Get initial stats
 	int32 InitialCacheHits = 0;
@@ -179,11 +151,11 @@ bool FDelveDeepConfigManagerCacheHitRateTest::RunTest(const FString& Parameters)
 	int32 ExpectedMisses = InitialCacheMisses + 6; // 6 queries to non-existent assets
 
 	// Verify tracking accuracy
-	TestEqual(TEXT("Cache misses should be tracked accurately"), AfterCacheMisses, ExpectedMisses);
-	TestEqual(TEXT("Cache hits should remain unchanged for non-existent assets"), AfterCacheHits, InitialCacheHits);
+	EXPECT_EQ(AfterCacheMisses, ExpectedMisses);
+	EXPECT_EQ(AfterCacheHits, InitialCacheHits);
 
 	// Verify average query time is reasonable (should be very fast, < 1ms)
-	TestTrue(TEXT("Average query time should be under 1ms"), AfterAvgQueryTime < 1.0f);
+	EXPECT_LT(AfterAvgQueryTime, 1.0f);
 
 	// Calculate cache hit rate
 	int32 TotalQueries = AfterCacheHits + AfterCacheMisses;
@@ -194,6 +166,7 @@ bool FDelveDeepConfigManagerCacheHitRateTest::RunTest(const FString& Parameters)
 			HitRate, AfterCacheHits, TotalQueries);
 	}
 
+	Fixture.AfterEach();
 	return true;
 }
 
@@ -201,37 +174,25 @@ bool FDelveDeepConfigManagerCacheHitRateTest::RunTest(const FString& Parameters)
  * Test data table lookup by name
  * Verifies that monster configs can be looked up from data tables
  */
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepConfigManagerDataTableLookupTest, 
-	"DelveDeep.ConfigurationManager.DataTableLookup", 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FConfigurationManagerDataTableLookupTest, 
+	"DelveDeep.Configuration.DataTableLookup", 
 	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
 
-bool FDelveDeepConfigManagerDataTableLookupTest::RunTest(const FString& Parameters)
+bool FConfigurationManagerDataTableLookupTest::RunTest(const FString& Parameters)
 {
 	// Create test fixture
-	FConfigurationManagerTestFixture Fixture;
-	UDelveDeepConfigurationManager* ConfigManager = Fixture.ConfigManager;
+	FSubsystemTestFixture Fixture;
+	Fixture.BeforeEach();
 
-	// Create a test data table
-	UDataTable* TestDataTable = NewObject<UDataTable>();
-	TestDataTable->RowStruct = FDelveDeepMonsterConfig::StaticStruct();
-
-	// Add test monster config
-	FDelveDeepMonsterConfig TestMonster;
-	TestMonster.MonsterName = FText::FromString(TEXT("TestGoblin"));
-	TestMonster.Health = 50.0f;
-	TestMonster.Damage = 5.0f;
-	TestMonster.MoveSpeed = 200.0f;
-	TestMonster.DetectionRange = 500.0f;
-	TestMonster.AttackRange = 100.0f;
-
-	// Note: In a real test environment with data tables, we would add the row here
-	// For now, we'll test the lookup behavior with a non-existent monster
+	// Get configuration manager
+	UDelveDeepConfigurationManager* ConfigManager = Fixture.GetSubsystem<UDelveDeepConfigurationManager>();
+	ASSERT_NOT_NULL(ConfigManager);
 
 	// Query for a monster config
 	const FDelveDeepMonsterConfig* Result = ConfigManager->GetMonsterConfig(FName("TestGoblin"));
 
 	// Since we don't have actual data tables loaded, result should be nullptr
-	TestNull(TEXT("Monster config should return nullptr when table not loaded"), Result);
+	EXPECT_NULL(Result);
 
 	// Get performance stats to verify query was tracked
 	int32 CacheHits = 0;
@@ -240,8 +201,9 @@ bool FDelveDeepConfigManagerDataTableLookupTest::RunTest(const FString& Paramete
 	ConfigManager->GetPerformanceStats(CacheHits, CacheMisses, AvgQueryTime);
 
 	// Verify query was tracked
-	TestTrue(TEXT("Query should be tracked in performance stats"), CacheMisses > 0);
+	EXPECT_GT(CacheMisses, 0);
 
+	Fixture.AfterEach();
 	return true;
 }
 
@@ -249,15 +211,19 @@ bool FDelveDeepConfigManagerDataTableLookupTest::RunTest(const FString& Paramete
  * Test invalid name returns nullptr
  * Verifies that querying with invalid names returns nullptr gracefully
  */
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepConfigManagerInvalidNameTest, 
-	"DelveDeep.ConfigurationManager.InvalidNameReturnsNull", 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FConfigurationManagerInvalidNameTest, 
+	"DelveDeep.Configuration.InvalidNameReturnsNull", 
 	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
 
-bool FDelveDeepConfigManagerInvalidNameTest::RunTest(const FString& Parameters)
+bool FConfigurationManagerInvalidNameTest::RunTest(const FString& Parameters)
 {
 	// Create test fixture
-	FConfigurationManagerTestFixture Fixture;
-	UDelveDeepConfigurationManager* ConfigManager = Fixture.ConfigManager;
+	FSubsystemTestFixture Fixture;
+	Fixture.BeforeEach();
+
+	// Get configuration manager
+	UDelveDeepConfigurationManager* ConfigManager = Fixture.GetSubsystem<UDelveDeepConfigurationManager>();
+	ASSERT_NOT_NULL(ConfigManager);
 
 	// Test with various invalid names
 	const UDelveDeepCharacterData* Result1 = ConfigManager->GetCharacterData(FName(""));
@@ -265,9 +231,9 @@ bool FDelveDeepConfigManagerInvalidNameTest::RunTest(const FString& Parameters)
 	const UDelveDeepCharacterData* Result3 = ConfigManager->GetCharacterData(FName("NonExistent123"));
 
 	// All should return nullptr
-	TestNull(TEXT("Empty name should return nullptr"), Result1);
-	TestNull(TEXT("Invalid name should return nullptr"), Result2);
-	TestNull(TEXT("Non-existent name should return nullptr"), Result3);
+	EXPECT_NULL(Result1);
+	EXPECT_NULL(Result2);
+	EXPECT_NULL(Result3);
 
 	// Test with other asset types
 	const UDelveDeepUpgradeData* UpgradeResult = ConfigManager->GetUpgradeData(FName("InvalidUpgrade"));
@@ -275,10 +241,10 @@ bool FDelveDeepConfigManagerInvalidNameTest::RunTest(const FString& Parameters)
 	const UDelveDeepAbilityData* AbilityResult = ConfigManager->GetAbilityData(FName("InvalidAbility"));
 	const FDelveDeepMonsterConfig* MonsterResult = ConfigManager->GetMonsterConfig(FName("InvalidMonster"));
 
-	TestNull(TEXT("Invalid upgrade name should return nullptr"), UpgradeResult);
-	TestNull(TEXT("Invalid weapon name should return nullptr"), WeaponResult);
-	TestNull(TEXT("Invalid ability name should return nullptr"), AbilityResult);
-	TestNull(TEXT("Invalid monster name should return nullptr"), MonsterResult);
+	EXPECT_NULL(UpgradeResult);
+	EXPECT_NULL(WeaponResult);
+	EXPECT_NULL(AbilityResult);
+	EXPECT_NULL(MonsterResult);
 
 	// Verify all queries were tracked as cache misses
 	int32 CacheHits = 0;
@@ -286,8 +252,9 @@ bool FDelveDeepConfigManagerInvalidNameTest::RunTest(const FString& Parameters)
 	float AvgQueryTime = 0.0f;
 	ConfigManager->GetPerformanceStats(CacheHits, CacheMisses, AvgQueryTime);
 
-	TestTrue(TEXT("All invalid queries should be tracked as cache misses"), CacheMisses >= 7);
+	EXPECT_GE(CacheMisses, 7);
 
+	Fixture.AfterEach();
 	return true;
 }
 
@@ -295,45 +262,50 @@ bool FDelveDeepConfigManagerInvalidNameTest::RunTest(const FString& Parameters)
  * Test query performance under target thresholds
  * Verifies that queries complete within performance targets (< 1ms)
  */
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepConfigManagerQueryPerformanceTest, 
-	"DelveDeep.ConfigurationManager.QueryPerformance", 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FConfigurationManagerQueryPerformanceTest, 
+	"DelveDeep.Configuration.QueryPerformance", 
 	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
 
-bool FDelveDeepConfigManagerQueryPerformanceTest::RunTest(const FString& Parameters)
+bool FConfigurationManagerQueryPerformanceTest::RunTest(const FString& Parameters)
 {
 	// Create test fixture
-	FConfigurationManagerTestFixture Fixture;
-	UDelveDeepConfigurationManager* ConfigManager = Fixture.ConfigManager;
+	FSubsystemTestFixture Fixture;
+	Fixture.BeforeEach();
+
+	// Get configuration manager
+	UDelveDeepConfigurationManager* ConfigManager = Fixture.GetSubsystem<UDelveDeepConfigurationManager>();
+	ASSERT_NOT_NULL(ConfigManager);
 
 	// Measure single query performance
-	double StartTime = FPlatformTime::Seconds();
-	ConfigManager->GetCharacterData(FName("TestCharacter"));
-	double EndTime = FPlatformTime::Seconds();
-	double SingleQueryTime = (EndTime - StartTime) * 1000.0; // Convert to milliseconds
+	{
+		DelveDeepTestUtils::FScopedTestTimer Timer(TEXT("Single Query"));
+		ConfigManager->GetCharacterData(FName("TestCharacter"));
+		double SingleQueryTime = Timer.GetElapsedMs();
 
-	// Single query should be under 1ms
-	TestTrue(TEXT("Single query should complete in under 1ms"), SingleQueryTime < 1.0);
-
-	UE_LOG(LogDelveDeepConfig, Display, TEXT("Single query time: %.4f ms"), SingleQueryTime);
+		// Single query should be under 1ms
+		EXPECT_LT(SingleQueryTime, 1.0);
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("Single query time: %.4f ms"), SingleQueryTime);
+	}
 
 	// Measure bulk query performance (1000 queries)
 	const int32 BulkQueryCount = 1000;
-	StartTime = FPlatformTime::Seconds();
-	
-	for (int32 i = 0; i < BulkQueryCount; ++i)
 	{
-		ConfigManager->GetCharacterData(FName("TestCharacter"));
+		DelveDeepTestUtils::FScopedTestTimer Timer(TEXT("Bulk Queries"));
+		
+		for (int32 i = 0; i < BulkQueryCount; ++i)
+		{
+			ConfigManager->GetCharacterData(FName("TestCharacter"));
+			Timer.RecordSample();
+		}
+
+		// Average query time should be under 1ms
+		double AvgBulkQueryTime = Timer.GetAverageMs();
+		EXPECT_LT(AvgBulkQueryTime, 1.0);
+		EXPECT_TRUE(Timer.IsWithinBudget(1.0));
+
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("Bulk query performance: %d queries, Min=%.4f ms, Max=%.4f ms, Avg=%.4f ms, Median=%.4f ms"), 
+			BulkQueryCount, Timer.GetMinMs(), Timer.GetMaxMs(), Timer.GetAverageMs(), Timer.GetMedianMs());
 	}
-	
-	EndTime = FPlatformTime::Seconds();
-	double BulkQueryTime = (EndTime - StartTime) * 1000.0; // Convert to milliseconds
-	double AvgBulkQueryTime = BulkQueryTime / BulkQueryCount;
-
-	// Average query time should be under 1ms
-	TestTrue(TEXT("Average bulk query time should be under 1ms"), AvgBulkQueryTime < 1.0);
-
-	UE_LOG(LogDelveDeepConfig, Display, TEXT("Bulk query performance: %d queries in %.2f ms (avg: %.4f ms per query)"), 
-		BulkQueryCount, BulkQueryTime, AvgBulkQueryTime);
 
 	// Get performance stats from configuration manager
 	int32 CacheHits = 0;
@@ -342,22 +314,23 @@ bool FDelveDeepConfigManagerQueryPerformanceTest::RunTest(const FString& Paramet
 	ConfigManager->GetPerformanceStats(CacheHits, CacheMisses, ConfigManagerAvgQueryTime);
 
 	// Verify configuration manager's tracked average is also under 1ms
-	TestTrue(TEXT("Configuration manager tracked average should be under 1ms"), ConfigManagerAvgQueryTime < 1.0f);
+	EXPECT_LT(ConfigManagerAvgQueryTime, 1.0f);
 
 	UE_LOG(LogDelveDeepConfig, Display, TEXT("Configuration manager stats: Hits=%d, Misses=%d, Avg=%.4f ms"), 
 		CacheHits, CacheMisses, ConfigManagerAvgQueryTime);
 
 	// Test data table query performance
-	StartTime = FPlatformTime::Seconds();
-	ConfigManager->GetMonsterConfig(FName("TestMonster"));
-	EndTime = FPlatformTime::Seconds();
-	double DataTableQueryTime = (EndTime - StartTime) * 1000.0;
+	{
+		DelveDeepTestUtils::FScopedTestTimer Timer(TEXT("Data Table Query"));
+		ConfigManager->GetMonsterConfig(FName("TestMonster"));
+		double DataTableQueryTime = Timer.GetElapsedMs();
 
-	// Data table query should be under 0.5ms (target from requirements)
-	TestTrue(TEXT("Data table query should complete in under 0.5ms"), DataTableQueryTime < 0.5);
+		// Data table query should be under 0.5ms (target from requirements)
+		EXPECT_LT(DataTableQueryTime, 0.5);
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("Data table query time: %.4f ms"), DataTableQueryTime);
+	}
 
-	UE_LOG(LogDelveDeepConfig, Display, TEXT("Data table query time: %.4f ms"), DataTableQueryTime);
-
+	Fixture.AfterEach();
 	return true;
 }
 
@@ -365,15 +338,19 @@ bool FDelveDeepConfigManagerQueryPerformanceTest::RunTest(const FString& Paramet
  * Test performance metrics accuracy
  * Verifies that performance metrics are calculated correctly
  */
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepConfigManagerPerformanceMetricsTest, 
-	"DelveDeep.ConfigurationManager.PerformanceMetrics", 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FConfigurationManagerPerformanceMetricsTest, 
+	"DelveDeep.Configuration.PerformanceMetrics", 
 	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
 
-bool FDelveDeepConfigManagerPerformanceMetricsTest::RunTest(const FString& Parameters)
+bool FConfigurationManagerPerformanceMetricsTest::RunTest(const FString& Parameters)
 {
 	// Create test fixture
-	FConfigurationManagerTestFixture Fixture;
-	UDelveDeepConfigurationManager* ConfigManager = Fixture.ConfigManager;
+	FSubsystemTestFixture Fixture;
+	Fixture.BeforeEach();
+
+	// Get configuration manager
+	UDelveDeepConfigurationManager* ConfigManager = Fixture.GetSubsystem<UDelveDeepConfigurationManager>();
+	ASSERT_NOT_NULL(ConfigManager);
 
 	// Get initial stats
 	int32 InitialCacheHits = 0;
@@ -396,11 +373,11 @@ bool FDelveDeepConfigManagerPerformanceMetricsTest::RunTest(const FString& Param
 
 	// Verify metrics
 	int32 ExpectedMisses = InitialCacheMisses + QueryCount;
-	TestEqual(TEXT("Cache misses should match query count"), AfterCacheMisses, ExpectedMisses);
+	EXPECT_EQ(AfterCacheMisses, ExpectedMisses);
 
 	// Verify average query time is reasonable
-	TestTrue(TEXT("Average query time should be positive"), AfterAvgQueryTime > 0.0f);
-	TestTrue(TEXT("Average query time should be under 1ms"), AfterAvgQueryTime < 1.0f);
+	EXPECT_GT(AfterAvgQueryTime, 0.0f);
+	EXPECT_LT(AfterAvgQueryTime, 1.0f);
 
 	// Calculate cache hit rate
 	int32 TotalQueries = AfterCacheHits + AfterCacheMisses;
@@ -411,6 +388,7 @@ bool FDelveDeepConfigManagerPerformanceMetricsTest::RunTest(const FString& Param
 			HitRate, AfterCacheHits, TotalQueries);
 	}
 
+	Fixture.AfterEach();
 	return true;
 }
 
@@ -418,15 +396,19 @@ bool FDelveDeepConfigManagerPerformanceMetricsTest::RunTest(const FString& Param
  * Test multiple asset type queries
  * Verifies that different asset types can be queried independently
  */
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepConfigManagerMultipleAssetTypesTest, 
-	"DelveDeep.ConfigurationManager.MultipleAssetTypes", 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FConfigurationManagerMultipleAssetTypesTest, 
+	"DelveDeep.Configuration.MultipleAssetTypes", 
 	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
 
-bool FDelveDeepConfigManagerMultipleAssetTypesTest::RunTest(const FString& Parameters)
+bool FConfigurationManagerMultipleAssetTypesTest::RunTest(const FString& Parameters)
 {
 	// Create test fixture
-	FConfigurationManagerTestFixture Fixture;
-	UDelveDeepConfigurationManager* ConfigManager = Fixture.ConfigManager;
+	FSubsystemTestFixture Fixture;
+	Fixture.BeforeEach();
+
+	// Get configuration manager
+	UDelveDeepConfigurationManager* ConfigManager = Fixture.GetSubsystem<UDelveDeepConfigurationManager>();
+	ASSERT_NOT_NULL(ConfigManager);
 
 	// Query different asset types
 	const UDelveDeepCharacterData* CharData = ConfigManager->GetCharacterData(FName("TestChar"));
@@ -436,11 +418,11 @@ bool FDelveDeepConfigManagerMultipleAssetTypesTest::RunTest(const FString& Param
 	const FDelveDeepMonsterConfig* MonsterData = ConfigManager->GetMonsterConfig(FName("TestMonster"));
 
 	// All should return nullptr (assets don't exist)
-	TestNull(TEXT("Character data should return nullptr"), CharData);
-	TestNull(TEXT("Upgrade data should return nullptr"), UpgradeData);
-	TestNull(TEXT("Weapon data should return nullptr"), WeaponData);
-	TestNull(TEXT("Ability data should return nullptr"), AbilityData);
-	TestNull(TEXT("Monster data should return nullptr"), MonsterData);
+	EXPECT_NULL(CharData);
+	EXPECT_NULL(UpgradeData);
+	EXPECT_NULL(WeaponData);
+	EXPECT_NULL(AbilityData);
+	EXPECT_NULL(MonsterData);
 
 	// Verify all queries were tracked
 	int32 CacheHits = 0;
@@ -448,8 +430,9 @@ bool FDelveDeepConfigManagerMultipleAssetTypesTest::RunTest(const FString& Param
 	float AvgQueryTime = 0.0f;
 	ConfigManager->GetPerformanceStats(CacheHits, CacheMisses, AvgQueryTime);
 
-	TestTrue(TEXT("All asset type queries should be tracked"), CacheMisses >= 5);
+	EXPECT_GE(CacheMisses, 5);
 
+	Fixture.AfterEach();
 	return true;
 }
 
@@ -457,29 +440,108 @@ bool FDelveDeepConfigManagerMultipleAssetTypesTest::RunTest(const FString& Param
  * Test validation integration with configuration manager
  * Verifies that ValidateAllData works correctly
  */
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepConfigManagerValidationIntegrationTest, 
-	"DelveDeep.ConfigurationManager.ValidationIntegration", 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FConfigurationManagerValidationIntegrationTest, 
+	"DelveDeep.Configuration.ValidationIntegration", 
 	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
 
-bool FDelveDeepConfigManagerValidationIntegrationTest::RunTest(const FString& Parameters)
+bool FConfigurationManagerValidationIntegrationTest::RunTest(const FString& Parameters)
 {
 	// Create test fixture
-	FConfigurationManagerTestFixture Fixture;
-	UDelveDeepConfigurationManager* ConfigManager = Fixture.ConfigManager;
+	FSubsystemTestFixture Fixture;
+	Fixture.BeforeEach();
+
+	// Get configuration manager
+	UDelveDeepConfigurationManager* ConfigManager = Fixture.GetSubsystem<UDelveDeepConfigurationManager>();
+	ASSERT_NOT_NULL(ConfigManager);
 
 	// Run validation on all data
 	FString ValidationReport;
 	bool bIsValid = ConfigManager->ValidateAllData(ValidationReport);
 
 	// Validation should complete without crashing
-	TestTrue(TEXT("ValidateAllData should complete successfully"), true);
+	EXPECT_TRUE(true);
 
 	// Report should be generated
-	TestTrue(TEXT("Validation report should be generated"), !ValidationReport.IsEmpty());
+	EXPECT_FALSE(ValidationReport.IsEmpty());
 
 	// Log the validation report for inspection
 	UE_LOG(LogDelveDeepConfig, Display, TEXT("Validation Report:\n%s"), *ValidationReport);
 
+	Fixture.AfterEach();
+	return true;
+}
+
+/**
+ * Test memory usage during configuration queries
+ * Verifies that queries don't cause excessive memory allocations
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FConfigurationManagerMemoryUsageTest, 
+	"DelveDeep.Configuration.MemoryUsage", 
+	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+
+bool FConfigurationManagerMemoryUsageTest::RunTest(const FString& Parameters)
+{
+	// Create test fixture
+	FSubsystemTestFixture Fixture;
+	Fixture.BeforeEach();
+
+	// Get configuration manager
+	UDelveDeepConfigurationManager* ConfigManager = Fixture.GetSubsystem<UDelveDeepConfigurationManager>();
+	ASSERT_NOT_NULL(ConfigManager);
+
+	// Track memory during queries
+	{
+		DelveDeepTestUtils::FScopedMemoryTracker MemTracker;
+		
+		// Perform multiple queries
+		const int32 QueryCount = 100;
+		for (int32 i = 0; i < QueryCount; ++i)
+		{
+			ConfigManager->GetCharacterData(FName(*FString::Printf(TEXT("TestChar%d"), i)));
+		}
+
+		// Memory usage should be reasonable (< 1MB for 100 queries)
+		uint64 AllocatedBytes = MemTracker.GetAllocatedBytes();
+		EXPECT_TRUE(MemTracker.IsWithinBudget(1024 * 1024)); // 1MB budget
+
+		UE_LOG(LogDelveDeepConfig, Display, TEXT("Memory usage for %d queries: %llu bytes"), 
+			QueryCount, AllocatedBytes);
+	}
+
+	Fixture.AfterEach();
+	return true;
+}
+
+/**
+ * Test subsystem initialization performance
+ * Verifies that configuration manager initializes within performance targets
+ */
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FConfigurationManagerInitializationPerformanceTest, 
+	"DelveDeep.Configuration.InitializationPerformance", 
+	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+
+bool FConfigurationManagerInitializationPerformanceTest::RunTest(const FString& Parameters)
+{
+	// Measure initialization time
+	DelveDeepTestUtils::FScopedTestTimer Timer(TEXT("Configuration Manager Initialization"));
+	
+	// Create test fixture (this initializes the subsystem)
+	FSubsystemTestFixture Fixture;
+	Fixture.BeforeEach();
+
+	// Get configuration manager
+	UDelveDeepConfigurationManager* ConfigManager = Fixture.GetSubsystem<UDelveDeepConfigurationManager>();
+	ASSERT_NOT_NULL(ConfigManager);
+
+	double InitTime = Timer.GetElapsedMs();
+
+	// Initialization should be under 100ms (target from requirements)
+	EXPECT_LT(InitTime, 100.0);
+	EXPECT_TRUE(Timer.IsWithinBudget(100.0));
+
+	UE_LOG(LogDelveDeepConfig, Display, TEXT("Configuration manager initialization time: %.2f ms"), InitTime);
+
+	Fixture.AfterEach();
 	return true;
 }
 
