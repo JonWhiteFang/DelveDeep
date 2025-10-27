@@ -483,4 +483,147 @@ namespace DelveDeepTestUtils
 		double StartTime;
 		float Timeout;
 	};
+
+	// ========================================
+	// Console Command Testing
+	// ========================================
+
+	/**
+	 * Console output capture helper for testing console commands.
+	 * Captures log output during command execution for verification.
+	 */
+	class DELVEDEEP_API FConsoleOutputCapture
+	{
+	public:
+		/**
+		 * Constructs a console output capture and starts capturing.
+		 */
+		FConsoleOutputCapture();
+
+		/**
+		 * Destructor stops capturing.
+		 */
+		~FConsoleOutputCapture();
+
+		/**
+		 * Gets all captured output lines.
+		 * 
+		 * @return Array of captured log messages
+		 */
+		const TArray<FString>& GetCapturedOutput() const;
+
+		/**
+		 * Checks if the captured output contains a specific string.
+		 * 
+		 * @param SearchString String to search for
+		 * @return True if found, false otherwise
+		 */
+		bool ContainsOutput(const FString& SearchString) const;
+
+		/**
+		 * Checks if the captured output contains all specified strings.
+		 * 
+		 * @param SearchStrings Array of strings to search for
+		 * @return True if all found, false otherwise
+		 */
+		bool ContainsAllOutput(const TArray<FString>& SearchStrings) const;
+
+		/**
+		 * Gets the number of captured output lines.
+		 * 
+		 * @return Number of lines captured
+		 */
+		int32 GetOutputLineCount() const;
+
+		/**
+		 * Clears all captured output.
+		 */
+		void ClearOutput();
+
+	private:
+		TArray<FString> CapturedOutput;
+		void* OutputDeviceHandle;  // Opaque handle to output device
+	};
+
+	/**
+	 * Executes a console command programmatically.
+	 * 
+	 * @param Command The console command to execute (e.g., "DelveDeep.ValidateAllData")
+	 * @return True if command was found and executed, false otherwise
+	 */
+	DELVEDEEP_API bool ExecuteConsoleCommand(const FString& Command);
+
+	/**
+	 * Executes a console command with arguments programmatically.
+	 * 
+	 * @param Command The console command to execute
+	 * @param Args Array of arguments to pass to the command
+	 * @return True if command was found and executed, false otherwise
+	 */
+	DELVEDEEP_API bool ExecuteConsoleCommandWithArgs(const FString& Command, const TArray<FString>& Args);
+
+	/**
+	 * Executes a console command and captures its output.
+	 * 
+	 * @param Command The console command to execute
+	 * @param OutCapturedOutput Array to receive captured output lines
+	 * @return True if command was found and executed, false otherwise
+	 */
+	DELVEDEEP_API bool ExecuteConsoleCommandWithCapture(
+		const FString& Command,
+		TArray<FString>& OutCapturedOutput);
+
+	/**
+	 * Verifies that a console command is registered.
+	 * 
+	 * @param CommandName The name of the command to check (e.g., "DelveDeep.ValidateAllData")
+	 * @return True if command is registered, false otherwise
+	 */
+	DELVEDEEP_API bool IsConsoleCommandRegistered(const FString& CommandName);
+
+	/**
+	 * Gets all registered console commands matching a prefix.
+	 * 
+	 * @param Prefix Command prefix to search for (e.g., "DelveDeep.")
+	 * @return Array of matching command names
+	 */
+	DELVEDEEP_API TArray<FString> GetRegisteredConsoleCommands(const FString& Prefix);
+
+	/**
+	 * Tests that a console command handles invalid parameters gracefully.
+	 * 
+	 * @param Command The console command to test
+	 * @param InvalidArgs Array of invalid arguments to test
+	 * @param OutCapturedOutput Array to receive captured output (should contain error messages)
+	 * @return True if command handled invalid parameters without crashing
+	 */
+	DELVEDEEP_API bool TestConsoleCommandInvalidParameters(
+		const FString& Command,
+		const TArray<FString>& InvalidArgs,
+		TArray<FString>& OutCapturedOutput);
+
+	/**
+	 * Verifies that a console command produces expected side effects.
+	 * This is a helper that executes a command and allows custom verification.
+	 * 
+	 * @param Command The console command to execute
+	 * @param VerificationFunc Function to call after command execution to verify side effects
+	 * @return True if command executed and verification passed
+	 */
+	DELVEDEEP_API bool VerifyConsoleCommandSideEffects(
+		const FString& Command,
+		TFunction<bool()> VerificationFunc);
+
+	/**
+	 * Tests that all expected console commands are registered for a subsystem.
+	 * 
+	 * @param SubsystemName Name of the subsystem (e.g., "Validation", "Events")
+	 * @param ExpectedCommands Array of expected command names
+	 * @param OutMissingCommands Array to receive names of missing commands
+	 * @return True if all expected commands are registered
+	 */
+	DELVEDEEP_API bool VerifySubsystemCommandsRegistered(
+		const FString& SubsystemName,
+		const TArray<FString>& ExpectedCommands,
+		TArray<FString>& OutMissingCommands);
 }

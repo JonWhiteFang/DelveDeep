@@ -3,6 +3,8 @@
 #include "DelveDeepTestUtilities.h"
 #include "HAL/PlatformTime.h"
 #include "Misc/EngineVersionComparison.h"
+#include "Misc/OutputDevice.h"
+#include "HAL/IConsoleManager.h"
 #include "DelveDeepCharacterData.h"
 #include "DelveDeepMonsterConfig.h"
 #include "DelveDeepWeaponData.h"
@@ -663,5 +665,302 @@ namespace DelveDeepTestUtils
 		double CurrentTime = FPlatformTime::Seconds();
 		double ElapsedTime = CurrentTime - StartTime;
 		return ElapsedTime >= Timeout;
+	}
+
+	// ========================================
+	// Console Command Testing
+	// ========================================
+
+	/**
+	 * Custom output device for capturing console output during tests.
+	 */
+	class FTestOutputDevice : public FOutputDevice
+	{
+	public:
+		TArray<FString> CapturedLines;
+
+		virtual void Serialize(const TCHAR* V, ELogVerbosity::Type Verbosity, const class FName& Category) override
+		{
+			FString Line = FString(V);
+			CapturedLines.Add(Line);
+		}
+	};
+
+	FConsoleOutputCapture::FConsoleOutputCapture()
+		: OutputDeviceHandle(nullptr)
+	{
+		// Create and register output device
+		FTestOutputDevice* OutputDevice = new FTestOutputDevice();
+		OutputDeviceHandle = OutputDevice;
+		GLog->AddOutputDevice(OutputDevice);
+	}
+
+	FConsoleOutputCapture::~FConsoleOutputCapture()
+	{
+		if (OutputDeviceHandle)
+		{
+			FTestOutputDevice* OutputDevice = static_cast<FTestOutputDevice*>(OutputDeviceHandle);
+			
+			// Copy captured output before removing device
+			CapturedOutput = OutputDevice->CapturedLines;
+			
+			// Remove and delete output device
+			GLog->RemoveOutputDevice(OutputDevice);
+			delete OutputDevice;
+			OutputDeviceHandle = nullptr;
+		}
+	}
+
+	const TArray<FString>& FConsoleOutputCapture::GetCapturedOutput() const
+	{
+		if (OutputDeviceHandle)
+		{
+			FTestOutputDevice* OutputDevice = static_cast<FTestOutputDevice*>(OutputDeviceHandle);
+			return OutputDevice->CapturedLines;
+		}
+		return CapturedOutput;
+	}
+
+	bool FConsoleOutputCapture::ContainsOutput(const FString& SearchString) const
+	{
+		const TArray<FString>& Output = GetCapturedOutput();
+		for (const FString& Line : Output)
+		{
+			if (Line.Contains(SearchString))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool FConsoleOutputCapture::ContainsAllOutput(const TArray<FString>& SearchStrings) const
+	{
+		for (const FString& SearchString : SearchStrings)
+		{
+			if (!ContainsOutput(SearchString))
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	int32 FConsoleOutputCapture::GetOutputLineCount() const
+	{
+		return GetCapturedOutput().Num();
+	}
+
+	void FConsoleOutputCapture::ClearOutput()
+	{
+		if (OutputDeviceHandle)
+		{
+			FTestOutputDevice* OutputDevice = static_cast<FTestOutputDevice*>(OutputDeviceHandle);
+			OutputDevice->CapturedLines.Empty();
+		}
+		CapturedOutput.Empty();
+	}
+
+	bool ExecuteConsoleCommand(const FString& Command)
+	{
+		if (Command.IsEmpty())
+		{
+			UE_LOG(LogTemp, Error, TEXT("ExecuteConsoleCommand: Command is empty"));
+			return false;
+		}
+
+		// Get console manager
+		IConsoleManager& ConsoleManager = IConsoleManager::Get();
+
+		// Try to find the command
+		IConsoleCommand* ConsoleCommand = ConsoleManager.FindConsoleCommand(*Command);
+		if (!ConsoleCommand)
+		{
+			UE_LOG(LogTemp, Error, TEXT("ExecuteConsoleCommand: Command not found: %s"), *Command);
+			return false;
+		}
+
+		// Execute the command
+		ConsoleCommand->Execute(TArray<FString>(), nullptr, *GLog);
+		return true;
+	}
+
+	bool ExecuteConsoleCommandWithArgs(const FString& Command, const TArray<FString>& Args)
+	{
+		if (Command.IsEmpty())
+		{
+			UE_LOG(LogTemp, Error, TEXT("ExecuteConsoleCommandWithArgs: Command is empty"));
+			return false;
+		}
+
+		// Get console manager
+		IConsoleManager& ConsoleManager = IConsoleManager::Get();
+
+		// Try to find the command
+		IConsoleCommand* ConsoleCommand = ConsoleManager.FindConsoleCommand(*Command);
+		if (!ConsoleCommand)
+		{
+			UE_LOG(LogTemp, Error, TEXT("ExecuteConsoleCommandWithArgs: Command not found: %s"), *Command);
+			return false;
+		}
+
+		// Execute the command with arguments
+		ConsoleCommand->Execute(Args, nullptr, *GLog);
+		return true;
+	}
+
+	bool ExecuteConsoleCommandWithCapture(
+		const FString& Command,
+		TArray<FString>& OutCapturedOutput)
+	{
+		// Clear output array
+		OutCapturedOutput.Empty();
+
+		// Create output capture
+		FConsoleOutputCapture Capture;
+
+		// Execute command
+		bool bResult = ExecuteConsoleCommand(Command);
+
+		// Copy captured output
+		OutCapturedOutput = Capture.GetCapturedOutput();
+
+		return bResult;
+	}
+
+	bool IsConsoleCommandRegistered(const FString& CommandName)
+	{
+		if (CommandName.IsEmpty())
+		{
+			return false;
+		}
+
+		// Get console manager
+		IConsoleManager& ConsoleManager = IConsoleManager::Get();
+
+		// Try to find the command
+		IConsoleCommand* ConsoleCommand = ConsoleManager.FindConsoleCommand(*CommandName);
+		return ConsoleCommand != nullptr;
+	}
+
+	TArray<FString> GetRegisteredConsoleCommands(const FString& Prefix)
+	{
+		TArray<FString> MatchingCommands;
+
+		// Get console manager
+		IConsoleManager& ConsoleManager = IConsoleManager::Get();
+
+		// Iterate through all console objects
+		ConsoleManager.ForEachConsoleObjectThatStartsWith(
+			FConsoleObjectVisitor::CreateLambda([&MatchingCommands, &Prefix](const TCHAR* Key, IConsoleObject* ConsoleObject)
+			{
+				FString CommandName(Key);
+				if (CommandName.StartsWith(Prefix))
+				{
+					// Only include commands, not variables
+					if (ConsoleObject->AsCommand())
+					{
+						MatchingCommands.Add(CommandName);
+					}
+				}
+			}),
+			*Prefix);
+
+		return MatchingCommands;
+	}
+
+	bool TestConsoleCommandInvalidParameters(
+		const FString& Command,
+		const TArray<FString>& InvalidArgs,
+		TArray<FString>& OutCapturedOutput)
+	{
+		// Clear output array
+		OutCapturedOutput.Empty();
+
+		// Create output capture
+		FConsoleOutputCapture Capture;
+
+		// Try to execute command with invalid parameters
+		// We expect this to handle gracefully without crashing
+		bool bExecuted = false;
+		
+		try
+		{
+			bExecuted = ExecuteConsoleCommandWithArgs(Command, InvalidArgs);
+		}
+		catch (...)
+		{
+			// Command crashed - this is a failure
+			UE_LOG(LogTemp, Error, TEXT("TestConsoleCommandInvalidParameters: Command crashed with invalid parameters"));
+			return false;
+		}
+
+		// Copy captured output
+		OutCapturedOutput = Capture.GetCapturedOutput();
+
+		// Command should have executed (even if it logged errors)
+		// The important thing is it didn't crash
+		return bExecuted;
+	}
+
+	bool VerifyConsoleCommandSideEffects(
+		const FString& Command,
+		TFunction<bool()> VerificationFunc)
+	{
+		if (!VerificationFunc)
+		{
+			UE_LOG(LogTemp, Error, TEXT("VerifyConsoleCommandSideEffects: Verification function is null"));
+			return false;
+		}
+
+		// Execute command
+		bool bExecuted = ExecuteConsoleCommand(Command);
+		if (!bExecuted)
+		{
+			UE_LOG(LogTemp, Error, TEXT("VerifyConsoleCommandSideEffects: Command execution failed"));
+			return false;
+		}
+
+		// Verify side effects
+		bool bVerified = VerificationFunc();
+		if (!bVerified)
+		{
+			UE_LOG(LogTemp, Error, TEXT("VerifyConsoleCommandSideEffects: Verification failed for command: %s"), *Command);
+		}
+
+		return bVerified;
+	}
+
+	bool VerifySubsystemCommandsRegistered(
+		const FString& SubsystemName,
+		const TArray<FString>& ExpectedCommands,
+		TArray<FString>& OutMissingCommands)
+	{
+		// Clear output array
+		OutMissingCommands.Empty();
+
+		// Check each expected command
+		for (const FString& CommandName : ExpectedCommands)
+		{
+			if (!IsConsoleCommandRegistered(CommandName))
+			{
+				OutMissingCommands.Add(CommandName);
+				UE_LOG(LogTemp, Warning, TEXT("VerifySubsystemCommandsRegistered: Command not registered: %s"), *CommandName);
+			}
+		}
+
+		// Log results
+		if (OutMissingCommands.Num() == 0)
+		{
+			UE_LOG(LogTemp, Display, TEXT("VerifySubsystemCommandsRegistered: All %d commands registered for %s"),
+				ExpectedCommands.Num(), *SubsystemName);
+			return true;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("VerifySubsystemCommandsRegistered: %d/%d commands missing for %s"),
+				OutMissingCommands.Num(), ExpectedCommands.Num(), *SubsystemName);
+			return false;
+		}
 	}
 }
