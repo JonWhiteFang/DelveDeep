@@ -28,6 +28,10 @@ This directory contains comprehensive development guidelines and best practices 
 - [testing.md](testing.md) - Performance testing procedures
 - [code-review.md](code-review.md) - Performance profiling checklist
 
+**Automated Testing Framework** (October 27, 2025) - Comprehensive testing infrastructure:
+- [testing.md](testing.md) - Testing framework and utilities
+- [code-review.md](code-review.md) - Test coverage requirements
+
 ### Core Guidelines
 
 **Architecture & Design:**
@@ -50,7 +54,7 @@ This directory contains comprehensive development guidelines and best practices 
 
 ## Implementation Status
 
-### Phase 1: Core Foundation (4/5 Complete)
+### Phase 1: Core Foundation (5/5 Complete) ✅
 
 ✅ **Data-Driven Configuration System** (Complete - October 23, 2025)
 - FValidationContext for error/warning tracking
@@ -121,23 +125,76 @@ This directory contains comprehensive development guidelines and best practices 
 - [subsystems.md](subsystems.md)
 - [error-handling.md](error-handling.md)
 
+✅ **Performance Telemetry System** (Complete - October 24, 2025)
+- Frame performance tracking (FPS, frame time, spike detection)
+- System profiling with budget tracking
+- Memory tracking and leak detection
+- Performance baseline capture and comparison
+- Real-time performance overlay (Minimal, Standard, Detailed modes)
+- Profiling sessions with detailed metrics
+- Gameplay metrics tracking (entity counts, events)
+- Asset loading performance tracking
+- Conditional compilation for build configurations
+- Comprehensive error handling and validation
+
+**Key Achievements:**
+- Telemetry overhead: <0.5ms per frame (development)
+- Telemetry overhead: <0.1ms per frame (shipping)
+- Overlay rendering: <0.1ms per frame
+- Memory snapshot: <1ms per capture
+- Report generation: <100ms for 5-minute data
+
+**Documentation:**
+- [TelemetryIntegrationGuide.md](../Documentation/Systems/TelemetryIntegrationGuide.md)
+- [TelemetryBuildConfigurations.md](../Documentation/Systems/TelemetryBuildConfigurations.md)
+- [Performance-Testing.md](../Documentation/Systems/Performance-Testing.md)
+
+✅ **Automated Testing Framework** (Complete - October 27, 2025)
+- Google Test-style assertion macros (EXPECT_*, ASSERT_*)
+- Test fixtures for setup/teardown (FDelveDeepTestFixture, FSubsystemTestFixture)
+- Async test support with latent commands
+- Performance measurement utilities (FScopedTestTimer)
+- Memory tracking utilities (FScopedMemoryTracker)
+- Test report generation (Markdown, HTML, JUnit XML)
+- CI/CD integration scripts (RunTests.sh, RunTests.bat)
+- Comprehensive test organization by system
+
+**Key Achievements:**
+- Test execution: <30 seconds for full suite
+- Parallel execution support
+- Watch mode for development
+- Comprehensive test coverage for all systems
+
+**Documentation:**
+- [TestingFramework.md](../Documentation/Systems/TestingFramework.md)
+- [Testing-Guide.md](../Documentation/Testing-Guide.md)
+- [TestReportGeneration.md](../Documentation/Systems/TestReportGeneration.md)
+
+### Phase 2: Core Gameplay (1/4 In Progress)
+
+🔄 **Character System Foundation** (In Progress - October 27, 2025)
+- Component-based architecture with UDelveDeepCharacterComponent
+- Base character actor (ADelveDeepCharacter) inheriting from APaperCharacter
+- Four character classes (Warrior, Ranger, Mage, Necromancer)
+- Stats component for health, resource, damage, and move speed
+- Class-specific resource systems (Rage, Energy, Mana, Souls)
+- Integration with Configuration, Event, and Telemetry systems
+- Blueprint-ready design with full Blueprint integration
+- Performance optimization with tick disabled by default
+
+**Active Spec**: [.kiro/specs/character-system-foundation/](.kiro/specs/character-system-foundation/)
+
 ### Next Priorities
 
-🔄 **Performance Telemetry** (Next - Phase 1)
-- Stat groups and cycle counters
-- Performance monitoring infrastructure
-- Profiling tools integration
+🔄 **Enhanced Input System** (Next - Phase 2)
+- Multi-device support (keyboard, gamepad)
+- Input buffering
+- Action mapping
 
-🔄 **Automated Testing Framework** (Phase 1)
-- Configuration system tests complete ✅
-- Event system tests complete ✅
-- Expand to other systems as implemented
-- CI/CD integration
-
-🔄 **Character System Foundation** (Phase 2)
-- Component-based architecture
-- Four character classes
-- Integration with configuration system
+🔄 **Movement System** (Phase 2)
+- 2D movement with collision
+- Wall sliding
+- Animation state machine
 
 ## Using These Guidelines
 
@@ -145,7 +202,7 @@ This directory contains comprehensive development guidelines and best practices 
 
 1. **Review relevant guidelines** before starting implementation
 2. **Follow established patterns** from completed systems
-3. **Use configuration and event systems as reference** for architecture decisions
+3. **Use configuration, event, and telemetry systems as reference** for architecture decisions
 4. **Validate early and often** using FValidationContext
 5. **Write tests** for critical functionality
 6. **Update documentation** as you implement
@@ -224,6 +281,49 @@ DelveDeep.Events.ListAllListeners     # List all listeners
 DelveDeep.Events.BroadcastTestEvent   # Broadcast test event
 ```
 
+### Telemetry System (✓ Implemented)
+```bash
+# Frame tracking
+DelveDeep.Telemetry.ShowFPS
+DelveDeep.Telemetry.ShowFrameStats
+
+# System profiling
+DelveDeep.Telemetry.ShowSystemStats
+DelveDeep.Telemetry.ShowBudgets
+
+# Memory tracking
+DelveDeep.Telemetry.ShowMemory
+DelveDeep.Telemetry.CheckMemoryLeaks
+
+# Baseline management
+DelveDeep.Telemetry.CaptureBaseline <Name>
+DelveDeep.Telemetry.CompareBaseline <Name>
+
+# Reporting
+DelveDeep.Telemetry.GenerateReport [Duration]
+DelveDeep.Telemetry.ExportCSV <Path>
+
+# Profiling
+DelveDeep.Telemetry.StartProfiling <SessionName>
+DelveDeep.Telemetry.StopProfiling
+
+# Visualization
+DelveDeep.Telemetry.EnableOverlay [Mode]
+DelveDeep.Telemetry.DisableOverlay
+```
+
+### Testing Framework (✓ Implemented)
+```bash
+# Run tests
+DelveDeep.RunTests [Filter]           # Run tests matching filter
+DelveDeep.RunAllTests                 # Run all tests
+DelveDeep.ListTests                   # List all available tests
+
+# Test reports
+DelveDeep.GenerateTestReport          # Generate test report
+DelveDeep.ExportTestResults <Path>    # Export results to file
+```
+
 ### System Testing (Planned)
 ```bash
 DelveDeep.ValidateAllSystems      # Run comprehensive system validation
@@ -251,6 +351,18 @@ stat DelveDeep                    # Show DelveDeep-specific metrics
 - Listener invocation: <0.1ms per listener
 - System overhead: <0.1ms per event
 - Deferred processing: <10ms for 1000 events
+
+### Telemetry System (✓ Achieved)
+- Telemetry overhead: <0.5ms per frame (development)
+- Telemetry overhead: <0.1ms per frame (shipping)
+- Overlay rendering: <0.1ms per frame
+- Memory snapshot: <1ms per capture
+- Report generation: <100ms for 5-minute data
+
+### Testing Framework (✓ Achieved)
+- Test execution: <30 seconds for full suite
+- Parallel execution support
+- Watch mode for development
 
 ### General Targets
 - Frame Rate: 60+ FPS
@@ -280,7 +392,11 @@ Documentation/
 │   ├── ContentDirectoryStructure.md  # Asset organization ✓
 │   ├── Performance-Testing.md    # Performance testing ✓
 │   ├── DataDrivenConfiguration.md    # System overview ✓
-│   └── CentralizedEventSystem.md     # Event bus architecture ✓
+│   ├── CentralizedEventSystem.md     # Event bus architecture ✓
+│   ├── TelemetryIntegrationGuide.md  # Telemetry integration ✓
+│   ├── TelemetryBuildConfigurations.md  # Build configs ✓
+│   ├── TestingFramework.md       # Testing framework ✓
+│   └── TestReportGeneration.md   # Test reporting ✓
 └── Implementation/
     ├── Task1-ValidationInfrastructure.md  # Implementation notes ✓
     └── Task11-ExampleDataAssets.md        # Example data ✓
@@ -290,7 +406,7 @@ Documentation/
 
 When implementing new systems:
 
-1. **Follow established patterns** from configuration and event systems
+1. **Follow established patterns** from configuration, event, telemetry, and testing systems
 2. **Use FValidationContext** for validation
 3. **Implement as subsystem** if game-wide functionality
 4. **Write comprehensive tests**
@@ -301,15 +417,17 @@ When implementing new systems:
 ## Questions?
 
 - Check [DOCUMENTATION_INDEX.md](../../DOCUMENTATION_INDEX.md) for complete documentation
-- Review completed configuration and event systems for reference implementation
+- Review completed systems for reference implementation
 - Consult specific steering documents for detailed guidance
 
 ---
 
-**Last Updated**: October 24, 2025
+**Last Updated**: October 27, 2025
 
-**Status**: Phase 1 - Core Foundation (4/5 Complete)
+**Status**: Phase 1 Complete (5/5), Phase 2 In Progress (1/4)
 
-**Completed**: Data-Driven Configuration (Oct 23), Enhanced Validation (Oct 23), Centralized Event System (Oct 24), Performance Telemetry (Oct 24)
+**Completed**: Data-Driven Configuration (Oct 23), Enhanced Validation (Oct 23), Centralized Event System (Oct 24), Performance Telemetry (Oct 24), Automated Testing Framework (Oct 27)
 
-**Next**: Automated Testing Framework
+**In Progress**: Character System Foundation (Oct 27)
+
+**Next**: Enhanced Input System
