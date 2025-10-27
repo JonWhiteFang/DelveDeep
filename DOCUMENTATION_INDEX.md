@@ -200,6 +200,7 @@ DelveDeep.Telemetry.DisableOverlay
 **Status**: In Progress (October 27, 2025)
 
 **Core Documentation**:
+- **[TestingFramework.md](Documentation/Systems/TestingFramework.md)**: Complete testing framework documentation
 - **[TestReportGeneration.md](Documentation/Systems/TestReportGeneration.md)**: Test report generation and export
 - **[Testing-Guide.md](Documentation/Testing-Guide.md)**: Comprehensive testing guide
 - **[Performance-Testing.md](Documentation/Systems/Performance-Testing.md)**: Performance testing procedures
