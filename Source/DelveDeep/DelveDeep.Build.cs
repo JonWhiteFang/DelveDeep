@@ -25,7 +25,9 @@ public class DelveDeep : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{
-			"AssetRegistry"  // For hot reload support
+			"AssetRegistry",  // For hot reload support
+			"Json",           // For test data loading
+			"JsonUtilities"  // For JSON serialization
 		});
 	}
 }

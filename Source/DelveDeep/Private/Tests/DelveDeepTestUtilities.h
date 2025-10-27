@@ -485,6 +485,233 @@ namespace DelveDeepTestUtils
 	};
 
 	// ========================================
+	// Blueprint Testing Utilities
+	// ========================================
+
+	/**
+	 * Calls a Blueprint-callable function from C++ tests.
+	 * 
+	 * @param Object The object containing the function
+	 * @param FunctionName Name of the Blueprint-callable function
+	 * @param Params Optional parameters to pass to the function
+	 * @return True if function was found and called successfully
+	 */
+	DELVEDEEP_API bool CallBlueprintFunction(
+		UObject* Object,
+		const FString& FunctionName,
+		const TArray<FString>& Params = TArray<FString>());
+
+	/**
+	 * Reads a Blueprint-exposed property value.
+	 * 
+	 * @param Object The object containing the property
+	 * @param PropertyName Name of the Blueprint-exposed property
+	 * @param OutValue String representation of the property value
+	 * @return True if property was found and read successfully
+	 */
+	DELVEDEEP_API bool ReadBlueprintProperty(
+		UObject* Object,
+		const FString& PropertyName,
+		FString& OutValue);
+
+	/**
+	 * Writes a Blueprint-exposed property value.
+	 * 
+	 * @param Object The object containing the property
+	 * @param PropertyName Name of the Blueprint-exposed property
+	 * @param Value String representation of the value to set
+	 * @return True if property was found and written successfully
+	 */
+	DELVEDEEP_API bool WriteBlueprintProperty(
+		UObject* Object,
+		const FString& PropertyName,
+		const FString& Value);
+
+	/**
+	 * Triggers a Blueprint event and verifies it was broadcast.
+	 * 
+	 * @param Object The object that broadcasts the event
+	 * @param EventName Name of the Blueprint event
+	 * @param OutEventTriggered Set to true if event was triggered
+	 * @return True if event mechanism was found
+	 */
+	DELVEDEEP_API bool TriggerBlueprintEvent(
+		UObject* Object,
+		const FString& EventName,
+		bool& OutEventTriggered);
+
+	/**
+	 * Verifies that a Blueprint-callable function handles invalid inputs gracefully.
+	 * 
+	 * @param Object The object containing the function
+	 * @param FunctionName Name of the Blueprint-callable function
+	 * @param InvalidParams Array of invalid parameters to test
+	 * @return True if function handled invalid inputs without crashing
+	 */
+	DELVEDEEP_API bool TestBlueprintFunctionInvalidInputs(
+		UObject* Object,
+		const FString& FunctionName,
+		const TArray<FString>& InvalidParams);
+
+	/**
+	 * Tests a static Blueprint function library method.
+	 * 
+	 * @param LibraryClass The Blueprint function library class
+	 * @param FunctionName Name of the static function
+	 * @param Params Optional parameters to pass to the function
+	 * @return True if function was found and called successfully
+	 */
+	DELVEDEEP_API bool TestBlueprintLibraryFunction(
+		UClass* LibraryClass,
+		const FString& FunctionName,
+		const TArray<FString>& Params = TArray<FString>());
+
+	// ========================================
+	// Error Handling Testing Utilities
+	// ========================================
+
+	/**
+	 * Simulates an error scenario for testing error handling.
+	 * 
+	 * @param ErrorType Type of error to simulate ("NullPointer", "InvalidData", "OutOfRange", etc.)
+	 * @param Context Validation context to receive error messages
+	 * @return True if error was simulated successfully
+	 */
+	DELVEDEEP_API bool SimulateErrorScenario(
+		const FString& ErrorType,
+		FValidationContext& Context);
+
+	/**
+	 * Verifies that an error was logged with the appropriate severity.
+	 * 
+	 * @param ExpectedMessage Expected error message substring
+	 * @param ExpectedSeverity Expected log severity ("Error", "Warning", "Display")
+	 * @param CapturedOutput Captured log output to search
+	 * @return True if error was logged with correct severity
+	 */
+	DELVEDEEP_API bool VerifyErrorLogged(
+		const FString& ExpectedMessage,
+		const FString& ExpectedSeverity,
+		const TArray<FString>& CapturedOutput);
+
+	/**
+	 * Tests error recovery by simulating an error and verifying recovery.
+	 * 
+	 * @param ErrorFunc Function that triggers an error
+	 * @param RecoveryFunc Function that should recover from the error
+	 * @param VerificationFunc Function that verifies successful recovery
+	 * @return True if error recovery succeeded
+	 */
+	DELVEDEEP_API bool TestErrorRecovery(
+		TFunction<void()> ErrorFunc,
+		TFunction<void()> RecoveryFunc,
+		TFunction<bool()> VerificationFunc);
+
+	/**
+	 * Verifies that validation error messages are clear and actionable.
+	 * 
+	 * @param Context Validation context containing error messages
+	 * @param RequiredElements Array of required elements in error messages (e.g., "value", "expected")
+	 * @return True if all error messages contain required elements
+	 */
+	DELVEDEEP_API bool VerifyValidationErrorQuality(
+		const FValidationContext& Context,
+		const TArray<FString>& RequiredElements);
+
+	/**
+	 * Tests error propagation through FValidationContext.
+	 * 
+	 * @param SourceContext Source validation context with errors
+	 * @param TargetContext Target validation context that should receive errors
+	 * @param PropagationFunc Function that propagates errors between contexts
+	 * @return True if errors were propagated correctly
+	 */
+	DELVEDEEP_API bool TestErrorPropagation(
+		const FValidationContext& SourceContext,
+		FValidationContext& TargetContext,
+		TFunction<void(const FValidationContext&, FValidationContext&)> PropagationFunc);
+
+	// ========================================
+	// Test Data Loading Utilities
+	// ========================================
+
+	/**
+	 * Loads test data from a JSON file.
+	 * 
+	 * @param FilePath Path to the JSON file (relative to project directory)
+	 * @param OutJsonObject Parsed JSON object
+	 * @return True if file was loaded and parsed successfully
+	 */
+	DELVEDEEP_API bool LoadTestDataFromJSON(
+		const FString& FilePath,
+		TSharedPtr<FJsonObject>& OutJsonObject);
+
+	/**
+	 * Loads test data from a CSV file.
+	 * 
+	 * @param FilePath Path to the CSV file (relative to project directory)
+	 * @param OutRows Array of rows, each row is an array of column values
+	 * @param bHasHeader True if first row contains column headers
+	 * @return True if file was loaded and parsed successfully
+	 */
+	DELVEDEEP_API bool LoadTestDataFromCSV(
+		const FString& FilePath,
+		TArray<TArray<FString>>& OutRows,
+		bool bHasHeader = true);
+
+	/**
+	 * Creates a parameterized test dataset from JSON.
+	 * 
+	 * @param JsonObject JSON object containing test data
+	 * @param DatasetName Name of the dataset array in JSON
+	 * @param OutTestCases Array of test case data
+	 * @return True if dataset was extracted successfully
+	 */
+	DELVEDEEP_API bool CreateParameterizedTestDataset(
+		const TSharedPtr<FJsonObject>& JsonObject,
+		const FString& DatasetName,
+		TArray<TSharedPtr<FJsonObject>>& OutTestCases);
+
+	/**
+	 * Generates realistic test data matching production schemas.
+	 * 
+	 * @param SchemaType Type of schema to generate ("Character", "Monster", "Weapon", etc.)
+	 * @param Count Number of test data instances to generate
+	 * @param OutData Array of generated test data objects
+	 * @return True if data was generated successfully
+	 */
+	DELVEDEEP_API bool GenerateRealisticTestData(
+		const FString& SchemaType,
+		int32 Count,
+		TArray<UObject*>& OutData);
+
+	/**
+	 * Creates test data with varying sizes for scalability testing.
+	 * 
+	 * @param BaseData Base test data to scale
+	 * @param Sizes Array of sizes to generate (e.g., [10, 100, 1000])
+	 * @param OutDatasets Map of size to generated datasets
+	 * @return True if datasets were generated successfully
+	 */
+	DELVEDEEP_API bool CreateScalabilityTestDatasets(
+		UObject* BaseData,
+		const TArray<int32>& Sizes,
+		TMap<int32, TArray<UObject*>>& OutDatasets);
+
+	/**
+	 * Validates test data against a schema.
+	 * 
+	 * @param Data Test data to validate
+	 * @param SchemaType Expected schema type
+	 * @param Context Validation context for error tracking
+	 * @return True if data matches schema
+	 */
+	DELVEDEEP_API bool ValidateTestDataSchema(
+		UObject* Data,
+		const FString& SchemaType,
+		FValidationContext& Context);
+
+	// ========================================
 	// Console Command Testing
 	// ========================================
 
