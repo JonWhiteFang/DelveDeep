@@ -1,0 +1,272 @@
+# DelveDeep GitLab CI/CD Pipeline
+# Automated testing for Unreal Engine 5.6 project
+
+variables:
+  UE_VERSION: "5.6"
+  PROJECT_NAME: "DelveDeep"
+  UE_ROOT_WINDOWS: "C:\\UnrealEngine"
+  UE_ROOT_LINUX: "/opt/UnrealEngine"
+
+stages:
+  - build
+  - test
+  - coverage
+  - report
+  - deploy
+
+# Build stage
+build:windows:
+  stage: build
+  tags:
+    - windows
+    - unreal
+  script:
+    - echo "Building DelveDeep on Windows..."
+    - $env:UE_ROOT = $UE_ROOT_WINDOWS
+    - & "$env:UE_ROOT\Engine\Build\BatchFiles\Build.bat" DelveDeepEditor Win64 Development "$PWD\DelveDeep.uproject" -waitmutex
+  artifacts:
+    paths:
+      - Binaries/
+      - Intermediate/
+    expire_in: 1 day
+  only:
+    - main
+    - develop
+    - merge_requests
+
+build:linux:
+  stage: build
+  tags:
+    - linux
+    - unreal
+  script:
+    - echo "Building DelveDeep on Linux..."
+    - export UE_ROOT=$UE_ROOT_LINUX
+    - $UE_ROOT/Engine/Build/BatchFiles/Linux/Build.sh DelveDeepEditor Linux Development "$PWD/DelveDeep.uproject" -waitmutex
+  artifacts:
+    paths:
+      - Binaries/
+      - Intermediate/
+    expire_in: 1 day
+  only:
+    - main
+    - develop
+    - merge_requests
+
+# Test stages
+test:unit:windows:
+  stage: test
+  tags:
+    - windows
+    - unreal
+  dependencies:
+    - build:windows
+  script:
+    - echo "Running unit tests on Windows..."
+    - .\RunTests.bat -filter=Product -output=TestResults\unit
+  artifacts:
+    when: always
+    paths:
+      - TestResults/unit/
+    reports:
+      junit: TestResults/unit/*.xml
+    expire_in: 30 days
+  only:
+    - main
+    - develop
+    - merge_requests
+
+test:unit:linux:
+  stage: test
+  tags:
+    - linux
+    - unreal
+  dependencies:
+    - build:linux
+  script:
+    - echo "Running unit tests on Linux..."
+    - ./RunTests.sh --filter=Product --output=TestResults/unit
+  artifacts:
+    when: always
+    paths:
+      - TestResults/unit/
+    reports:
+      junit: TestResults/unit/*.xml
+    expire_in: 30 days
+  only:
+    - main
+    - develop
+    - merge_requests
+
+test:integration:windows:
+  stage: test
+  tags:
+    - windows
+    - unreal
+  dependencies:
+    - build:windows
+  script:
+    - echo "Running integration tests on Windows..."
+    - .\RunTests.bat -filter=Integration -output=TestResults\integration
+  artifacts:
+    when: always
+    paths:
+      - TestResults/integration/
+    reports:
+      junit: TestResults/integration/*.xml
+    expire_in: 30 days
+  only:
+    - main
+    - develop
+    - merge_requests
+
+test:integration:linux:
+  stage: test
+  tags:
+    - linux
+    - unreal
+  dependencies:
+    - build:linux
+  script:
+    - echo "Running integration tests on Linux..."
+    - ./RunTests.sh --filter=Integration --output=TestResults/integration
+  artifacts:
+    when: always
+    paths:
+      - TestResults/integration/
+    reports:
+      junit: TestResults/integration/*.xml
+    expire_in: 30 days
+  only:
+    - main
+    - develop
+    - merge_requests
+
+test:performance:windows:
+  stage: test
+  tags:
+    - windows
+    - unreal
+  dependencies:
+    - build:windows
+  script:
+    - echo "Running performance tests on Windows..."
+    - .\RunTests.bat -filter=Perf -output=TestResults\performance
+  artifacts:
+    when: always
+    paths:
+      - TestResults/performance/
+    reports:
+      junit: TestResults/performance/*.xml
+    expire_in: 30 days
+  only:
+    - main
+    - develop
+    - merge_requests
+  allow_failure: true
+
+test:performance:linux:
+  stage: test
+  tags:
+    - linux
+    - unreal
+  dependencies:
+    - build:linux
+  script:
+    - echo "Running performance tests on Linux..."
+    - ./RunTests.sh --filter=Perf --output=TestResults/performance
+  artifacts:
+    when: always
+    paths:
+      - TestResults/performance/
+    reports:
+      junit: TestResults/performance/*.xml
+    expire_in: 30 days
+  only:
+    - main
+    - develop
+    - merge_requests
+  allow_failure: true
+
+# Coverage stage
+coverage:
+  stage: coverage
+  tags:
+    - linux
+    - unreal
+  dependencies:
+    - test:unit:linux
+    - test:integration:linux
+  script:
+    - echo "Generating code coverage report..."
+    - ./Scripts/generate-coverage.sh
+  coverage: '/Total Coverage: \d+\.\d+%/'
+  artifacts:
+    paths:
+      - TestResults/coverage/
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: TestResults/coverage/coverage.xml
+    expire_in: 90 days
+  only:
+    - main
+    - develop
+    - merge_requests
+
+# Report stage
+report:consolidated:
+  stage: report
+  tags:
+    - linux
+  dependencies:
+    - test:unit:windows
+    - test:unit:linux
+    - test:integration:windows
+    - test:integration:linux
+    - test:performance:windows
+    - test:performance:linux
+  script:
+    - echo "Generating consolidated test report..."
+    - ./Scripts/generate-report.sh
+  artifacts:
+    paths:
+      - TestResults/consolidated-report.html
+      - TestResults/summary.txt
+    expire_in: 90 days
+  only:
+    - main
+    - develop
+    - merge_requests
+
+# Deploy stage
+pages:
+  stage: deploy
+  tags:
+    - linux
+  dependencies:
+    - report:consolidated
+    - coverage
+  script:
+    - mkdir -p public
+    - cp -r TestResults/* public/
+    - echo "Test reports deployed to GitLab Pages"
+  artifacts:
+    paths:
+      - public
+    expire_in: 90 days
+  only:
+    - main
+
+# Notification on failure
+notify:failure:
+  stage: .post
+  tags:
+    - linux
+  script:
+    - echo "Tests failed! Sending notification..."
+    - 'curl -X POST -H "Content-Type: application/json" -d "{\"text\":\"DelveDeep tests failed on $CI_COMMIT_REF_NAME\"}" $SLACK_WEBHOOK_URL'
+  when: on_failure
+  only:
+    - main
+    - develop
