@@ -195,6 +195,35 @@ DelveDeep.Telemetry.DisableOverlay
 
 **Archived Spec**: [.kiro/specs/archived/performance-telemetry/](.kiro/specs/archived/performance-telemetry/)
 
+#### Automated Testing Framework 🔄
+
+**Status**: In Progress (October 27, 2025)
+
+**Core Documentation**:
+- **[TestReportGeneration.md](Documentation/Systems/TestReportGeneration.md)**: Test report generation and export
+- **[Testing-Guide.md](Documentation/Testing-Guide.md)**: Comprehensive testing guide
+- **[Performance-Testing.md](Documentation/Systems/Performance-Testing.md)**: Performance testing procedures
+
+**Key Features**:
+- Google Test-style assertion macros (EXPECT_*, ASSERT_*)
+- Test fixtures for setup/teardown (FDelveDeepTestFixture, FSubsystemTestFixture)
+- Async test support with latent commands
+- Performance measurement utilities (FScopedTestTimer)
+- Memory tracking utilities (FScopedMemoryTracker)
+- Test report generation (Markdown, HTML, JUnit XML)
+- CI/CD integration scripts (RunTests.sh, RunTests.bat)
+- Comprehensive test organization by system
+
+**Test Report Features**:
+- FDelveDeepTestResult: Individual test result tracking
+- FDelveDeepTestReport: Aggregated statistics and metrics
+- Multiple export formats (Markdown, HTML, JUnit XML)
+- Suite-level execution time tracking
+- Pass rate and performance metrics
+- CI/CD dashboard integration
+
+**Active Spec**: [.kiro/specs/automated-testing-framework/](.kiro/specs/automated-testing-framework/)
+
 ### Planned Systems
 
 #### Phase 1: Core Foundation (4/5 Complete)

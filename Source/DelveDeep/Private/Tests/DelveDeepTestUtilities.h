@@ -6,6 +6,7 @@
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "DelveDeepValidation.h"
+#include "DelveDeepTestReport.h"
 
 /**
  * DelveDeep Test Utilities
