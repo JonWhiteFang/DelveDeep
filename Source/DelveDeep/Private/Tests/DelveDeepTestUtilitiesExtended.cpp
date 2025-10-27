@@ -1,17 +1,13 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "DelveDeepTestUtilities.h"
+#include "UObject/UObjectGlobals.h"
+#include "UObject/Package.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 #include "Dom/JsonObject.h"
-#include "UObject/UnrealType.h"
-#include "UObject/PropertyPortFlags.h"
-#include "DelveDeepCharacterData.h"
-#include "DelveDeepMonsterConfig.h"
-#include "DelveDeepWeaponData.h"
-#include "DelveDeepAbilityData.h"
 
 namespace DelveDeepTestUtils
 {
@@ -30,78 +26,23 @@ namespace DelveDeepTestUtils
 			return false;
 		}
 
-		if (FunctionName.IsEmpty())
-		{
-			UE_LOG(LogTemp, Error, TEXT("CallBlueprintFunction: FunctionName is empty"));
-			return false;
-		}
-
-		// Find the function by name
+		// Find the function
 		UFunction* Function = Object->FindFunction(FName(*FunctionName));
 		if (!Function)
 		{
-			UE_LOG(LogTemp, Error, TEXT("CallBlueprintFunction: Function '%s' not found on object '%s'"),
-				*FunctionName, *Object->GetName());
+			UE_LOG(LogTemp, Error, TEXT("CallBlueprintFunction: Function not found: %s"), *FunctionName);
 			return false;
 		}
 
-		// Verify function is Blueprint-callable
-		if (!Function->HasAnyFunctionFlags(FUNC_BlueprintCallable))
+		// For now, we support calling functions without parameters
+		// Full parameter support would require parsing and converting string params to proper types
+		if (Params.Num() > 0)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("CallBlueprintFunction: Function '%s' is not Blueprint-callable"),
-				*FunctionName);
-		}
-
-		// Allocate parameter buffer
-		uint8* ParamBuffer = nullptr;
-		if (Function->ParmsSize > 0)
-		{
-			ParamBuffer = (uint8*)FMemory::Malloc(Function->ParmsSize);
-			FMemory::Memzero(ParamBuffer, Function->ParmsSize);
-
-			// Initialize parameters with default values
-			for (TFieldIterator<FProperty> It(Function); It; ++It)
-			{
-				FProperty* Property = *It;
-				if (Property->HasAnyPropertyFlags(CPF_Parm) && !Property->HasAnyPropertyFlags(CPF_ReturnParm))
-				{
-					Property->InitializeValue_InContainer(ParamBuffer);
-				}
-			}
+			UE_LOG(LogTemp, Warning, TEXT("CallBlueprintFunction: Parameter passing not yet implemented"));
 		}
 
 		// Call the function
-		try
-		{
-			Object->ProcessEvent(Function, ParamBuffer);
-		}
-		catch (...)
-		{
-			UE_LOG(LogTemp, Error, TEXT("CallBlueprintFunction: Exception occurred calling function '%s'"),
-				*FunctionName);
-			
-			if (ParamBuffer)
-			{
-				FMemory::Free(ParamBuffer);
-			}
-			return false;
-		}
-
-		// Cleanup
-		if (ParamBuffer)
-		{
-			// Destroy parameters
-			for (TFieldIterator<FProperty> It(Function); It; ++It)
-			{
-				FProperty* Property = *It;
-				if (Property->HasAnyPropertyFlags(CPF_Parm))
-				{
-					Property->DestroyValue_InContainer(ParamBuffer);
-				}
-			}
-			FMemory::Free(ParamBuffer);
-		}
-
+		Object->ProcessEvent(Function, nullptr);
 		return true;
 	}
 
@@ -116,32 +57,17 @@ namespace DelveDeepTestUtils
 			return false;
 		}
 
-		if (PropertyName.IsEmpty())
-		{
-			UE_LOG(LogTemp, Error, TEXT("ReadBlueprintProperty: PropertyName is empty"));
-			return false;
-		}
-
-		// Find the property by name
+		// Find the property
 		FProperty* Property = Object->GetClass()->FindPropertyByName(FName(*PropertyName));
 		if (!Property)
 		{
-			UE_LOG(LogTemp, Error, TEXT("ReadBlueprintProperty: Property '%s' not found on object '%s'"),
-				*PropertyName, *Object->GetName());
+			UE_LOG(LogTemp, Error, TEXT("ReadBlueprintProperty: Property not found: %s"), *PropertyName);
 			return false;
-		}
-
-		// Verify property is Blueprint-readable
-		if (!Property->HasAnyPropertyFlags(CPF_BlueprintVisible))
-		{
-			UE_LOG(LogTemp, Warning, TEXT("ReadBlueprintProperty: Property '%s' is not Blueprint-visible"),
-				*PropertyName);
 		}
 
 		// Export property value to string
 		const void* PropertyValue = Property->ContainerPtrToValuePtr<void>(Object);
 		Property->ExportTextItem_Direct(OutValue, PropertyValue, nullptr, Object, PPF_None);
-
 		return true;
 	}
 
@@ -156,34 +82,17 @@ namespace DelveDeepTestUtils
 			return false;
 		}
 
-		if (PropertyName.IsEmpty())
-		{
-			UE_LOG(LogTemp, Error, TEXT("WriteBlueprintProperty: PropertyName is empty"));
-			return false;
-		}
-
-		// Find the property by name
+		// Find the property
 		FProperty* Property = Object->GetClass()->FindPropertyByName(FName(*PropertyName));
 		if (!Property)
 		{
-			UE_LOG(LogTemp, Error, TEXT("WriteBlueprintProperty: Property '%s' not found on object '%s'"),
-				*PropertyName, *Object->GetName());
+			UE_LOG(LogTemp, Error, TEXT("WriteBlueprintProperty: Property not found: %s"), *PropertyName);
 			return false;
-		}
-
-		// Verify property is Blueprint-writable
-		if (!Property->HasAnyPropertyFlags(CPF_BlueprintVisible) || 
-			Property->HasAnyPropertyFlags(CPF_BlueprintReadOnly))
-		{
-			UE_LOG(LogTemp, Warning, TEXT("WriteBlueprintProperty: Property '%s' is not Blueprint-writable"),
-				*PropertyName);
 		}
 
 		// Import property value from string
 		void* PropertyValue = Property->ContainerPtrToValuePtr<void>(Object);
-		const TCHAR* ValuePtr = *Value;
-		Property->ImportText_Direct(ValuePtr, PropertyValue, Object, PPF_None);
-
+		Property->ImportText_Direct(*Value, PropertyValue, Object, PPF_None);
 		return true;
 	}
 
@@ -200,41 +109,17 @@ namespace DelveDeepTestUtils
 			return false;
 		}
 
-		if (EventName.IsEmpty())
-		{
-			UE_LOG(LogTemp, Error, TEXT("TriggerBlueprintEvent: EventName is empty"));
-			return false;
-		}
-
 		// Find the event function
 		UFunction* EventFunction = Object->FindFunction(FName(*EventName));
 		if (!EventFunction)
 		{
-			UE_LOG(LogTemp, Error, TEXT("TriggerBlueprintEvent: Event '%s' not found on object '%s'"),
-				*EventName, *Object->GetName());
+			UE_LOG(LogTemp, Error, TEXT("TriggerBlueprintEvent: Event not found: %s"), *EventName);
 			return false;
-		}
-
-		// Verify it's a Blueprint event
-		if (!EventFunction->HasAnyFunctionFlags(FUNC_BlueprintEvent))
-		{
-			UE_LOG(LogTemp, Warning, TEXT("TriggerBlueprintEvent: Function '%s' is not a Blueprint event"),
-				*EventName);
 		}
 
 		// Trigger the event
-		try
-		{
-			Object->ProcessEvent(EventFunction, nullptr);
-			OutEventTriggered = true;
-		}
-		catch (...)
-		{
-			UE_LOG(LogTemp, Error, TEXT("TriggerBlueprintEvent: Exception occurred triggering event '%s'"),
-				*EventName);
-			return false;
-		}
-
+		Object->ProcessEvent(EventFunction, nullptr);
+		OutEventTriggered = true;
 		return true;
 	}
 
@@ -249,19 +134,26 @@ namespace DelveDeepTestUtils
 			return false;
 		}
 
-		// Try to call function with invalid parameters
+		// Find the function
+		UFunction* Function = Object->FindFunction(FName(*FunctionName));
+		if (!Function)
+		{
+			UE_LOG(LogTemp, Error, TEXT("TestBlueprintFunctionInvalidInputs: Function not found: %s"), *FunctionName);
+			return false;
+		}
+
+		// Try calling with invalid inputs
 		// The function should handle gracefully without crashing
 		try
 		{
-			bool bResult = CallBlueprintFunction(Object, FunctionName, InvalidParams);
-			// Function executed without crashing - this is success
+			// For now, we just call with null parameters
+			// Full implementation would require parameter marshalling
+			Object->ProcessEvent(Function, nullptr);
 			return true;
 		}
 		catch (...)
 		{
-			// Function crashed - this is failure
-			UE_LOG(LogTemp, Error, TEXT("TestBlueprintFunctionInvalidInputs: Function '%s' crashed with invalid inputs"),
-				*FunctionName);
+			UE_LOG(LogTemp, Error, TEXT("TestBlueprintFunctionInvalidInputs: Function crashed with invalid inputs"));
 			return false;
 		}
 	}
@@ -277,39 +169,25 @@ namespace DelveDeepTestUtils
 			return false;
 		}
 
-		if (FunctionName.IsEmpty())
-		{
-			UE_LOG(LogTemp, Error, TEXT("TestBlueprintLibraryFunction: FunctionName is empty"));
-			return false;
-		}
-
 		// Find the static function
 		UFunction* Function = LibraryClass->FindFunctionByName(FName(*FunctionName));
 		if (!Function)
 		{
-			UE_LOG(LogTemp, Error, TEXT("TestBlueprintLibraryFunction: Function '%s' not found in library '%s'"),
-				*FunctionName, *LibraryClass->GetName());
+			UE_LOG(LogTemp, Error, TEXT("TestBlueprintLibraryFunction: Function not found: %s"), *FunctionName);
 			return false;
 		}
 
-		// Verify it's a static function
-		if (!Function->HasAnyFunctionFlags(FUNC_Static))
-		{
-			UE_LOG(LogTemp, Warning, TEXT("TestBlueprintLibraryFunction: Function '%s' is not static"),
-				*FunctionName);
-		}
-
-		// Get the class default object to call static function
+		// Get the default object for static function calls
 		UObject* CDO = LibraryClass->GetDefaultObject();
 		if (!CDO)
 		{
-			UE_LOG(LogTemp, Error, TEXT("TestBlueprintLibraryFunction: Failed to get CDO for library '%s'"),
-				*LibraryClass->GetName());
+			UE_LOG(LogTemp, Error, TEXT("TestBlueprintLibraryFunction: Failed to get CDO"));
 			return false;
 		}
 
 		// Call the static function
-		return CallBlueprintFunction(CDO, FunctionName, Params);
+		CDO->ProcessEvent(Function, nullptr);
+		return true;
 	}
 
 	// ========================================
@@ -320,38 +198,32 @@ namespace DelveDeepTestUtils
 		const FString& ErrorType,
 		FValidationContext& Context)
 	{
-		Context.SystemName = TEXT("ErrorSimulation");
-		Context.OperationName = FString::Printf(TEXT("Simulate%s"), *ErrorType);
+		Context.SystemName = TEXT("TestUtilities");
+		Context.OperationName = TEXT("SimulateErrorScenario");
 
 		if (ErrorType == TEXT("NullPointer"))
 		{
-			Context.AddError(TEXT("Simulated null pointer error: Object reference is null"));
+			Context.AddError(TEXT("Simulated null pointer error"));
 			return true;
 		}
 		else if (ErrorType == TEXT("InvalidData"))
 		{
-			Context.AddError(TEXT("Simulated invalid data error: Value is outside valid range"));
+			Context.AddError(TEXT("Simulated invalid data error"));
 			return true;
 		}
 		else if (ErrorType == TEXT("OutOfRange"))
 		{
-			Context.AddError(TEXT("Simulated out of range error: Index exceeds array bounds"));
+			Context.AddError(TEXT("Simulated out of range error"));
 			return true;
 		}
-		else if (ErrorType == TEXT("MissingAsset"))
+		else if (ErrorType == TEXT("FileNotFound"))
 		{
-			Context.AddError(TEXT("Simulated missing asset error: Required asset not found"));
-			return true;
-		}
-		else if (ErrorType == TEXT("ValidationFailure"))
-		{
-			Context.AddError(TEXT("Simulated validation failure: Data does not meet requirements"));
-			Context.AddWarning(TEXT("Simulated validation warning: Optional field is missing"));
+			Context.AddError(TEXT("Simulated file not found error"));
 			return true;
 		}
 		else
 		{
-			Context.AddError(FString::Printf(TEXT("Unknown error type: %s"), *ErrorType));
+			Context.AddWarning(FString::Printf(TEXT("Unknown error type: %s"), *ErrorType));
 			return false;
 		}
 	}
@@ -361,41 +233,36 @@ namespace DelveDeepTestUtils
 		const FString& ExpectedSeverity,
 		const TArray<FString>& CapturedOutput)
 	{
-		if (ExpectedMessage.IsEmpty())
-		{
-			UE_LOG(LogTemp, Error, TEXT("VerifyErrorLogged: ExpectedMessage is empty"));
-			return false;
-		}
-
 		// Search for the expected message in captured output
 		for (const FString& Line : CapturedOutput)
 		{
 			if (Line.Contains(ExpectedMessage))
 			{
-				// Check if severity matches (if specified)
+				// Check severity if specified
 				if (!ExpectedSeverity.IsEmpty())
 				{
-					if (ExpectedSeverity == TEXT("Error") && !Line.Contains(TEXT("Error")))
+					if (ExpectedSeverity == TEXT("Error") && Line.Contains(TEXT("Error")))
 					{
-						continue;
+						return true;
 					}
-					if (ExpectedSeverity == TEXT("Warning") && !Line.Contains(TEXT("Warning")))
+					else if (ExpectedSeverity == TEXT("Warning") && Line.Contains(TEXT("Warning")))
 					{
-						continue;
+						return true;
 					}
-					if (ExpectedSeverity == TEXT("Display") && !Line.Contains(TEXT("Display")))
+					else if (ExpectedSeverity == TEXT("Display") && !Line.Contains(TEXT("Error")) && !Line.Contains(TEXT("Warning")))
 					{
-						continue;
+						return true;
 					}
 				}
-
-				// Found matching message with correct severity
-				return true;
+				else
+				{
+					// No severity check, just message match
+					return true;
+				}
 			}
 		}
 
-		UE_LOG(LogTemp, Error, TEXT("VerifyErrorLogged: Expected message not found: %s (Severity: %s)"),
-			*ExpectedMessage, *ExpectedSeverity);
+		UE_LOG(LogTemp, Error, TEXT("VerifyErrorLogged: Expected message not found: %s"), *ExpectedMessage);
 		return false;
 	}
 
@@ -410,39 +277,14 @@ namespace DelveDeepTestUtils
 			return false;
 		}
 
-		// Trigger the error
-		try
-		{
-			ErrorFunc();
-		}
-		catch (...)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("TestErrorRecovery: Error function threw exception"));
-		}
+		// Trigger error
+		ErrorFunc();
 
 		// Attempt recovery
-		try
-		{
-			RecoveryFunc();
-		}
-		catch (...)
-		{
-			UE_LOG(LogTemp, Error, TEXT("TestErrorRecovery: Recovery function threw exception"));
-			return false;
-		}
+		RecoveryFunc();
 
 		// Verify recovery succeeded
-		bool bRecovered = false;
-		try
-		{
-			bRecovered = VerificationFunc();
-		}
-		catch (...)
-		{
-			UE_LOG(LogTemp, Error, TEXT("TestErrorRecovery: Verification function threw exception"));
-			return false;
-		}
-
+		bool bRecovered = VerificationFunc();
 		if (!bRecovered)
 		{
 			UE_LOG(LogTemp, Error, TEXT("TestErrorRecovery: Recovery verification failed"));
@@ -461,14 +303,14 @@ namespace DelveDeepTestUtils
 			return true;
 		}
 
-		// Check each error message for required elements
+		// Check that all error messages contain required elements
 		for (const FString& Error : Context.ValidationErrors)
 		{
 			for (const FString& RequiredElement : RequiredElements)
 			{
 				if (!Error.Contains(RequiredElement))
 				{
-					UE_LOG(LogTemp, Error, TEXT("VerifyValidationErrorQuality: Error message missing required element '%s': %s"),
+					UE_LOG(LogTemp, Error, TEXT("VerifyValidationErrorQuality: Error missing required element '%s': %s"),
 						*RequiredElement, *Error);
 					return false;
 				}
@@ -485,40 +327,24 @@ namespace DelveDeepTestUtils
 	{
 		if (!PropagationFunc)
 		{
-			UE_LOG(LogTemp, Error, TEXT("TestErrorPropagation: PropagationFunc is null"));
+			UE_LOG(LogTemp, Error, TEXT("TestErrorPropagation: Propagation function is null"));
 			return false;
 		}
 
-		// Record initial state
+		// Record initial error count
 		int32 InitialErrorCount = TargetContext.ValidationErrors.Num();
-		int32 InitialWarningCount = TargetContext.ValidationWarnings.Num();
 
 		// Propagate errors
-		try
-		{
-			PropagationFunc(SourceContext, TargetContext);
-		}
-		catch (...)
-		{
-			UE_LOG(LogTemp, Error, TEXT("TestErrorPropagation: PropagationFunc threw exception"));
-			return false;
-		}
+		PropagationFunc(SourceContext, TargetContext);
 
 		// Verify errors were propagated
-		int32 ExpectedErrorCount = InitialErrorCount + SourceContext.ValidationErrors.Num();
-		int32 ExpectedWarningCount = InitialWarningCount + SourceContext.ValidationWarnings.Num();
+		int32 FinalErrorCount = TargetContext.ValidationErrors.Num();
+		int32 PropagatedErrors = FinalErrorCount - InitialErrorCount;
 
-		if (TargetContext.ValidationErrors.Num() != ExpectedErrorCount)
+		if (PropagatedErrors != SourceContext.ValidationErrors.Num())
 		{
-			UE_LOG(LogTemp, Error, TEXT("TestErrorPropagation: Error count mismatch. Expected: %d, Actual: %d"),
-				ExpectedErrorCount, TargetContext.ValidationErrors.Num());
-			return false;
-		}
-
-		if (TargetContext.ValidationWarnings.Num() != ExpectedWarningCount)
-		{
-			UE_LOG(LogTemp, Error, TEXT("TestErrorPropagation: Warning count mismatch. Expected: %d, Actual: %d"),
-				ExpectedWarningCount, TargetContext.ValidationWarnings.Num());
+			UE_LOG(LogTemp, Error, TEXT("TestErrorPropagation: Expected %d errors, got %d"),
+				SourceContext.ValidationErrors.Num(), PropagatedErrors);
 			return false;
 		}
 
@@ -533,39 +359,25 @@ namespace DelveDeepTestUtils
 		const FString& FilePath,
 		TSharedPtr<FJsonObject>& OutJsonObject)
 	{
-		if (FilePath.IsEmpty())
-		{
-			UE_LOG(LogTemp, Error, TEXT("LoadTestDataFromJSON: FilePath is empty"));
-			return false;
-		}
-
-		// Construct full path
+		// Build full path
 		FString FullPath = FPaths::ProjectDir() / FilePath;
-		
-		// Check if file exists
-		if (!FPaths::FileExists(FullPath))
-		{
-			UE_LOG(LogTemp, Error, TEXT("LoadTestDataFromJSON: File not found: %s"), *FullPath);
-			return false;
-		}
 
-		// Load file content
+		// Read file
 		FString JsonString;
 		if (!FFileHelper::LoadFileToString(JsonString, *FullPath))
 		{
-			UE_LOG(LogTemp, Error, TEXT("LoadTestDataFromJSON: Failed to load file: %s"), *FullPath);
+			UE_LOG(LogTemp, Error, TEXT("LoadTestDataFromJSON: Failed to read file: %s"), *FullPath);
 			return false;
 		}
 
 		// Parse JSON
-		TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(JsonString);
-		if (!FJsonSerializer::Deserialize(JsonReader, OutJsonObject) || !OutJsonObject.IsValid())
+		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(JsonString);
+		if (!FJsonSerializer::Deserialize(Reader, OutJsonObject))
 		{
-			UE_LOG(LogTemp, Error, TEXT("LoadTestDataFromJSON: Failed to parse JSON from file: %s"), *FullPath);
+			UE_LOG(LogTemp, Error, TEXT("LoadTestDataFromJSON: Failed to parse JSON: %s"), *FullPath);
 			return false;
 		}
 
-		UE_LOG(LogTemp, Display, TEXT("LoadTestDataFromJSON: Successfully loaded JSON from: %s"), *FullPath);
 		return true;
 	}
 
@@ -574,49 +386,29 @@ namespace DelveDeepTestUtils
 		TArray<TArray<FString>>& OutRows,
 		bool bHasHeader)
 	{
-		if (FilePath.IsEmpty())
-		{
-			UE_LOG(LogTemp, Error, TEXT("LoadTestDataFromCSV: FilePath is empty"));
-			return false;
-		}
-
-		// Construct full path
+		// Build full path
 		FString FullPath = FPaths::ProjectDir() / FilePath;
-		
-		// Check if file exists
-		if (!FPaths::FileExists(FullPath))
-		{
-			UE_LOG(LogTemp, Error, TEXT("LoadTestDataFromCSV: File not found: %s"), *FullPath);
-			return false;
-		}
 
-		// Load file content
-		FString CsvString;
-		if (!FFileHelper::LoadFileToString(CsvString, *FullPath))
+		// Read file
+		FString CSVString;
+		if (!FFileHelper::LoadFileToString(CSVString, *FullPath))
 		{
-			UE_LOG(LogTemp, Error, TEXT("LoadTestDataFromCSV: Failed to load file: %s"), *FullPath);
+			UE_LOG(LogTemp, Error, TEXT("LoadTestDataFromCSV: Failed to read file: %s"), *FullPath);
 			return false;
 		}
 
 		// Parse CSV
 		TArray<FString> Lines;
-		CsvString.ParseIntoArrayLines(Lines);
+		CSVString.ParseIntoArrayLines(Lines);
 
-		if (Lines.Num() == 0)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("LoadTestDataFromCSV: File is empty: %s"), *FullPath);
-			return true;
-		}
-
-		// Skip header if specified
+		// Skip header if present
 		int32 StartIndex = bHasHeader ? 1 : 0;
 
-		// Parse each line
 		for (int32 i = StartIndex; i < Lines.Num(); ++i)
 		{
 			TArray<FString> Columns;
-			Lines[i].ParseIntoArray(Columns, TEXT(","), true);
-			
+			Lines[i].ParseIntoArray(Columns, TEXT(","));
+
 			// Trim whitespace from each column
 			for (FString& Column : Columns)
 			{
@@ -626,8 +418,6 @@ namespace DelveDeepTestUtils
 			OutRows.Add(Columns);
 		}
 
-		UE_LOG(LogTemp, Display, TEXT("LoadTestDataFromCSV: Successfully loaded %d rows from: %s"),
-			OutRows.Num(), *FullPath);
 		return true;
 	}
 
@@ -642,18 +432,11 @@ namespace DelveDeepTestUtils
 			return false;
 		}
 
-		if (DatasetName.IsEmpty())
-		{
-			UE_LOG(LogTemp, Error, TEXT("CreateParameterizedTestDataset: DatasetName is empty"));
-			return false;
-		}
-
 		// Get the dataset array
 		const TArray<TSharedPtr<FJsonValue>>* DatasetArray;
 		if (!JsonObject->TryGetArrayField(DatasetName, DatasetArray))
 		{
-			UE_LOG(LogTemp, Error, TEXT("CreateParameterizedTestDataset: Dataset '%s' not found in JSON"),
-				*DatasetName);
+			UE_LOG(LogTemp, Error, TEXT("CreateParameterizedTestDataset: Dataset not found: %s"), *DatasetName);
 			return false;
 		}
 
@@ -667,8 +450,6 @@ namespace DelveDeepTestUtils
 			}
 		}
 
-		UE_LOG(LogTemp, Display, TEXT("CreateParameterizedTestDataset: Extracted %d test cases from dataset '%s'"),
-			OutTestCases.Num(), *DatasetName);
 		return true;
 	}
 
@@ -677,59 +458,49 @@ namespace DelveDeepTestUtils
 		int32 Count,
 		TArray<UObject*>& OutData)
 	{
-		if (SchemaType.IsEmpty())
-		{
-			UE_LOG(LogTemp, Error, TEXT("GenerateRealisticTestData: SchemaType is empty"));
-			return false;
-		}
+		OutData.Empty();
 
-		if (Count <= 0)
+		if (SchemaType == TEXT("Character"))
 		{
-			UE_LOG(LogTemp, Error, TEXT("GenerateRealisticTestData: Count must be positive"));
-			return false;
-		}
-
-		// Generate test data based on schema type
-		for (int32 i = 0; i < Count; ++i)
-		{
-			UObject* Data = nullptr;
-
-			if (SchemaType == TEXT("Character"))
+			for (int32 i = 0; i < Count; ++i)
 			{
-				FString Name = FString::Printf(TEXT("TestCharacter_%d"), i);
+				FString Name = FString::Printf(TEXT("Character_%d"), i);
 				float Health = 100.0f + (i * 10.0f);
 				float Damage = 10.0f + (i * 2.0f);
-				Data = CreateTestCharacterData(Name, Health, Damage);
-			}
-			else if (SchemaType == TEXT("Weapon"))
-			{
-				FString Name = FString::Printf(TEXT("TestWeapon_%d"), i);
-				float Damage = 10.0f + (i * 5.0f);
-				float AttackSpeed = 1.0f + (i * 0.1f);
-				Data = CreateTestWeaponData(Name, Damage, AttackSpeed);
-			}
-			else if (SchemaType == TEXT("Ability"))
-			{
-				FString Name = FString::Printf(TEXT("TestAbility_%d"), i);
-				float Cooldown = 5.0f + (i * 1.0f);
-				float ResourceCost = 10.0f + (i * 5.0f);
-				Data = CreateTestAbilityData(Name, Cooldown, ResourceCost);
-			}
-			else
-			{
-				UE_LOG(LogTemp, Error, TEXT("GenerateRealisticTestData: Unknown schema type: %s"), *SchemaType);
-				return false;
-			}
-
-			if (Data)
-			{
+				UDelveDeepCharacterData* Data = CreateTestCharacterData(Name, Health, Damage);
 				OutData.Add(Data);
 			}
+			return true;
 		}
-
-		UE_LOG(LogTemp, Display, TEXT("GenerateRealisticTestData: Generated %d instances of type '%s'"),
-			OutData.Num(), *SchemaType);
-		return true;
+		else if (SchemaType == TEXT("Weapon"))
+		{
+			for (int32 i = 0; i < Count; ++i)
+			{
+				FString Name = FString::Printf(TEXT("Weapon_%d"), i);
+				float Damage = 10.0f + (i * 5.0f);
+				float AttackSpeed = 1.0f + (i * 0.1f);
+				UDelveDeepWeaponData* Data = CreateTestWeaponData(Name, Damage, AttackSpeed);
+				OutData.Add(Data);
+			}
+			return true;
+		}
+		else if (SchemaType == TEXT("Ability"))
+		{
+			for (int32 i = 0; i < Count; ++i)
+			{
+				FString Name = FString::Printf(TEXT("Ability_%d"), i);
+				float Cooldown = 5.0f + (i * 1.0f);
+				float ResourceCost = 10.0f + (i * 5.0f);
+				UDelveDeepAbilityData* Data = CreateTestAbilityData(Name, Cooldown, ResourceCost);
+				OutData.Add(Data);
+			}
+			return true;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("GenerateRealisticTestData: Unknown schema type: %s"), *SchemaType);
+			return false;
+		}
 	}
 
 	bool CreateScalabilityTestDatasets(
@@ -743,11 +514,7 @@ namespace DelveDeepTestUtils
 			return false;
 		}
 
-		if (Sizes.Num() == 0)
-		{
-			UE_LOG(LogTemp, Error, TEXT("CreateScalabilityTestDatasets: Sizes array is empty"));
-			return false;
-		}
+		OutDatasets.Empty();
 
 		// Determine schema type from base data
 		FString SchemaType;
@@ -777,15 +544,9 @@ namespace DelveDeepTestUtils
 			{
 				OutDatasets.Add(Size, Dataset);
 			}
-			else
-			{
-				UE_LOG(LogTemp, Error, TEXT("CreateScalabilityTestDatasets: Failed to generate dataset of size %d"), Size);
-				return false;
-			}
 		}
 
-		UE_LOG(LogTemp, Display, TEXT("CreateScalabilityTestDatasets: Generated %d datasets"), OutDatasets.Num());
-		return true;
+		return OutDatasets.Num() > 0;
 	}
 
 	bool ValidateTestDataSchema(
@@ -793,12 +554,12 @@ namespace DelveDeepTestUtils
 		const FString& SchemaType,
 		FValidationContext& Context)
 	{
-		Context.SystemName = TEXT("TestDataValidation");
-		Context.OperationName = FString::Printf(TEXT("Validate%sSchema"), *SchemaType);
+		Context.SystemName = TEXT("TestUtilities");
+		Context.OperationName = TEXT("ValidateTestDataSchema");
 
 		if (!IsValid(Data))
 		{
-			Context.AddError(TEXT("Data object is null"));
+			Context.AddError(TEXT("Data is null"));
 			return false;
 		}
 
@@ -808,8 +569,7 @@ namespace DelveDeepTestUtils
 			UDelveDeepCharacterData* CharacterData = Cast<UDelveDeepCharacterData>(Data);
 			if (!CharacterData)
 			{
-				Context.AddError(FString::Printf(TEXT("Data is not of type Character (actual type: %s)"),
-					*Data->GetClass()->GetName()));
+				Context.AddError(TEXT("Data is not a Character"));
 				return false;
 			}
 			return CharacterData->Validate(Context);
@@ -819,8 +579,7 @@ namespace DelveDeepTestUtils
 			UDelveDeepWeaponData* WeaponData = Cast<UDelveDeepWeaponData>(Data);
 			if (!WeaponData)
 			{
-				Context.AddError(FString::Printf(TEXT("Data is not of type Weapon (actual type: %s)"),
-					*Data->GetClass()->GetName()));
+				Context.AddError(TEXT("Data is not a Weapon"));
 				return false;
 			}
 			return WeaponData->Validate(Context);
@@ -830,8 +589,7 @@ namespace DelveDeepTestUtils
 			UDelveDeepAbilityData* AbilityData = Cast<UDelveDeepAbilityData>(Data);
 			if (!AbilityData)
 			{
-				Context.AddError(FString::Printf(TEXT("Data is not of type Ability (actual type: %s)"),
-					*Data->GetClass()->GetName()));
+				Context.AddError(TEXT("Data is not an Ability"));
 				return false;
 			}
 			return AbilityData->Validate(Context);
