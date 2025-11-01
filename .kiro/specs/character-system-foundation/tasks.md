@@ -262,7 +262,7 @@
   - Implement AddTemporaryStatBoost() helper
   - _Requirements: 15.1, 15.2, 15.3_
 
-- [ ] 28. Implement console commands
+- [x] 28. Implement console commands
   - Create SpawnCharacter console command accepting class name
   - Create ModifyHealth console command accepting amount
   - Create ModifyResource console command accepting amount

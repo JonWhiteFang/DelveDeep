@@ -1,0 +1,58 @@
+# Unreal Engine Build Files
+Intermediate/
+Binaries/
+Build/
+DerivedDataCache/
+
+# Unreal Engine User Files
+Saved/
+*.sln
+*.suo
+*.xcodeproj
+*.xcworkspace
+
+# Visual Studio Files
+.vs/
+*.VC.db
+*.VC.opendb
+
+# Rider Files
+.idea/
+*.sln.DotSettings.user
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+*.ipa
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
