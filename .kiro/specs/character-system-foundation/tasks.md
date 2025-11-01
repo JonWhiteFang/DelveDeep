@@ -272,7 +272,7 @@
   - Create RespawnCharacter console command
   - _Requirements: 20.1, 20.2, 20.3, 20.4, 20.5_
 
-- [ ] 29. Create character test utilities
+- [x] 29. Create character test utilities
   - Add CreateTestCharacter() to DelveDeepTestUtilities
   - Add SetCharacterStats() helper for testing
   - Add SimulateDamage() helper for damage testing
