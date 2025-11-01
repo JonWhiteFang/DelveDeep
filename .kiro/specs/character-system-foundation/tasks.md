@@ -127,7 +127,7 @@
   - _Requirements: 9.5_
   - _Note: Sprite animation reset deferred to task 25 (sprite rendering integration)_
 
-- [ ] 14. Create Warrior character class
+- [x] 14. Create Warrior character class
   - Create DelveDeepWarrior.h and .cpp
   - Inherit from ADelveDeepCharacter
   - Set CharacterClassName to "Warrior" in constructor
@@ -137,7 +137,7 @@
   - Set MaxRage constant to 100.0f
   - _Requirements: 4.1, 7.1, 7.5_
 
-- [ ] 15. Create Ranger character class
+- [x] 15. Create Ranger character class
   - Create DelveDeepRanger.h and .cpp
   - Inherit from ADelveDeepCharacter
   - Set CharacterClassName to "Ranger" in constructor
@@ -147,7 +147,7 @@
   - Set EnergyRegenRate to 10.0f per second
   - _Requirements: 4.2, 7.2, 7.5_
 
-- [ ] 16. Create Mage character class
+- [x] 16. Create Mage character class
   - Create DelveDeepMage.h and .cpp
   - Inherit from ADelveDeepCharacter
   - Set CharacterClassName to "Mage" in constructor
@@ -157,7 +157,7 @@
   - Set ManaRegenRate to 5.0f per second
   - _Requirements: 4.3, 7.3, 7.5_
 
-- [ ] 17. Create Necromancer character class
+- [x] 17. Create Necromancer character class
   - Create DelveDeepNecromancer.h and .cpp
   - Inherit from ADelveDeepCharacter
   - Set CharacterClassName to "Necromancer" in constructor
