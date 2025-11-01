@@ -3,6 +3,10 @@
 #include "Character/DelveDeepStatsComponent.h"
 #include "Configuration/DelveDeepCharacterData.h"
 #include "Validation/ValidationContext.h"
+#include "DelveDeepEventSubsystem.h"
+#include "DelveDeepEventPayload.h"
+#include "GameplayTagsManager.h"
+#include "Engine/World.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogDelveDeepStats, Log, All);
 
@@ -37,9 +41,9 @@ void UDelveDeepStatsComponent::InitializeFromCharacterData(const UDelveDeepChara
 
 	// Load base stats from character data
 	BaseHealth = Data->BaseHealth;
-	BaseResource = Data->BaseMana; // Note: This will be overridden by subclasses for different resource types
+	BaseResource = Data->MaxResource; // Note: This will be overridden by subclasses for different resource types
 	BaseDamage = Data->BaseDamage;
-	BaseMoveSpeed = Data->BaseMoveSpeed;
+	BaseMoveSpeed = Data->MoveSpeed;
 
 	// Set current stats to max values
 	MaxHealth = BaseHealth;
@@ -105,4 +109,92 @@ bool UDelveDeepStatsComponent::ValidateComponent(FValidationContext& Context) co
 	}
 
 	return bIsValid;
+}
+
+void UDelveDeepStatsComponent::ModifyHealth(float Delta)
+{
+	// Store old value for event broadcasting
+	float OldHealth = CurrentHealth;
+
+	// Apply delta and clamp to valid range
+	CurrentHealth = FMath::Clamp(CurrentHealth + Delta, 0.0f, MaxHealth);
+
+	// Only broadcast events if health actually changed
+	if (!FMath::IsNearlyEqual(OldHealth, CurrentHealth))
+	{
+		// Broadcast stat changed event
+		OnStatChanged(FName("Health"), OldHealth, CurrentHealth);
+
+		// Broadcast health change event through event subsystem
+		if (UWorld* World = GetWorld())
+		{
+			if (UGameInstance* GameInstance = World->GetGameInstance())
+			{
+				if (UDelveDeepEventSubsystem* EventSubsystem = GameInstance->GetSubsystem<UDelveDeepEventSubsystem>())
+				{
+					FDelveDeepHealthChangeEventPayload Payload;
+					Payload.EventTag = FGameplayTag::RequestGameplayTag(FName("DelveDeep.Character.Health.Changed"));
+					Payload.Character = GetCharacterOwner();
+					Payload.PreviousHealth = OldHealth;
+					Payload.NewHealth = CurrentHealth;
+					Payload.MaxHealth = MaxHealth;
+					Payload.Instigator = GetCharacterOwner();
+
+					EventSubsystem->BroadcastEvent(Payload);
+				}
+			}
+		}
+
+		UE_LOG(LogDelveDeepStats, Verbose, 
+			TEXT("Health modified: %.2f -> %.2f (Delta: %.2f)"), 
+			OldHealth, CurrentHealth, Delta);
+	}
+}
+
+void UDelveDeepStatsComponent::ModifyResource(float Delta)
+{
+	// Store old value for event broadcasting
+	float OldResource = CurrentResource;
+
+	// Apply delta and clamp to valid range
+	CurrentResource = FMath::Clamp(CurrentResource + Delta, 0.0f, MaxResource);
+
+	// Only broadcast events if resource actually changed
+	if (!FMath::IsNearlyEqual(OldResource, CurrentResource))
+	{
+		// Broadcast resource changed event
+		OnResourceChanged(OldResource, CurrentResource);
+
+		// Broadcast stat changed event
+		OnStatChanged(FName("Resource"), OldResource, CurrentResource);
+
+		UE_LOG(LogDelveDeepStats, Verbose, 
+			TEXT("Resource modified: %.2f -> %.2f (Delta: %.2f)"), 
+			OldResource, CurrentResource, Delta);
+	}
+}
+
+void UDelveDeepStatsComponent::ResetToMaxValues()
+{
+	float OldHealth = CurrentHealth;
+	float OldResource = CurrentResource;
+
+	CurrentHealth = MaxHealth;
+	CurrentResource = MaxResource;
+
+	UE_LOG(LogDelveDeepStats, Display, 
+		TEXT("Stats reset to max values: Health=%.2f, Resource=%.2f"), 
+		MaxHealth, MaxResource);
+
+	// Broadcast events if values changed
+	if (!FMath::IsNearlyEqual(OldHealth, CurrentHealth))
+	{
+		OnStatChanged(FName("Health"), OldHealth, CurrentHealth);
+	}
+
+	if (!FMath::IsNearlyEqual(OldResource, CurrentResource))
+	{
+		OnResourceChanged(OldResource, CurrentResource);
+		OnStatChanged(FName("Resource"), OldResource, CurrentResource);
+	}
 }

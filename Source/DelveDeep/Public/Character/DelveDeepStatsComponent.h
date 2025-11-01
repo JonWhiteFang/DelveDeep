@@ -103,6 +103,25 @@ public:
 	UFUNCTION(BlueprintPure, Category = "DelveDeep|Stats")
 	float GetResourcePercentage() const { return MaxResource > 0.0f ? CurrentResource / MaxResource : 0.0f; }
 
+	// Health modification
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Stats")
+	void ModifyHealth(float Delta);
+
+	// Resource modification
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Stats")
+	void ModifyResource(float Delta);
+
+	// Reset stats to maximum values
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Stats")
+	void ResetToMaxValues();
+
+	// Blueprint events
+	UFUNCTION(BlueprintImplementableEvent, Category = "DelveDeep|Stats")
+	void OnStatChanged(FName StatName, float OldValue, float NewValue);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "DelveDeep|Stats")
+	void OnResourceChanged(float OldValue, float NewValue);
+
 protected:
 	/**
 	 * Active stat modifiers mapped by modifier name.
