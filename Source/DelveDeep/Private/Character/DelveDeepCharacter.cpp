@@ -118,7 +118,7 @@ void ADelveDeepCharacter::InitializeFromData()
 	}
 
 	// Validate character data
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Character");
 	Context.OperationName = TEXT("InitializeFromData");
 
@@ -140,7 +140,7 @@ void ADelveDeepCharacter::InitializeFromData()
 		*GetName(), *CharacterClassName.ToString());
 }
 
-bool ADelveDeepCharacter::ValidateCharacterData(FValidationContext& Context) const
+bool ADelveDeepCharacter::ValidateCharacterData(FDelveDeepValidationContext& Context) const
 {
 	bool bIsValid = true;
 
@@ -472,7 +472,7 @@ void ADelveDeepCharacter::BroadcastDamageEvent(float DamageAmount, AActor* Damag
 			Payload.Instigator = DamageSource;
 
 			// Validate payload before broadcasting
-			FValidationContext Context;
+			FDelveDeepValidationContext Context;
 			Context.SystemName = TEXT("Character");
 			Context.OperationName = TEXT("BroadcastDamageEvent");
 
@@ -672,7 +672,7 @@ void ADelveDeepCharacter::BroadcastHealEvent(float HealAmount)
 			Payload.Instigator = this;
 
 			// Validate payload before broadcasting
-			FValidationContext Context;
+			FDelveDeepValidationContext Context;
 			Context.SystemName = TEXT("Character");
 			Context.OperationName = TEXT("BroadcastHealEvent");
 
@@ -703,7 +703,7 @@ void ADelveDeepCharacter::BroadcastDeathEvent(AActor* Killer)
 			Payload.Instigator = Killer;
 
 			// Validate payload before broadcasting
-			FValidationContext Context;
+			FDelveDeepValidationContext Context;
 			Context.SystemName = TEXT("Character");
 			Context.OperationName = TEXT("BroadcastDeathEvent");
 

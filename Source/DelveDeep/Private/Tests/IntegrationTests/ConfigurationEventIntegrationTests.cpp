@@ -20,7 +20,7 @@
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FConfigurationEventCommunicationTest,
 	"DelveDeep.Integration.ConfigurationEventCommunication",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FConfigurationEventCommunicationTest::RunTest(const FString& Parameters)
 {
@@ -78,7 +78,7 @@ bool FConfigurationEventCommunicationTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FConfigurationValidationEventTest,
 	"DelveDeep.Integration.ConfigurationValidationEvent",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FConfigurationValidationEventTest::RunTest(const FString& Parameters)
 {
@@ -114,7 +114,7 @@ bool FConfigurationValidationEventTest::RunTest(const FString& Parameters)
 	InvalidCharacter->MoveSpeed = -100.0f;  // Invalid: negative speed
 
 	// Validate and expect failure
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Integration");
 	Context.OperationName = TEXT("TestInvalidCharacter");
 	bool bIsValid = InvalidCharacter->Validate(Context);
@@ -150,7 +150,7 @@ bool FConfigurationValidationEventTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FConfigurationQueryEventTest,
 	"DelveDeep.Integration.ConfigurationQueryEvent",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FConfigurationQueryEventTest::RunTest(const FString& Parameters)
 {
@@ -218,7 +218,7 @@ bool FConfigurationQueryEventTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FConfigurationCacheEventTest,
 	"DelveDeep.Integration.ConfigurationCacheEvent",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FConfigurationCacheEventTest::RunTest(const FString& Parameters)
 {
@@ -299,7 +299,7 @@ bool FConfigurationCacheEventTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMultiSystemStateConsistencyTest,
 	"DelveDeep.Integration.MultiSystemStateConsistency",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FMultiSystemStateConsistencyTest::RunTest(const FString& Parameters)
 {

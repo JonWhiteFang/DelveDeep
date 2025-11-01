@@ -107,7 +107,6 @@ public:
 	UDelveDeepRegressionDetector();
 
 	// Compare test results and detect regressions
-	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Regression")
 	bool CompareTestResults(
 		const FDelveDeepTestReport& Baseline,
 		const FDelveDeepTestReport& Current);
@@ -153,7 +152,6 @@ public:
 	bool LoadBaselineReport(const FString& FilePath);
 
 	// Save current report as baseline
-	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Regression")
 	bool SaveBaselineReport(const FDelveDeepTestReport& Report, const FString& FilePath);
 
 private:

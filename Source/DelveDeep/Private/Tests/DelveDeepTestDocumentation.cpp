@@ -12,18 +12,15 @@ FTestDocumentation FTestDocumentationGenerator::GenerateDocumentation()
 	Documentation.ProjectVersion = TEXT("1.0.0");  // TODO: Get from project settings
 
 	// Get all registered automation tests
-	TArray<FAutomationTestBase*> Tests;
+	TArray<FAutomationTestInfo> Tests;
 	FAutomationTestFramework::Get().GetValidTestNames(Tests);
 
 	// Extract metadata from each test
 	TArray<FTestMetadata> AllTests;
-	for (FAutomationTestBase* Test : Tests)
+	for (const FAutomationTestInfo& TestInfo : Tests)
 	{
-		if (Test)
-		{
-			FTestMetadata Metadata = ExtractTestMetadata(Test);
-			AllTests.Add(Metadata);
-		}
+		FTestMetadata Metadata = ExtractTestMetadata(TestInfo);
+		AllTests.Add(Metadata);
 	}
 
 	// Organize tests into suites
@@ -49,17 +46,12 @@ FTestDocumentation FTestDocumentationGenerator::GenerateDocumentation()
 	return Documentation;
 }
 
-FTestMetadata FTestDocumentationGenerator::ExtractTestMetadata(const FAutomationTestBase* Test)
+FTestMetadata FTestDocumentationGenerator::ExtractTestMetadata(const FAutomationTestInfo& TestInfo)
 {
 	FTestMetadata Metadata;
 
-	if (!Test)
-	{
-		return Metadata;
-	}
-
 	// Get test name
-	Metadata.TestName = Test->GetTestFullName();
+	Metadata.TestName = TestInfo.GetDisplayName();
 
 	// Parse test name to extract system and suite
 	FString ShortName;
@@ -74,7 +66,7 @@ FTestMetadata FTestDocumentationGenerator::ExtractTestMetadata(const FAutomation
 	Metadata.Requirements = ExtractRequirements(Metadata.TestName, Metadata.Description);
 
 	// Get test flags
-	Metadata.TestFlags = Test->GetTestFlags();
+	Metadata.TestFlags = static_cast<uint32>(TestInfo.GetTestFlags());
 
 	// Extract tags from flags
 	Metadata.Tags = ExtractTags(Metadata.TestFlags, Metadata.TestName);

@@ -157,7 +157,6 @@ public:
 	 * Get current memory snapshot
 	 * @return Current memory snapshot
 	 */
-	UFUNCTION(BlueprintPure, Category = "DelveDeep|Telemetry")
 	FMemorySnapshot GetCurrentMemorySnapshot() const;
 
 	/**
@@ -237,7 +236,6 @@ public:
 	 * @param OutBaseline The baseline data
 	 * @return True if baseline was found
 	 */
-	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
 	bool GetBaseline(FName BaselineName, FPerformanceBaseline& OutBaseline) const;
 
 	/**
@@ -274,7 +272,6 @@ public:
 	 * @param DurationSeconds Duration to report on (default: 300 seconds = 5 minutes)
 	 * @return True if report was generated successfully
 	 */
-	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
 	bool GeneratePerformanceReport(FPerformanceReport& OutReport, float DurationSeconds = 300.0f);
 
 	/**
@@ -283,7 +280,6 @@ public:
 	 * @param FilePath Path where to save the CSV file
 	 * @return True if export was successful
 	 */
-	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
 	bool ExportReportToCSV(const FPerformanceReport& Report, const FString& FilePath);
 
 	/**
@@ -292,7 +288,6 @@ public:
 	 * @param FilePath Path where to save the JSON file
 	 * @return True if export was successful
 	 */
-	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
 	bool ExportReportToJSON(const FPerformanceReport& Report, const FString& FilePath);
 
 	// Performance Overlay
@@ -545,7 +540,7 @@ private:
 	 * @param Context Validation context for error reporting
 	 * @return True if baseline is valid
 	 */
-	bool ValidateBaseline(const FPerformanceBaseline& Baseline, FValidationContext& Context) const;
+	bool ValidateBaseline(const FPerformanceBaseline& Baseline, FDelveDeepValidationContext& Context) const;
 
 	/**
 	 * Get the default profiling save directory

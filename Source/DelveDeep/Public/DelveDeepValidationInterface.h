@@ -34,5 +34,5 @@ public:
 	 * @return True if validation passed (no Critical or Error issues), false otherwise
 	 */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "DelveDeep|Validation")
-	bool ValidateData(FValidationContext& Context);
+	bool ValidateData(FDelveDeepValidationContext& Context);
 };

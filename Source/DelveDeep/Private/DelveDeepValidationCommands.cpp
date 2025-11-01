@@ -140,7 +140,7 @@ void FDelveDeepValidationCommands::ValidateObject(const TArray<FString>& Args)
 	
 	UE_LOG(LogDelveDeepConfig, Display, TEXT("Validating object: %s"), *Object->GetName());
 	
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	bool bResult = ValidationSubsystem->ValidateObject(Object, Context);
 	
 	UE_LOG(LogDelveDeepConfig, Display, TEXT("\n%s"), *Context.GetReport());
@@ -407,7 +407,7 @@ void FDelveDeepValidationCommands::TestValidationSeverity(const TArray<FString>&
 {
 	UE_LOG(LogDelveDeepConfig, Display, TEXT("=== Testing Validation Severity Levels ===\n"));
 	
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("TestSystem");
 	Context.OperationName = TEXT("TestValidationSeverity");
 	
@@ -470,7 +470,7 @@ void FDelveDeepValidationCommands::ProfileValidation(const TArray<FString>& Args
 	
 	for (int32 i = 0; i < NumIterations; ++i)
 	{
-		FValidationContext Context;
+		FDelveDeepValidationContext Context;
 		
 		double StartTime = FPlatformTime::Seconds();
 		ValidationSubsystem->ValidateObject(Object, Context);
@@ -505,7 +505,7 @@ void FDelveDeepValidationCommands::ProfileValidation(const TArray<FString>& Args
 	TotalTime = 0.0;
 	for (int32 i = 0; i < NumIterations; ++i)
 	{
-		FValidationContext Context;
+		FDelveDeepValidationContext Context;
 		
 		double StartTime = FPlatformTime::Seconds();
 		ValidationSubsystem->ValidateObjectWithCache(Object, Context, false);

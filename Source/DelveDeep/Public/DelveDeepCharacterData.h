@@ -64,5 +64,5 @@ public:
 
 	// Validation
 	virtual void PostLoad() override;
-	bool Validate(FValidationContext& Context) const;
+	bool Validate(FDelveDeepValidationContext& Context) const;
 };

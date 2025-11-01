@@ -5,7 +5,7 @@
 void FDelveDeepMonsterConfig::OnPostDataImport(const UDataTable* InDataTable, const FName InRowName, 
 	TArray<FString>& OutCollectedImportProblems)
 {
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Configuration");
 	Context.OperationName = TEXT("ImportMonsterData");
 	
@@ -32,7 +32,7 @@ void FDelveDeepMonsterConfig::OnPostDataImport(const UDataTable* InDataTable, co
 	}
 }
 
-bool FDelveDeepMonsterConfig::Validate(FValidationContext& Context) const
+bool FDelveDeepMonsterConfig::Validate(FDelveDeepValidationContext& Context) const
 {
 	bool bIsValid = true;
 	

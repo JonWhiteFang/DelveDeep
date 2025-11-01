@@ -15,7 +15,7 @@
 
 bool UDelveDeepTelemetrySubsystem::CaptureBaseline(FName BaselineName)
 {
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Telemetry");
 	Context.OperationName = TEXT("CaptureBaseline");
 
@@ -80,7 +80,7 @@ bool UDelveDeepTelemetrySubsystem::CaptureBaseline(FName BaselineName)
 
 bool UDelveDeepTelemetrySubsystem::CompareToBaseline(FName BaselineName, FPerformanceComparison& OutComparison)
 {
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Telemetry");
 	Context.OperationName = TEXT("CompareToBaseline");
 
@@ -247,7 +247,7 @@ bool UDelveDeepTelemetrySubsystem::GetBaseline(FName BaselineName, FPerformanceB
 
 bool UDelveDeepTelemetrySubsystem::SaveBaseline(FName BaselineName, const FString& FilePath)
 {
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Telemetry");
 	Context.OperationName = TEXT("SaveBaseline");
 
@@ -354,7 +354,7 @@ bool UDelveDeepTelemetrySubsystem::SaveBaseline(FName BaselineName, const FStrin
 
 bool UDelveDeepTelemetrySubsystem::LoadBaseline(FName BaselineName, const FString& FilePath)
 {
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Telemetry");
 	Context.OperationName = TEXT("LoadBaseline");
 
@@ -508,7 +508,7 @@ FString UDelveDeepTelemetrySubsystem::GetDefaultBaselineDirectory() const
 	return FPaths::ProjectSavedDir() / TEXT("Telemetry") / TEXT("Baselines");
 }
 
-bool UDelveDeepTelemetrySubsystem::ValidateBaseline(const FPerformanceBaseline& Baseline, FValidationContext& Context) const
+bool UDelveDeepTelemetrySubsystem::ValidateBaseline(const FPerformanceBaseline& Baseline, FDelveDeepValidationContext& Context) const
 {
 	bool bIsValid = true;
 

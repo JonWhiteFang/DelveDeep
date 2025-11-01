@@ -465,7 +465,7 @@ void UDelveDeepEventSubsystem::BroadcastEventImmediate(const FDelveDeepEventPayl
 #if !UE_BUILD_SHIPPING
 	if (bValidationEnabled)
 	{
-		FValidationContext ValidationContext;
+		FDelveDeepValidationContext ValidationContext;
 		if (!Payload.Validate(ValidationContext))
 		{
 			UE_LOG(LogDelveDeepEvents, Error, TEXT("BroadcastEvent: Payload validation failed for tag %s: %s"),

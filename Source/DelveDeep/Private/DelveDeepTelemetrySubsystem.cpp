@@ -192,7 +192,7 @@ TArray<float> UDelveDeepTelemetrySubsystem::GetFrameTimeHistory(int32 NumFrames)
 
 void UDelveDeepTelemetrySubsystem::RegisterSystemBudget(FName SystemName, float BudgetMs)
 {
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Telemetry");
 	Context.OperationName = TEXT("RegisterSystemBudget");
 
@@ -234,7 +234,7 @@ void UDelveDeepTelemetrySubsystem::LoadBudgetsFromAsset(UDelveDeepPerformanceBud
 	}
 
 	// Validate budget asset
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Telemetry");
 	Context.OperationName = TEXT("LoadBudgetsFromAsset");
 

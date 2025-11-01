@@ -84,7 +84,7 @@ void UDelveDeepStatsComponent::InitializeFromCharacterData(const UDelveDeepChara
 		BaseHealth, BaseResource, BaseDamage, BaseMoveSpeed);
 }
 
-bool UDelveDeepStatsComponent::ValidateComponent(FValidationContext& Context) const
+bool UDelveDeepStatsComponent::ValidateComponent(FDelveDeepValidationContext& Context) const
 {
 	bool bIsValid = true;
 

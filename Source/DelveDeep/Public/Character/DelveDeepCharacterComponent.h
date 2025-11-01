@@ -9,7 +9,7 @@
 // Forward declarations
 class ADelveDeepCharacter;
 class UDelveDeepCharacterData;
-struct FValidationContext;
+struct FDelveDeepValidationContext;
 
 /**
  * Base component class for all character-specific functionality.
@@ -19,7 +19,7 @@ struct FValidationContext;
  * - Component-based architecture for modularity and reusability
  * - Tick disabled by default for performance optimization
  * - Blueprint-ready design for designer extensibility
- * - Validation support using FValidationContext
+ * - Validation support using FDelveDeepValidationContext
  * - Integration with data-driven configuration system
  * 
  * Usage:
@@ -41,7 +41,7 @@ struct FValidationContext;
  *         // Load component-specific data from character data asset
  *     }
  * 
- *     virtual bool ValidateComponent(FValidationContext& Context) const override
+ *     virtual bool ValidateComponent(FDelveDeepValidationContext& Context) const override
  *     {
  *         // Validate component state
  *         return Super::ValidateComponent(Context);
@@ -120,7 +120,7 @@ protected:
 	 * @param Context The validation context to populate with errors and warnings
 	 * @return True if validation passed, false if there are errors
 	 */
-	virtual bool ValidateComponent(FValidationContext& Context) const;
+	virtual bool ValidateComponent(FDelveDeepValidationContext& Context) const;
 
 	// Allow character actor to call protected initialization methods
 	friend class ADelveDeepCharacter;

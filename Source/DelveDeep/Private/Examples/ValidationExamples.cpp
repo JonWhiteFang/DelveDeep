@@ -30,7 +30,7 @@
  */
 void Example_BasicValidationWithSeverity()
 {
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Example");
 	Context.OperationName = TEXT("BasicValidation");
 
@@ -82,7 +82,7 @@ void Example_BasicValidationWithSeverity()
  */
 bool Example_ValidationTemplates(const UDelveDeepCharacterData* CharacterData)
 {
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Example");
 	Context.OperationName = TEXT("TemplateValidation");
 
@@ -148,7 +148,7 @@ void Example_RegisterCustomValidationRule(UGameInstance* GameInstance)
 	ValidationSubsystem->RegisterValidationRule(
 		FName(TEXT("ValidateCharacterBalance")),
 		UDelveDeepCharacterData::StaticClass(),
-		FValidationRuleDelegate::CreateLambda([](const UObject* Object, FValidationContext& Context) -> bool
+		FValidationRuleDelegate::CreateLambda([](const UObject* Object, FDelveDeepValidationContext& Context) -> bool
 		{
 			const UDelveDeepCharacterData* CharacterData = Cast<UDelveDeepCharacterData>(Object);
 			if (!CharacterData)
@@ -201,7 +201,7 @@ void Example_ValidationWithCaching(UGameInstance* GameInstance, UDelveDeepCharac
 
 	// First validation - cache miss, full validation
 	{
-		FValidationContext Context;
+		FDelveDeepValidationContext Context;
 		double StartTime = FPlatformTime::Seconds();
 		
 		bool bIsValid = ValidationSubsystem->ValidateObjectWithCache(CharacterData, Context);
@@ -215,7 +215,7 @@ void Example_ValidationWithCaching(UGameInstance* GameInstance, UDelveDeepCharac
 
 	// Second validation - cache hit, instant return
 	{
-		FValidationContext Context;
+		FDelveDeepValidationContext Context;
 		double StartTime = FPlatformTime::Seconds();
 		
 		bool bIsValid = ValidationSubsystem->ValidateObjectWithCache(CharacterData, Context);
@@ -233,7 +233,7 @@ void Example_ValidationWithCaching(UGameInstance* GameInstance, UDelveDeepCharac
 
 	// Third validation - cache miss after invalidation
 	{
-		FValidationContext Context;
+		FDelveDeepValidationContext Context;
 		double StartTime = FPlatformTime::Seconds();
 		
 		bool bIsValid = ValidationSubsystem->ValidateObjectWithCache(CharacterData, Context);
@@ -266,7 +266,7 @@ void Example_ValidationDelegates(UGameInstance* GameInstance)
 
 	// Register pre-validation delegate
 	FDelegateHandle PreValidationHandle = ValidationSubsystem->OnPreValidation.AddLambda(
-		[](const UObject* Object, FValidationContext& Context)
+		[](const UObject* Object, FDelveDeepValidationContext& Context)
 		{
 			UE_LOG(LogTemp, Display, TEXT("Pre-validation: About to validate %s"), 
 				*Object->GetName());
@@ -278,7 +278,7 @@ void Example_ValidationDelegates(UGameInstance* GameInstance)
 
 	// Register post-validation delegate
 	FDelegateHandle PostValidationHandle = ValidationSubsystem->OnPostValidation.AddLambda(
-		[](const UObject* Object, const FValidationContext& Context)
+		[](const UObject* Object, const FDelveDeepValidationContext& Context)
 		{
 			UE_LOG(LogTemp, Display, TEXT("Post-validation: Validated %s, Result: %s"), 
 				*Object->GetName(), Context.IsValid() ? TEXT("PASSED") : TEXT("FAILED"));
@@ -301,7 +301,7 @@ void Example_ValidationDelegates(UGameInstance* GameInstance)
 	UDelveDeepCharacterData* TestData = NewObject<UDelveDeepCharacterData>();
 	TestData->BaseHealth = -10.0f; // Invalid value
 	
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	ValidationSubsystem->ValidateObject(TestData, Context);
 
 	// Unregister delegates when done
@@ -321,7 +321,7 @@ void Example_ValidationDelegates(UGameInstance* GameInstance)
 void Example_ReportExportFormats()
 {
 	// Create a context with various issues
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("ExportExample");
 	Context.OperationName = TEXT("GenerateReports");
 	Context.AttachMetadata(TEXT("AssetPath"), TEXT("/Game/Data/Example"));

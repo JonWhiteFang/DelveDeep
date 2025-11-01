@@ -93,15 +93,7 @@ FDelveDeepTestReport FTestReportGenerator::GenerateReportFromResults(
 				Report.TestsBySuite.Add(Suite, 1);
 			}
 
-			float* SuiteTime = Report.ExecutionTimeBySuite.Find(Suite);
-			if (SuiteTime)
-			{
-				(*SuiteTime) += Result.ExecutionTime;
-			}
-			else
-			{
-				Report.ExecutionTimeBySuite.Add(Suite, Result.ExecutionTime);
-			}
+			Report.ExecutionTimeBySuite.FindOrAdd(Suite) += Result.ExecutionTime;
 		}
 	}
 
@@ -225,7 +217,7 @@ bool FTestReportGenerator::ExportToHTML(const FDelveDeepTestReport& Report, cons
 		{
 			const FString& Suite = Pair.Key;
 			int32 TestCount = Pair.Value;
-			float* SuiteTime = Report.ExecutionTimeBySuite.Find(Suite);
+			const float* SuiteTime = Report.ExecutionTimeBySuite.Find(Suite);
 			float ExecutionTime = SuiteTime ? *SuiteTime : 0.0f;
 
 			HTMLContent += FString::Printf(TEXT("<tr><td>%s</td><td>%d</td><td>%s</td></tr>\n"),

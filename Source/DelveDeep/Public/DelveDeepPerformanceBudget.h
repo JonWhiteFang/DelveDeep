@@ -54,7 +54,7 @@ struct DELVEDEEP_API FPerformanceBudgetEntry
 	 * @param Context Validation context for error reporting
 	 * @return True if valid
 	 */
-	bool Validate(FValidationContext& Context) const;
+	bool Validate(FDelveDeepValidationContext& Context) const;
 };
 
 /**
@@ -109,7 +109,7 @@ public:
 	 * @param Context Validation context for error reporting
 	 * @return True if valid
 	 */
-	bool Validate(FValidationContext& Context) const;
+	bool Validate(FDelveDeepValidationContext& Context) const;
 
 	// UObject interface
 	virtual void PostLoad() override;

@@ -69,9 +69,9 @@ struct DELVEDEEP_API FProfilingSession
 	 * Get estimated memory usage of this session
 	 * @return Estimated memory in bytes
 	 */
-	uint64 GetEstimatedMemoryUsage() const
+	int64 GetEstimatedMemoryUsage() const
 	{
-		uint64 TotalMemory = 0;
+		int64 TotalMemory = 0;
 
 		// Frame data: ~32 bytes per frame
 		TotalMemory += FrameData.Num() * 32;
@@ -110,54 +110,54 @@ struct DELVEDEEP_API FProfilingSessionReport
 	GENERATED_BODY()
 
 	/** Session name */
-	UPROPERTY(BlueprintReadOnly, Category = "Report")
+	UPROPERTY()
 	FName SessionName;
 
 	/** Session duration */
-	UPROPERTY(BlueprintReadOnly, Category = "Report")
+	UPROPERTY()
 	float DurationSeconds = 0.0f;
 
 	/** Total frames captured */
-	UPROPERTY(BlueprintReadOnly, Category = "Report")
+	UPROPERTY()
 	int32 TotalFrames = 0;
 
 	/** Average FPS */
-	UPROPERTY(BlueprintReadOnly, Category = "Report")
+	UPROPERTY()
 	float AverageFPS = 0.0f;
 
 	/** Minimum FPS */
-	UPROPERTY(BlueprintReadOnly, Category = "Report")
+	UPROPERTY()
 	float MinFPS = 0.0f;
 
 	/** Maximum FPS */
-	UPROPERTY(BlueprintReadOnly, Category = "Report")
+	UPROPERTY()
 	float MaxFPS = 0.0f;
 
 	/** 1% low FPS */
-	UPROPERTY(BlueprintReadOnly, Category = "Report")
+	UPROPERTY()
 	float OnePercentLowFPS = 0.0f;
 
 	/** Number of frame spikes detected */
-	UPROPERTY(BlueprintReadOnly, Category = "Report")
+	UPROPERTY()
 	int32 SpikeCount = 0;
 
 	/** System performance breakdown */
-	UPROPERTY(BlueprintReadOnly, Category = "Report")
+	UPROPERTY()
 	TArray<FSystemPerformanceData> SystemBreakdown;
 
 	/** Average memory usage */
-	UPROPERTY(BlueprintReadOnly, Category = "Report")
-	uint64 AverageMemoryUsage = 0;
+	UPROPERTY()
+	int64 AverageMemoryUsage = 0;
 
 	/** Peak memory usage */
-	UPROPERTY(BlueprintReadOnly, Category = "Report")
-	uint64 PeakMemoryUsage = 0;
+	UPROPERTY()
+	int64 PeakMemoryUsage = 0;
 
 	/** Session start time */
-	UPROPERTY(BlueprintReadOnly, Category = "Report")
+	UPROPERTY()
 	FDateTime StartTime;
 
 	/** Session end time */
-	UPROPERTY(BlueprintReadOnly, Category = "Report")
+	UPROPERTY()
 	FDateTime EndTime;
 };

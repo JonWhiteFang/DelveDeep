@@ -88,7 +88,7 @@ public:
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepEventCombatToUIProgressionIntegrationTest, 
 	"DelveDeep.EventSystem.Integration.CombatToUIProgression", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepEventCombatToUIProgressionIntegrationTest::RunTest(const FString& Parameters)
 {
@@ -240,7 +240,7 @@ bool FDelveDeepEventCombatToUIProgressionIntegrationTest::RunTest(const FString&
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepEventCrossSystemCommunicationTest, 
 	"DelveDeep.EventSystem.Integration.CrossSystemCommunication", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepEventCrossSystemCommunicationTest::RunTest(const FString& Parameters)
 {
@@ -462,7 +462,7 @@ bool FDelveDeepEventCrossSystemCommunicationTest::RunTest(const FString& Paramet
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepEventOrderingAcrossSystemsTest, 
 	"DelveDeep.EventSystem.Integration.EventOrdering", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepEventOrderingAcrossSystemsTest::RunTest(const FString& Parameters)
 {
@@ -591,7 +591,7 @@ bool FDelveDeepEventOrderingAcrossSystemsTest::RunTest(const FString& Parameters
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepEventRealisticLoadScenarioTest, 
 	"DelveDeep.EventSystem.Integration.RealisticLoadScenario", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepEventRealisticLoadScenarioTest::RunTest(const FString& Parameters)
 {
@@ -793,7 +793,7 @@ bool FDelveDeepEventRealisticLoadScenarioTest::RunTest(const FString& Parameters
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepEventRealisticListenerCountsTest, 
 	"DelveDeep.EventSystem.Integration.RealisticListenerCounts", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepEventRealisticListenerCountsTest::RunTest(const FString& Parameters)
 {

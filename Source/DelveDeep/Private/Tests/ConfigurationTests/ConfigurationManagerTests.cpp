@@ -20,7 +20,7 @@
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FConfigurationManagerAssetCachingTest, 
 	"DelveDeep.Configuration.AssetCaching", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FConfigurationManagerAssetCachingTest::RunTest(const FString& Parameters)
 {
@@ -64,7 +64,7 @@ bool FConfigurationManagerAssetCachingTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FConfigurationManagerCachedAssetTest, 
 	"DelveDeep.Configuration.CachedAssetReturn", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FConfigurationManagerCachedAssetTest::RunTest(const FString& Parameters)
 {
@@ -115,7 +115,7 @@ bool FConfigurationManagerCachedAssetTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FConfigurationManagerCacheHitRateTest, 
 	"DelveDeep.Configuration.CacheHitRateTracking", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FConfigurationManagerCacheHitRateTest::RunTest(const FString& Parameters)
 {
@@ -176,7 +176,7 @@ bool FConfigurationManagerCacheHitRateTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FConfigurationManagerDataTableLookupTest, 
 	"DelveDeep.Configuration.DataTableLookup", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FConfigurationManagerDataTableLookupTest::RunTest(const FString& Parameters)
 {
@@ -213,7 +213,7 @@ bool FConfigurationManagerDataTableLookupTest::RunTest(const FString& Parameters
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FConfigurationManagerInvalidNameTest, 
 	"DelveDeep.Configuration.InvalidNameReturnsNull", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FConfigurationManagerInvalidNameTest::RunTest(const FString& Parameters)
 {
@@ -264,7 +264,7 @@ bool FConfigurationManagerInvalidNameTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FConfigurationManagerQueryPerformanceTest, 
 	"DelveDeep.Configuration.QueryPerformance", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FConfigurationManagerQueryPerformanceTest::RunTest(const FString& Parameters)
 {
@@ -340,7 +340,7 @@ bool FConfigurationManagerQueryPerformanceTest::RunTest(const FString& Parameter
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FConfigurationManagerPerformanceMetricsTest, 
 	"DelveDeep.Configuration.PerformanceMetrics", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FConfigurationManagerPerformanceMetricsTest::RunTest(const FString& Parameters)
 {
@@ -398,7 +398,7 @@ bool FConfigurationManagerPerformanceMetricsTest::RunTest(const FString& Paramet
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FConfigurationManagerMultipleAssetTypesTest, 
 	"DelveDeep.Configuration.MultipleAssetTypes", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FConfigurationManagerMultipleAssetTypesTest::RunTest(const FString& Parameters)
 {
@@ -442,7 +442,7 @@ bool FConfigurationManagerMultipleAssetTypesTest::RunTest(const FString& Paramet
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FConfigurationManagerValidationIntegrationTest, 
 	"DelveDeep.Configuration.ValidationIntegration", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FConfigurationManagerValidationIntegrationTest::RunTest(const FString& Parameters)
 {
@@ -477,7 +477,7 @@ bool FConfigurationManagerValidationIntegrationTest::RunTest(const FString& Para
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FConfigurationManagerMemoryUsageTest, 
 	"DelveDeep.Configuration.MemoryUsage", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FConfigurationManagerMemoryUsageTest::RunTest(const FString& Parameters)
 {
@@ -518,7 +518,7 @@ bool FConfigurationManagerMemoryUsageTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FConfigurationManagerInitializationPerformanceTest, 
 	"DelveDeep.Configuration.InitializationPerformance", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FConfigurationManagerInitializationPerformanceTest::RunTest(const FString& Parameters)
 {

@@ -8,7 +8,7 @@
 
 class UDelveDeepCharacterData;
 class UDelveDeepAbilityData;
-struct FValidationContext;
+struct FDelveDeepValidationContext;
 
 /**
  * Abilities component managing character abilities and cooldowns.
@@ -24,7 +24,7 @@ public:
 
 	// Component lifecycle
 	virtual void InitializeFromCharacterData(const UDelveDeepCharacterData* Data) override;
-	virtual bool ValidateComponent(FValidationContext& Context) const override;
+	virtual bool ValidateComponent(FDelveDeepValidationContext& Context) const override;
 
 	// Ability management
 	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Character|Abilities")

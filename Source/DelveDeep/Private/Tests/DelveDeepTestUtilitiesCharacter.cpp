@@ -645,7 +645,7 @@ namespace DelveDeepTestUtils
 
 	bool VerifyCharacterStatsValid(
 		const ADelveDeepCharacter* Character,
-		FValidationContext& Context)
+		FDelveDeepValidationContext& Context)
 	{
 		Context.SystemName = TEXT("CharacterTestUtilities");
 		Context.OperationName = TEXT("VerifyCharacterStatsValid");

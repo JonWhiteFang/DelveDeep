@@ -2,7 +2,7 @@
 
 #include "DelveDeepEventPayload.h"
 
-bool FDelveDeepEventPayload::Validate(FValidationContext& Context) const
+bool FDelveDeepEventPayload::Validate(FDelveDeepValidationContext& Context) const
 {
 	Context.SystemName = TEXT("EventSystem");
 	Context.OperationName = TEXT("ValidateEventPayload");
@@ -34,7 +34,7 @@ bool FDelveDeepEventPayload::Validate(FValidationContext& Context) const
 	return bIsValid;
 }
 
-bool FDelveDeepEventPayload::ValidateActorReference(const TWeakObjectPtr<AActor>& Actor, const FString& ActorName, FValidationContext& Context) const
+bool FDelveDeepEventPayload::ValidateActorReference(const TWeakObjectPtr<AActor>& Actor, const FString& ActorName, FDelveDeepValidationContext& Context) const
 {
 	if (!Actor.IsValid())
 	{
@@ -45,7 +45,7 @@ bool FDelveDeepEventPayload::ValidateActorReference(const TWeakObjectPtr<AActor>
 	return true;
 }
 
-bool FDelveDeepDamageEventPayload::Validate(FValidationContext& Context) const
+bool FDelveDeepDamageEventPayload::Validate(FDelveDeepValidationContext& Context) const
 {
 	Context.SystemName = TEXT("EventSystem");
 	Context.OperationName = TEXT("ValidateDamageEvent");
@@ -81,7 +81,7 @@ bool FDelveDeepDamageEventPayload::Validate(FValidationContext& Context) const
 	return bIsValid;
 }
 
-bool FDelveDeepHealthChangeEventPayload::Validate(FValidationContext& Context) const
+bool FDelveDeepHealthChangeEventPayload::Validate(FDelveDeepValidationContext& Context) const
 {
 	Context.SystemName = TEXT("EventSystem");
 	Context.OperationName = TEXT("ValidateHealthChangeEvent");
@@ -128,7 +128,7 @@ bool FDelveDeepHealthChangeEventPayload::Validate(FValidationContext& Context) c
 	return bIsValid;
 }
 
-bool FDelveDeepKillEventPayload::Validate(FValidationContext& Context) const
+bool FDelveDeepKillEventPayload::Validate(FDelveDeepValidationContext& Context) const
 {
 	Context.SystemName = TEXT("EventSystem");
 	Context.OperationName = TEXT("ValidateKillEvent");
@@ -164,7 +164,7 @@ bool FDelveDeepKillEventPayload::Validate(FValidationContext& Context) const
 	return bIsValid;
 }
 
-bool FDelveDeepAttackEventPayload::Validate(FValidationContext& Context) const
+bool FDelveDeepAttackEventPayload::Validate(FDelveDeepValidationContext& Context) const
 {
 	Context.SystemName = TEXT("EventSystem");
 	Context.OperationName = TEXT("ValidateAttackEvent");
@@ -195,7 +195,7 @@ bool FDelveDeepAttackEventPayload::Validate(FValidationContext& Context) const
 	return bIsValid;
 }
 
-bool FDelveDeepEventPayload::ValidateRange(float Value, float MinValue, float MaxValue, const FString& ValueName, FValidationContext& Context) const
+bool FDelveDeepEventPayload::ValidateRange(float Value, float MinValue, float MaxValue, const FString& ValueName, FDelveDeepValidationContext& Context) const
 {
 	if (Value < MinValue || Value > MaxValue)
 	{
@@ -208,7 +208,7 @@ bool FDelveDeepEventPayload::ValidateRange(float Value, float MinValue, float Ma
 	return true;
 }
 
-bool FDelveDeepCharacterDeathEventPayload::Validate(FValidationContext& Context) const
+bool FDelveDeepCharacterDeathEventPayload::Validate(FDelveDeepValidationContext& Context) const
 {
 	bool bIsValid = Super::Validate(Context);
 
@@ -226,7 +226,7 @@ bool FDelveDeepCharacterDeathEventPayload::Validate(FValidationContext& Context)
 	return bIsValid;
 }
 
-bool FDelveDeepDamageEventPayload::Validate(FValidationContext& Context) const
+bool FDelveDeepDamageEventPayload::Validate(FDelveDeepValidationContext& Context) const
 {
 	bool bIsValid = Super::Validate(Context);
 
@@ -255,7 +255,7 @@ bool FDelveDeepDamageEventPayload::Validate(FValidationContext& Context) const
 	return bIsValid;
 }
 
-bool FDelveDeepStatChangedPayload::Validate(FValidationContext& Context) const
+bool FDelveDeepStatChangedPayload::Validate(FDelveDeepValidationContext& Context) const
 {
 	Context.SystemName = TEXT("EventSystem");
 	Context.OperationName = TEXT("ValidateStatChangedEvent");
@@ -293,7 +293,7 @@ bool FDelveDeepStatChangedPayload::Validate(FValidationContext& Context) const
 	return bIsValid;
 }
 
-bool FDelveDeepAbilityUsedPayload::Validate(FValidationContext& Context) const
+bool FDelveDeepAbilityUsedPayload::Validate(FDelveDeepValidationContext& Context) const
 {
 	Context.SystemName = TEXT("EventSystem");
 	Context.OperationName = TEXT("ValidateAbilityUsedEvent");

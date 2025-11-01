@@ -11,12 +11,12 @@
  * Verifies that validation operations meet performance targets.
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FValidationTemplatePerformanceTest, "DelveDeep.Validation.Performance.Templates", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FValidationTemplatePerformanceTest::RunTest(const FString& Parameters)
 {
 	const int32 IterationCount = 10000;
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Performance");
 	Context.OperationName = TEXT("TemplateTest");
 
@@ -105,7 +105,7 @@ bool FValidationTemplatePerformanceTest::RunTest(const FString& Parameters)
  * Verifies that context operations meet performance targets.
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FValidationContextPerformanceTest, "DelveDeep.Validation.Performance.Context", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FValidationContextPerformanceTest::RunTest(const FString& Parameters)
 {
@@ -113,7 +113,7 @@ bool FValidationContextPerformanceTest::RunTest(const FString& Parameters)
 
 	// Test issue addition performance
 	{
-		FValidationContext Context;
+		FDelveDeepValidationContext Context;
 		Context.SystemName = TEXT("Performance");
 		Context.OperationName = TEXT("IssueAddition");
 		
@@ -134,7 +134,7 @@ bool FValidationContextPerformanceTest::RunTest(const FString& Parameters)
 
 	// Test context reset performance
 	{
-		FValidationContext Context;
+		FDelveDeepValidationContext Context;
 		Context.SystemName = TEXT("Performance");
 		Context.OperationName = TEXT("ContextReset");
 		
@@ -162,14 +162,14 @@ bool FValidationContextPerformanceTest::RunTest(const FString& Parameters)
 
 	// Test context merging performance
 	{
-		FValidationContext Context1;
+		FDelveDeepValidationContext Context1;
 		Context1.SystemName = TEXT("System1");
 		for (int32 i = 0; i < 50; ++i)
 		{
 			Context1.AddError(FString::Printf(TEXT("Error %d"), i));
 		}
 		
-		FValidationContext Context2;
+		FDelveDeepValidationContext Context2;
 		Context2.SystemName = TEXT("System2");
 		for (int32 i = 0; i < 50; ++i)
 		{
@@ -179,7 +179,7 @@ bool FValidationContextPerformanceTest::RunTest(const FString& Parameters)
 		double StartTime = FPlatformTime::Seconds();
 		for (int32 i = 0; i < 1000; ++i) // Fewer iterations for merge
 		{
-			FValidationContext TempContext = Context1;
+			FDelveDeepValidationContext TempContext = Context1;
 			TempContext.MergeContext(Context2);
 		}
 		double EndTime = FPlatformTime::Seconds();
@@ -200,12 +200,12 @@ bool FValidationContextPerformanceTest::RunTest(const FString& Parameters)
  * Verifies that report generation meets performance targets.
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FValidationReportPerformanceTest, "DelveDeep.Validation.Performance.Reports", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FValidationReportPerformanceTest::RunTest(const FString& Parameters)
 {
 	// Create a context with many issues
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Performance");
 	Context.OperationName = TEXT("ReportGeneration");
 	

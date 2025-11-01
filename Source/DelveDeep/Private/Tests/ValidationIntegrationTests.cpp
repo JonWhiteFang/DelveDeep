@@ -181,7 +181,7 @@
 
 // Simple test to verify test file compiles
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FValidationIntegrationTestPlaceholder, "DelveDeep.Validation.Integration.Placeholder", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FValidationIntegrationTestPlaceholder::RunTest(const FString& Parameters)
 {

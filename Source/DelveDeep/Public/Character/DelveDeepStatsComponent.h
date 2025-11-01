@@ -7,7 +7,7 @@
 #include "DelveDeepStatsComponent.generated.h"
 
 class UDelveDeepCharacterData;
-struct FValidationContext;
+struct FDelveDeepValidationContext;
 
 /**
  * Stat modifier structure for temporary stat boosts/debuffs.
@@ -56,7 +56,7 @@ public:
 
 	// Component lifecycle
 	virtual void InitializeFromCharacterData(const UDelveDeepCharacterData* Data) override;
-	virtual bool ValidateComponent(FValidationContext& Context) const override;
+	virtual bool ValidateComponent(FDelveDeepValidationContext& Context) const override;
 
 	// Base stats (loaded from character data)
 	UPROPERTY(BlueprintReadOnly, Category = "DelveDeep|Stats")

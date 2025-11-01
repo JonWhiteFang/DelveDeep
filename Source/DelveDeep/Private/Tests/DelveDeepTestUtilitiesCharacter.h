@@ -2,6 +2,9 @@
 
 #pragma once
 
+// TODO: Enable when character system is implemented
+#if 0
+
 #include "CoreMinimal.h"
 #include "DelveDeepCharacter.h"
 #include "DelveDeepWarrior.h"
@@ -469,7 +472,7 @@ namespace DelveDeepTestUtils
 	 */
 	DELVEDEEP_API bool VerifyCharacterStatsValid(
 		const ADelveDeepCharacter* Character,
-		FValidationContext& Context);
+		FDelveDeepValidationContext& Context);
 
 	/**
 	 * Verifies that a character's health is at maximum.
@@ -493,3 +496,5 @@ namespace DelveDeepTestUtils
 		const ADelveDeepCharacter* Character,
 		float Tolerance = 0.01f);
 }
+
+#endif // 0

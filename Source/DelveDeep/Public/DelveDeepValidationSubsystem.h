@@ -53,7 +53,7 @@ public:
 	 * @return True if validation passed, false otherwise
 	 */
 	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
-	bool ValidateObject(const UObject* Object, FValidationContext& OutContext);
+	bool ValidateObject(const UObject* Object, FDelveDeepValidationContext& OutContext);
 
 	/**
 	 * Validates an object with caching support.
@@ -63,7 +63,7 @@ public:
 	 * @return True if validation passed, false otherwise
 	 */
 	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
-	bool ValidateObjectWithCache(const UObject* Object, FValidationContext& OutContext, bool bForceRevalidate = false);
+	bool ValidateObjectWithCache(const UObject* Object, FDelveDeepValidationContext& OutContext, bool bForceRevalidate = false);
 
 	/**
 	 * Validates multiple objects in parallel for improved performance.
@@ -74,7 +74,7 @@ public:
 	 * @return Number of objects that passed validation
 	 */
 	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
-	int32 ValidateObjects(const TArray<UObject*>& Objects, TArray<FValidationContext>& OutContexts, bool bUseCache = true);
+	int32 ValidateObjects(const TArray<UObject*>& Objects, TArray<FDelveDeepValidationContext>& OutContexts, bool bUseCache = true);
 
 	/**
 	 * Invalidates the cache for a specific object.
@@ -151,7 +151,7 @@ public:
 	 * Delegate fired before validation begins for an object.
 	 * Allows systems to prepare for validation or modify validation behavior.
 	 */
-	DECLARE_MULTICAST_DELEGATE_TwoParams(FOnPreValidation, const UObject* /* Object */, FValidationContext& /* Context */);
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FOnPreValidation, const UObject* /* Object */, FDelveDeepValidationContext& /* Context */);
 	
 	/** Pre-validation delegate instance */
 	FOnPreValidation OnPreValidation;
@@ -160,7 +160,7 @@ public:
 	 * Delegate fired after validation completes for an object.
 	 * Allows systems to respond to validation results or perform cleanup.
 	 */
-	DECLARE_MULTICAST_DELEGATE_TwoParams(FOnPostValidation, const UObject* /* Object */, const FValidationContext& /* Context */);
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FOnPostValidation, const UObject* /* Object */, const FDelveDeepValidationContext& /* Context */);
 	
 	/** Post-validation delegate instance */
 	FOnPostValidation OnPostValidation;
@@ -179,7 +179,7 @@ public:
 	/**
 	 * Blueprint delegate fired before validation begins for an object.
 	 */
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPreValidationBP, const UObject*, Object, FValidationContext&, Context);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPreValidationBP, const UObject*, Object, FDelveDeepValidationContext&, Context);
 	
 	/** Blueprint pre-validation delegate instance */
 	UPROPERTY(BlueprintAssignable, Category = "DelveDeep|Validation|Events")
@@ -188,7 +188,7 @@ public:
 	/**
 	 * Blueprint delegate fired after validation completes for an object.
 	 */
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPostValidationBP, const UObject*, Object, const FValidationContext&, Context);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPostValidationBP, const UObject*, Object, const FDelveDeepValidationContext&, Context);
 	
 	/** Blueprint post-validation delegate instance */
 	UPROPERTY(BlueprintAssignable, Category = "DelveDeep|Validation|Events")
@@ -210,7 +210,7 @@ private:
 	 * @param Context The validation context to populate
 	 * @return True if all rules passed, false otherwise
 	 */
-	bool ExecuteRulesForObject(const UObject* Object, FValidationContext& Context);
+	bool ExecuteRulesForObject(const UObject* Object, FDelveDeepValidationContext& Context);
 
 	/**
 	 * Checks if a cached validation result is still valid.
@@ -232,7 +232,7 @@ private:
 	 * @param Context The validation context with results
 	 * @param ExecutionTime Time taken for validation in seconds
 	 */
-	void UpdateMetrics(const FValidationContext& Context, double ExecutionTime);
+	void UpdateMetrics(const FDelveDeepValidationContext& Context, double ExecutionTime);
 
 	/** Map of class to validation rules */
 	TMap<UClass*, TArray<FValidationRuleDefinition>> ValidationRules;

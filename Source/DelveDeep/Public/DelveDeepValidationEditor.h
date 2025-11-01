@@ -36,7 +36,7 @@ private:
 	static void OnAssetPostSave(UObject* Asset);
 
 	/** Logs validation results to the Message Log */
-	static void LogValidationResults(const class FValidationContext& Context, const FString& AssetPath);
+	static void LogValidationResults(const class FDelveDeepValidationContext& Context, const FString& AssetPath);
 
 	/** Delegate handle for asset pre-save */
 	static FDelegateHandle PreSaveHandle;

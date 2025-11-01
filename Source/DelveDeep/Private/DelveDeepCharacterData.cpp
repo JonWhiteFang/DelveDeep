@@ -20,7 +20,7 @@ void UDelveDeepCharacterData::PostLoad()
 		ValidationSubsystem = World->GetGameInstance()->GetSubsystem<UDelveDeepValidationSubsystem>();
 	}
 	
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Configuration");
 	Context.OperationName = TEXT("LoadCharacterData");
 	
@@ -44,7 +44,7 @@ void UDelveDeepCharacterData::PostLoad()
 	}
 }
 
-bool UDelveDeepCharacterData::Validate(FValidationContext& Context) const
+bool UDelveDeepCharacterData::Validate(FDelveDeepValidationContext& Context) const
 {
 	bool bIsValid = true;
 	

@@ -17,7 +17,7 @@
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepTelemetryFPSCalculationTest,
 	"DelveDeep.Telemetry.FPSCalculation",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepTelemetryFPSCalculationTest::RunTest(const FString& Parameters)
 {
@@ -86,7 +86,7 @@ bool FDelveDeepTelemetryFPSCalculationTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepTelemetryOverheadTest,
 	"DelveDeep.Telemetry.Performance.FrameOverhead",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepTelemetryOverheadTest::RunTest(const FString& Parameters)
 {
@@ -157,7 +157,7 @@ bool FDelveDeepTelemetryOverheadTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepTelemetryOverlayOverheadTest,
 	"DelveDeep.Telemetry.Performance.OverlayOverhead",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepTelemetryOverlayOverheadTest::RunTest(const FString& Parameters)
 {
@@ -242,7 +242,7 @@ bool FDelveDeepTelemetryOverlayOverheadTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepTelemetryMemorySnapshotPerformanceTest,
 	"DelveDeep.Telemetry.Performance.MemorySnapshot",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepTelemetryMemorySnapshotPerformanceTest::RunTest(const FString& Parameters)
 {
@@ -295,7 +295,7 @@ bool FDelveDeepTelemetryMemorySnapshotPerformanceTest::RunTest(const FString& Pa
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepTelemetryReportGenerationPerformanceTest,
 	"DelveDeep.Telemetry.Performance.ReportGeneration",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepTelemetryReportGenerationPerformanceTest::RunTest(const FString& Parameters)
 {
@@ -369,7 +369,7 @@ bool FDelveDeepTelemetryReportGenerationPerformanceTest::RunTest(const FString& 
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepTelemetryMemoryFootprintTest,
 	"DelveDeep.Telemetry.Performance.MemoryFootprint",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepTelemetryMemoryFootprintTest::RunTest(const FString& Parameters)
 {
@@ -435,7 +435,7 @@ bool FDelveDeepTelemetryMemoryFootprintTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepTelemetryProfilingSessionOverheadTest,
 	"DelveDeep.Telemetry.Performance.ProfilingOverhead",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepTelemetryProfilingSessionOverheadTest::RunTest(const FString& Parameters)
 {
@@ -508,7 +508,7 @@ bool FDelveDeepTelemetryProfilingSessionOverheadTest::RunTest(const FString& Par
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepTelemetrySpikeDetectionTest,
 	"DelveDeep.Telemetry.SpikeDetection",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepTelemetrySpikeDetectionTest::RunTest(const FString& Parameters)
 {
@@ -585,7 +585,7 @@ bool FDelveDeepTelemetrySpikeDetectionTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepTelemetryBudgetViolationTest,
 	"DelveDeep.Telemetry.BudgetViolation",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepTelemetryBudgetViolationTest::RunTest(const FString& Parameters)
 {
@@ -666,7 +666,7 @@ bool FDelveDeepTelemetryBudgetViolationTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepTelemetryMemoryLeakDetectionTest,
 	"DelveDeep.Telemetry.MemoryLeakDetection",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepTelemetryMemoryLeakDetectionTest::RunTest(const FString& Parameters)
 {
@@ -758,7 +758,7 @@ bool FDelveDeepTelemetryMemoryLeakDetectionTest::RunTest(const FString& Paramete
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepTelemetryBaselineTest,
 	"DelveDeep.Telemetry.BaselineCapture",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepTelemetryBaselineTest::RunTest(const FString& Parameters)
 {
@@ -847,7 +847,7 @@ bool FDelveDeepTelemetryBaselineTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepTelemetryPercentileTest,
 	"DelveDeep.Telemetry.PercentileCalculation",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepTelemetryPercentileTest::RunTest(const FString& Parameters)
 {
@@ -916,7 +916,7 @@ bool FDelveDeepTelemetryPercentileTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepTelemetryReportGenerationTest,
 	"DelveDeep.Telemetry.ReportGeneration",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepTelemetryReportGenerationTest::RunTest(const FString& Parameters)
 {
@@ -1015,7 +1015,7 @@ bool FDelveDeepTelemetryReportGenerationTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepTelemetryEventSystemIntegrationTest,
 	"DelveDeep.Telemetry.Integration.EventSystem",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepTelemetryEventSystemIntegrationTest::RunTest(const FString& Parameters)
 {
@@ -1084,7 +1084,7 @@ bool FDelveDeepTelemetryEventSystemIntegrationTest::RunTest(const FString& Param
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepTelemetryConfigSystemIntegrationTest,
 	"DelveDeep.Telemetry.Integration.ConfigSystem",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepTelemetryConfigSystemIntegrationTest::RunTest(const FString& Parameters)
 {
@@ -1163,7 +1163,7 @@ bool FDelveDeepTelemetryConfigSystemIntegrationTest::RunTest(const FString& Para
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepTelemetryBudgetAllocationTest,
 	"DelveDeep.Telemetry.Integration.BudgetAllocation",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepTelemetryBudgetAllocationTest::RunTest(const FString& Parameters)
 {
@@ -1245,7 +1245,7 @@ bool FDelveDeepTelemetryBudgetAllocationTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepTelemetryRealisticLoadTest,
 	"DelveDeep.Telemetry.Integration.RealisticLoad",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepTelemetryRealisticLoadTest::RunTest(const FString& Parameters)
 {
@@ -1355,7 +1355,7 @@ bool FDelveDeepTelemetryRealisticLoadTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepTelemetryEntityCorrelationTest,
 	"DelveDeep.Telemetry.Integration.EntityCorrelation",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepTelemetryEntityCorrelationTest::RunTest(const FString& Parameters)
 {
@@ -1435,7 +1435,7 @@ bool FDelveDeepTelemetryEntityCorrelationTest::RunTest(const FString& Parameters
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepTelemetryBaselineComparisonTest,
 	"DelveDeep.Telemetry.Integration.BaselineComparison",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepTelemetryBaselineComparisonTest::RunTest(const FString& Parameters)
 {

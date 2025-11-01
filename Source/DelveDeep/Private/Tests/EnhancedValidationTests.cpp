@@ -10,12 +10,12 @@
 #include "Engine/GameInstance.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FValidationSeverityTest, "DelveDeep.Validation.SeverityLevels", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FValidationSeverityTest::RunTest(const FString& Parameters)
 {
 	// Test adding issues with different severity levels
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Test");
 	Context.OperationName = TEXT("SeverityTest");
 
@@ -58,22 +58,22 @@ bool FValidationSeverityTest::RunTest(const FString& Parameters)
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FValidationContextNestingTest, "DelveDeep.Validation.ContextNesting", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FValidationContextNestingTest::RunTest(const FString& Parameters)
 {
 	// Test nested validation contexts
-	FValidationContext ParentContext;
+	FDelveDeepValidationContext ParentContext;
 	ParentContext.SystemName = TEXT("Parent");
 	ParentContext.OperationName = TEXT("ParentOp");
 	ParentContext.AddError(TEXT("Parent error"));
 
-	FValidationContext ChildContext1;
+	FDelveDeepValidationContext ChildContext1;
 	ChildContext1.SystemName = TEXT("Child1");
 	ChildContext1.OperationName = TEXT("Child1Op");
 	ChildContext1.AddError(TEXT("Child1 error"));
 
-	FValidationContext ChildContext2;
+	FDelveDeepValidationContext ChildContext2;
 	ChildContext2.SystemName = TEXT("Child2");
 	ChildContext2.OperationName = TEXT("Child2Op");
 	ChildContext2.AddWarning(TEXT("Child2 warning"));
@@ -92,17 +92,17 @@ bool FValidationContextNestingTest::RunTest(const FString& Parameters)
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FValidationContextMergingTest, "DelveDeep.Validation.ContextMerging", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FValidationContextMergingTest::RunTest(const FString& Parameters)
 {
 	// Test merging validation contexts
-	FValidationContext Context1;
+	FDelveDeepValidationContext Context1;
 	Context1.SystemName = TEXT("System1");
 	Context1.AddError(TEXT("Error 1"));
 	Context1.AddWarning(TEXT("Warning 1"));
 
-	FValidationContext Context2;
+	FDelveDeepValidationContext Context2;
 	Context2.SystemName = TEXT("System2");
 	Context2.AddError(TEXT("Error 2"));
 	Context2.AddInfo(TEXT("Info 1"));
@@ -119,11 +119,11 @@ bool FValidationContextMergingTest::RunTest(const FString& Parameters)
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FValidationTemplateRangeTest, "DelveDeep.Validation.Templates.Range", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FValidationTemplateRangeTest::RunTest(const FString& Parameters)
 {
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Test");
 	Context.OperationName = TEXT("RangeTest");
 
@@ -157,11 +157,11 @@ bool FValidationTemplateRangeTest::RunTest(const FString& Parameters)
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FValidationTemplatePointerTest, "DelveDeep.Validation.Templates.Pointer", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FValidationTemplatePointerTest::RunTest(const FString& Parameters)
 {
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Test");
 	Context.OperationName = TEXT("PointerTest");
 
@@ -188,11 +188,11 @@ bool FValidationTemplatePointerTest::RunTest(const FString& Parameters)
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FValidationTemplateStringTest, "DelveDeep.Validation.Templates.String", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FValidationTemplateStringTest::RunTest(const FString& Parameters)
 {
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Test");
 	Context.OperationName = TEXT("StringTest");
 
@@ -230,11 +230,11 @@ bool FValidationTemplateStringTest::RunTest(const FString& Parameters)
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FValidationTemplateArrayTest, "DelveDeep.Validation.Templates.Array", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FValidationTemplateArrayTest::RunTest(const FString& Parameters)
 {
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Test");
 	Context.OperationName = TEXT("ArrayTest");
 
@@ -262,11 +262,11 @@ bool FValidationTemplateArrayTest::RunTest(const FString& Parameters)
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FValidationReportFormatsTest, "DelveDeep.Validation.ReportFormats", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FValidationReportFormatsTest::RunTest(const FString& Parameters)
 {
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("TestSystem");
 	Context.OperationName = TEXT("TestOperation");
 	Context.AddCritical(TEXT("Critical issue"));
@@ -302,11 +302,11 @@ bool FValidationReportFormatsTest::RunTest(const FString& Parameters)
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FValidationMetadataTest, "DelveDeep.Validation.Metadata", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FValidationMetadataTest::RunTest(const FString& Parameters)
 {
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Test");
 	Context.OperationName = TEXT("MetadataTest");
 
@@ -323,11 +323,11 @@ bool FValidationMetadataTest::RunTest(const FString& Parameters)
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FValidationDurationTest, "DelveDeep.Validation.Duration", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FValidationDurationTest::RunTest(const FString& Parameters)
 {
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Test");
 	Context.OperationName = TEXT("DurationTest");
 
@@ -348,7 +348,7 @@ bool FValidationDurationTest::RunTest(const FString& Parameters)
 
 /*
 IMPLEMENT_COMPLEX_AUTOMATION_TEST(FValidationSubsystemRuleRegistrationTest, "DelveDeep.Validation.Subsystem.RuleRegistration", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 void FValidationSubsystemRuleRegistrationTest::GetTests(TArray<FString>& OutBeautifiedNames, TArray<FString>& OutTestCommands) const
 {
@@ -367,7 +367,7 @@ bool FValidationSubsystemRuleRegistrationTest::RunTest(const FString& Parameters
 }
 
 IMPLEMENT_COMPLEX_AUTOMATION_TEST(FValidationSubsystemCachingTest, "DelveDeep.Validation.Subsystem.Caching", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 void FValidationSubsystemCachingTest::GetTests(TArray<FString>& OutBeautifiedNames, TArray<FString>& OutTestCommands) const
 {
@@ -386,7 +386,7 @@ bool FValidationSubsystemCachingTest::RunTest(const FString& Parameters)
 }
 
 IMPLEMENT_COMPLEX_AUTOMATION_TEST(FValidationSubsystemMetricsTest, "DelveDeep.Validation.Subsystem.Metrics", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 void FValidationSubsystemMetricsTest::GetTests(TArray<FString>& OutBeautifiedNames, TArray<FString>& OutTestCommands) const
 {
@@ -405,7 +405,7 @@ bool FValidationSubsystemMetricsTest::RunTest(const FString& Parameters)
 }
 
 IMPLEMENT_COMPLEX_AUTOMATION_TEST(FValidationSubsystemDelegatesTest, "DelveDeep.Validation.Subsystem.Delegates", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 void FValidationSubsystemDelegatesTest::GetTests(TArray<FString>& OutBeautifiedNames, TArray<FString>& OutTestCommands) const
 {
@@ -424,7 +424,7 @@ bool FValidationSubsystemDelegatesTest::RunTest(const FString& Parameters)
 }
 
 IMPLEMENT_COMPLEX_AUTOMATION_TEST(FValidationSubsystemBatchTest, "DelveDeep.Validation.Subsystem.Batch", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 void FValidationSubsystemBatchTest::GetTests(TArray<FString>& OutBeautifiedNames, TArray<FString>& OutTestCommands) const
 {

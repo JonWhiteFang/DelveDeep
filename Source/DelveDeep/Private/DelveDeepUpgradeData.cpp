@@ -6,7 +6,7 @@ void UDelveDeepUpgradeData::PostLoad()
 {
 	Super::PostLoad();
 	
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Configuration");
 	Context.OperationName = TEXT("LoadUpgradeData");
 	
@@ -28,7 +28,7 @@ int32 UDelveDeepUpgradeData::CalculateCostForLevel(int32 Level) const
 	return FMath::RoundToInt(Cost);
 }
 
-bool UDelveDeepUpgradeData::Validate(FValidationContext& Context) const
+bool UDelveDeepUpgradeData::Validate(FDelveDeepValidationContext& Context) const
 {
 	bool bIsValid = true;
 	

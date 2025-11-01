@@ -23,7 +23,7 @@ namespace DelveDeepValidation
 	 */
 	template<typename T>
 	bool ValidateRange(T Value, T Min, T Max, const FString& PropertyName, 
-					  FValidationContext& Context, EValidationSeverity Severity = EValidationSeverity::Error)
+					  FDelveDeepValidationContext& Context, EValidationSeverity Severity = EValidationSeverity::Error)
 	{
 		if (Value < Min || Value > Max)
 		{
@@ -46,7 +46,7 @@ namespace DelveDeepValidation
 	 */
 	template<typename T>
 	bool ValidatePointer(const T* Pointer, const FString& PropertyName, 
-						FValidationContext& Context, bool bAllowNull = false,
+						FDelveDeepValidationContext& Context, bool bAllowNull = false,
 						EValidationSeverity Severity = EValidationSeverity::Error)
 	{
 		if (!bAllowNull && !Pointer)
@@ -75,7 +75,7 @@ namespace DelveDeepValidation
 	 */
 	template<typename T>
 	bool ValidateSoftReference(const TSoftObjectPtr<T>& SoftPtr, const FString& PropertyName,
-							  FValidationContext& Context, bool bAllowNull = false,
+							  FDelveDeepValidationContext& Context, bool bAllowNull = false,
 							  EValidationSeverity Severity = EValidationSeverity::Warning)
 	{
 		if (!bAllowNull && SoftPtr.IsNull())
@@ -99,7 +99,7 @@ namespace DelveDeepValidation
 	 * @return True if string is valid, false otherwise
 	 */
 	inline bool ValidateString(const FString& Value, const FString& PropertyName,
-							  FValidationContext& Context, int32 MinLength = 0, 
+							  FDelveDeepValidationContext& Context, int32 MinLength = 0, 
 							  int32 MaxLength = MAX_int32, bool bAllowEmpty = false,
 							  EValidationSeverity Severity = EValidationSeverity::Error)
 	{
@@ -133,7 +133,7 @@ namespace DelveDeepValidation
 	 */
 	template<typename T>
 	bool ValidateArraySize(const TArray<T>& Array, const FString& PropertyName,
-						  FValidationContext& Context, int32 MinSize = 0, 
+						  FDelveDeepValidationContext& Context, int32 MinSize = 0, 
 						  int32 MaxSize = MAX_int32,
 						  EValidationSeverity Severity = EValidationSeverity::Error)
 	{
@@ -158,7 +158,7 @@ namespace DelveDeepValidation
 	 */
 	template<typename T>
 	bool ValidateEnum(T Value, const FString& PropertyName, 
-					 FValidationContext& Context,
+					 FDelveDeepValidationContext& Context,
 					 EValidationSeverity Severity = EValidationSeverity::Error)
 	{
 		UEnum* EnumClass = StaticEnum<T>();
@@ -182,7 +182,7 @@ namespace DelveDeepValidation
 	 * @return True if text is valid, false otherwise
 	 */
 	bool ValidateText(const FText& Value, const FString& PropertyName,
-					  FValidationContext& Context, bool bAllowEmpty = false,
+					  FDelveDeepValidationContext& Context, bool bAllowEmpty = false,
 					  EValidationSeverity Severity = EValidationSeverity::Error);
 
 	/**
@@ -195,6 +195,6 @@ namespace DelveDeepValidation
 	 * @return True if name is valid, false otherwise
 	 */
 	bool ValidateName(const FName& Value, const FString& PropertyName,
-					  FValidationContext& Context, bool bAllowNone = false,
+					  FDelveDeepValidationContext& Context, bool bAllowNone = false,
 					  EValidationSeverity Severity = EValidationSeverity::Error);
 }

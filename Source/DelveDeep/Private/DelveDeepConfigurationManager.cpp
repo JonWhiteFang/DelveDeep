@@ -275,7 +275,7 @@ bool UDelveDeepConfigurationManager::ValidateAllData(FString& OutReport)
 {
 	SCOPE_CYCLE_COUNTER(STAT_ValidateAllData);
 	
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("ConfigurationManager");
 	Context.OperationName = TEXT("ValidateAllData");
 
@@ -414,7 +414,7 @@ void UDelveDeepConfigurationManager::OnAssetReloaded(const FAssetData& AssetData
 			CharacterDataCache.Add(AssetName, CharacterData);
 			
 			// Re-validate
-			FValidationContext Context;
+			FDelveDeepValidationContext Context;
 			Context.SystemName = TEXT("HotReload");
 			Context.OperationName = TEXT("ReloadCharacterData");
 			
@@ -441,7 +441,7 @@ void UDelveDeepConfigurationManager::OnAssetReloaded(const FAssetData& AssetData
 		{
 			UpgradeDataCache.Add(AssetName, UpgradeData);
 			
-			FValidationContext Context;
+			FDelveDeepValidationContext Context;
 			Context.SystemName = TEXT("HotReload");
 			Context.OperationName = TEXT("ReloadUpgradeData");
 			
@@ -468,7 +468,7 @@ void UDelveDeepConfigurationManager::OnAssetReloaded(const FAssetData& AssetData
 		{
 			WeaponDataCache.Add(AssetName, WeaponData);
 			
-			FValidationContext Context;
+			FDelveDeepValidationContext Context;
 			Context.SystemName = TEXT("HotReload");
 			Context.OperationName = TEXT("ReloadWeaponData");
 			
@@ -495,7 +495,7 @@ void UDelveDeepConfigurationManager::OnAssetReloaded(const FAssetData& AssetData
 		{
 			AbilityDataCache.Add(AssetName, AbilityData);
 			
-			FValidationContext Context;
+			FDelveDeepValidationContext Context;
 			Context.SystemName = TEXT("HotReload");
 			Context.OperationName = TEXT("ReloadAbilityData");
 			
@@ -524,7 +524,7 @@ void UDelveDeepConfigurationManager::OnAssetReloaded(const FAssetData& AssetData
 			MonsterConfigTable = DataTable;
 			
 			// Validate all rows
-			FValidationContext Context;
+			FDelveDeepValidationContext Context;
 			Context.SystemName = TEXT("HotReload");
 			Context.OperationName = TEXT("ReloadMonsterConfigs");
 			
@@ -734,7 +734,7 @@ void UDelveDeepConfigurationManager::LoadDataTables()
 	}
 }
 
-bool UDelveDeepConfigurationManager::ValidateCharacterData(const UDelveDeepCharacterData* Data, FValidationContext& Context) const
+bool UDelveDeepConfigurationManager::ValidateCharacterData(const UDelveDeepCharacterData* Data, FDelveDeepValidationContext& Context) const
 {
 	if (!Data)
 	{
@@ -786,7 +786,7 @@ bool UDelveDeepConfigurationManager::ValidateCharacterData(const UDelveDeepChara
 	return bIsValid;
 }
 
-bool UDelveDeepConfigurationManager::ValidateMonsterConfig(const FDelveDeepMonsterConfig* Config, FValidationContext& Context) const
+bool UDelveDeepConfigurationManager::ValidateMonsterConfig(const FDelveDeepMonsterConfig* Config, FDelveDeepValidationContext& Context) const
 {
 	if (!Config)
 	{
@@ -830,7 +830,7 @@ bool UDelveDeepConfigurationManager::ValidateMonsterConfig(const FDelveDeepMonst
 	return bIsValid;
 }
 
-bool UDelveDeepConfigurationManager::ValidateUpgradeData(const UDelveDeepUpgradeData* Data, FValidationContext& Context) const
+bool UDelveDeepConfigurationManager::ValidateUpgradeData(const UDelveDeepUpgradeData* Data, FDelveDeepValidationContext& Context) const
 {
 	if (!Data)
 	{
@@ -875,7 +875,7 @@ bool UDelveDeepConfigurationManager::ValidateUpgradeData(const UDelveDeepUpgrade
 	return bIsValid;
 }
 
-bool UDelveDeepConfigurationManager::ValidateWeaponData(const UDelveDeepWeaponData* Data, FValidationContext& Context) const
+bool UDelveDeepConfigurationManager::ValidateWeaponData(const UDelveDeepWeaponData* Data, FDelveDeepValidationContext& Context) const
 {
 	if (!Data)
 	{
@@ -919,7 +919,7 @@ bool UDelveDeepConfigurationManager::ValidateWeaponData(const UDelveDeepWeaponDa
 	return bIsValid;
 }
 
-bool UDelveDeepConfigurationManager::ValidateAbilityData(const UDelveDeepAbilityData* Data, FValidationContext& Context) const
+bool UDelveDeepConfigurationManager::ValidateAbilityData(const UDelveDeepAbilityData* Data, FDelveDeepValidationContext& Context) const
 {
 	if (!Data)
 	{
@@ -1138,7 +1138,7 @@ void UDelveDeepConfigurationManager::RegisterValidationRules(UDelveDeepValidatio
 	ValidationSubsystem->RegisterValidationRule(
 		FName(TEXT("ValidateCharacterData")),
 		UDelveDeepCharacterData::StaticClass(),
-		FValidationRuleDelegate::CreateLambda([this](const UObject* Object, FValidationContext& Context) -> bool
+		FValidationRuleDelegate::CreateLambda([this](const UObject* Object, FDelveDeepValidationContext& Context) -> bool
 		{
 			const UDelveDeepCharacterData* CharacterData = Cast<UDelveDeepCharacterData>(Object);
 			if (CharacterData)
@@ -1155,7 +1155,7 @@ void UDelveDeepConfigurationManager::RegisterValidationRules(UDelveDeepValidatio
 	ValidationSubsystem->RegisterValidationRule(
 		FName(TEXT("ValidateMonsterConfig")),
 		UDataTable::StaticClass(),
-		FValidationRuleDelegate::CreateLambda([this](const UObject* Object, FValidationContext& Context) -> bool
+		FValidationRuleDelegate::CreateLambda([this](const UObject* Object, FDelveDeepValidationContext& Context) -> bool
 		{
 			const UDataTable* DataTable = Cast<UDataTable>(Object);
 			if (DataTable && DataTable->GetRowStruct() && 
@@ -1183,7 +1183,7 @@ void UDelveDeepConfigurationManager::RegisterValidationRules(UDelveDeepValidatio
 	ValidationSubsystem->RegisterValidationRule(
 		FName(TEXT("ValidateUpgradeData")),
 		UDelveDeepUpgradeData::StaticClass(),
-		FValidationRuleDelegate::CreateLambda([this](const UObject* Object, FValidationContext& Context) -> bool
+		FValidationRuleDelegate::CreateLambda([this](const UObject* Object, FDelveDeepValidationContext& Context) -> bool
 		{
 			const UDelveDeepUpgradeData* UpgradeData = Cast<UDelveDeepUpgradeData>(Object);
 			if (UpgradeData)
@@ -1200,7 +1200,7 @@ void UDelveDeepConfigurationManager::RegisterValidationRules(UDelveDeepValidatio
 	ValidationSubsystem->RegisterValidationRule(
 		FName(TEXT("ValidateWeaponData")),
 		UDelveDeepWeaponData::StaticClass(),
-		FValidationRuleDelegate::CreateLambda([this](const UObject* Object, FValidationContext& Context) -> bool
+		FValidationRuleDelegate::CreateLambda([this](const UObject* Object, FDelveDeepValidationContext& Context) -> bool
 		{
 			const UDelveDeepWeaponData* WeaponData = Cast<UDelveDeepWeaponData>(Object);
 			if (WeaponData)
@@ -1217,7 +1217,7 @@ void UDelveDeepConfigurationManager::RegisterValidationRules(UDelveDeepValidatio
 	ValidationSubsystem->RegisterValidationRule(
 		FName(TEXT("ValidateAbilityData")),
 		UDelveDeepAbilityData::StaticClass(),
-		FValidationRuleDelegate::CreateLambda([this](const UObject* Object, FValidationContext& Context) -> bool
+		FValidationRuleDelegate::CreateLambda([this](const UObject* Object, FDelveDeepValidationContext& Context) -> bool
 		{
 			const UDelveDeepAbilityData* AbilityData = Cast<UDelveDeepAbilityData>(Object);
 			if (AbilityData)
@@ -1251,7 +1251,7 @@ void UDelveDeepConfigurationManager::ValidateAllDataWithSubsystem(UDelveDeepVali
 	{
 		if (Pair.Value)
 		{
-			FValidationContext Context;
+			FDelveDeepValidationContext Context;
 			Context.SystemName = TEXT("ConfigurationManager");
 			Context.OperationName = TEXT("ValidateCharacterData");
 			
@@ -1272,7 +1272,7 @@ void UDelveDeepConfigurationManager::ValidateAllDataWithSubsystem(UDelveDeepVali
 	// Validate monster config table
 	if (MonsterConfigTable)
 	{
-		FValidationContext Context;
+		FDelveDeepValidationContext Context;
 		Context.SystemName = TEXT("ConfigurationManager");
 		Context.OperationName = TEXT("ValidateMonsterConfigs");
 		
@@ -1294,7 +1294,7 @@ void UDelveDeepConfigurationManager::ValidateAllDataWithSubsystem(UDelveDeepVali
 	{
 		if (Pair.Value)
 		{
-			FValidationContext Context;
+			FDelveDeepValidationContext Context;
 			Context.SystemName = TEXT("ConfigurationManager");
 			Context.OperationName = TEXT("ValidateUpgradeData");
 			
@@ -1317,7 +1317,7 @@ void UDelveDeepConfigurationManager::ValidateAllDataWithSubsystem(UDelveDeepVali
 	{
 		if (Pair.Value)
 		{
-			FValidationContext Context;
+			FDelveDeepValidationContext Context;
 			Context.SystemName = TEXT("ConfigurationManager");
 			Context.OperationName = TEXT("ValidateWeaponData");
 			
@@ -1340,7 +1340,7 @@ void UDelveDeepConfigurationManager::ValidateAllDataWithSubsystem(UDelveDeepVali
 	{
 		if (Pair.Value)
 		{
-			FValidationContext Context;
+			FDelveDeepValidationContext Context;
 			Context.SystemName = TEXT("ConfigurationManager");
 			Context.OperationName = TEXT("ValidateAbilityData");
 			

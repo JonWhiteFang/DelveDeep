@@ -48,5 +48,5 @@ protected:
 	void RemoveWeaponModifiers(const UDelveDeepWeaponData* Weapon);
 
 	// Validation
-	virtual bool ValidateComponent(FValidationContext& Context) const override;
+	virtual bool ValidateComponent(FDelveDeepValidationContext& Context) const override;
 };

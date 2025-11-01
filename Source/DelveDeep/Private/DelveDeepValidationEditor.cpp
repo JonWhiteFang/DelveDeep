@@ -74,7 +74,7 @@ void FDelveDeepValidationEditor::OnAssetPreSave(UObject* Asset)
 	}
 
 	// Validate the asset
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("EditorValidation");
 	Context.OperationName = TEXT("PreSave");
 
@@ -131,7 +131,7 @@ void FDelveDeepValidationEditor::ValidateAssetByPath(const FString& AssetPath)
 	}
 
 	// Validate the asset
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("EditorValidation");
 	Context.OperationName = TEXT("ValidateAsset");
 
@@ -197,7 +197,7 @@ void FDelveDeepValidationEditor::ValidateAssetsInDirectory(const FString& Direct
 			continue;
 		}
 
-		FValidationContext Context;
+		FDelveDeepValidationContext Context;
 		Context.SystemName = TEXT("EditorValidation");
 		Context.OperationName = TEXT("ValidateDirectory");
 
@@ -267,7 +267,7 @@ void FDelveDeepValidationEditor::ValidateAllAssets()
 			continue;
 		}
 
-		FValidationContext Context;
+		FDelveDeepValidationContext Context;
 		Context.SystemName = TEXT("EditorValidation");
 		Context.OperationName = TEXT("ValidateAll");
 
@@ -288,7 +288,7 @@ void FDelveDeepValidationEditor::ValidateAllAssets()
 		PassedCount, FailedCount, SkippedCount);
 }
 
-void FDelveDeepValidationEditor::LogValidationResults(const FValidationContext& Context, const FString& AssetPath)
+void FDelveDeepValidationEditor::LogValidationResults(const FDelveDeepValidationContext& Context, const FString& AssetPath)
 {
 	// Create Message Log category if it doesn't exist
 	FMessageLog ValidationLog("DelveDeepValidation");

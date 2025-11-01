@@ -25,7 +25,7 @@
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FValidationCommandRegistrationTest,
 	"DelveDeep.ConsoleCommands.ValidationCommandRegistration",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FValidationCommandRegistrationTest::RunTest(const FString& Parameters)
 {
@@ -69,7 +69,7 @@ bool FValidationCommandRegistrationTest::RunTest(const FString& Parameters)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FEventCommandRegistrationTest,
 	"DelveDeep.ConsoleCommands.EventCommandRegistration",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FEventCommandRegistrationTest::RunTest(const FString& Parameters)
 {
@@ -116,7 +116,7 @@ bool FEventCommandRegistrationTest::RunTest(const FString& Parameters)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FCommandDiscoveryTest,
 	"DelveDeep.ConsoleCommands.CommandDiscovery",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FCommandDiscoveryTest::RunTest(const FString& Parameters)
 {
@@ -146,7 +146,7 @@ bool FCommandDiscoveryTest::RunTest(const FString& Parameters)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FBasicCommandExecutionTest,
 	"DelveDeep.ConsoleCommands.BasicExecution",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FBasicCommandExecutionTest::RunTest(const FString& Parameters)
 {
@@ -167,7 +167,7 @@ bool FBasicCommandExecutionTest::RunTest(const FString& Parameters)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FCommandOutputCaptureTest,
 	"DelveDeep.ConsoleCommands.OutputCapture",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FCommandOutputCaptureTest::RunTest(const FString& Parameters)
 {
@@ -203,7 +203,7 @@ bool FCommandOutputCaptureTest::RunTest(const FString& Parameters)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FConsoleOutputCaptureHelperTest,
 	"DelveDeep.ConsoleCommands.OutputCaptureHelper",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FConsoleOutputCaptureHelperTest::RunTest(const FString& Parameters)
 {
@@ -240,7 +240,7 @@ bool FConsoleOutputCaptureHelperTest::RunTest(const FString& Parameters)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FInvalidParameterHandlingTest,
 	"DelveDeep.ConsoleCommands.InvalidParameterHandling",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FInvalidParameterHandlingTest::RunTest(const FString& Parameters)
 {
@@ -277,7 +277,7 @@ bool FInvalidParameterHandlingTest::RunTest(const FString& Parameters)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FCommandWithArgumentsTest,
 	"DelveDeep.ConsoleCommands.CommandWithArguments",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FCommandWithArgumentsTest::RunTest(const FString& Parameters)
 {
@@ -304,7 +304,7 @@ bool FCommandWithArgumentsTest::RunTest(const FString& Parameters)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FCommandSideEffectsTest,
 	"DelveDeep.ConsoleCommands.SideEffects",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FCommandSideEffectsTest::RunTest(const FString& Parameters)
 {
@@ -343,7 +343,7 @@ bool FCommandSideEffectsTest::RunTest(const FString& Parameters)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FCommandResetSideEffectsTest,
 	"DelveDeep.ConsoleCommands.ResetSideEffects",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FCommandResetSideEffectsTest::RunTest(const FString& Parameters)
 {
@@ -392,7 +392,7 @@ bool FCommandResetSideEffectsTest::RunTest(const FString& Parameters)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FCommandSubsystemIntegrationTest,
 	"DelveDeep.ConsoleCommands.SubsystemIntegration",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FCommandSubsystemIntegrationTest::RunTest(const FString& Parameters)
 {
@@ -434,7 +434,7 @@ bool FCommandSubsystemIntegrationTest::RunTest(const FString& Parameters)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FAllCommandsExecutionTest,
 	"DelveDeep.ConsoleCommands.AllCommandsExecution",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FAllCommandsExecutionTest::RunTest(const FString& Parameters)
 {

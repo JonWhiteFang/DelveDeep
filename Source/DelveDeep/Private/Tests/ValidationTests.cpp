@@ -12,16 +12,16 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
 /**
- * Test FValidationContext error tracking functionality
+ * Test FDelveDeepValidationContext error tracking functionality
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepValidationContextErrorTest, 
 	"DelveDeep.Validation.ErrorTracking", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepValidationContextErrorTest::RunTest(const FString& Parameters)
 {
 	// Create validation context
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("TestSystem");
 	Context.OperationName = TEXT("TestOperation");
 
@@ -46,16 +46,16 @@ bool FDelveDeepValidationContextErrorTest::RunTest(const FString& Parameters)
 }
 
 /**
- * Test FValidationContext report generation
+ * Test FDelveDeepValidationContext report generation
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepValidationContextReportTest, 
 	"DelveDeep.Validation.ReportGeneration", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepValidationContextReportTest::RunTest(const FString& Parameters)
 {
 	// Create validation context with errors and warnings
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Configuration");
 	Context.OperationName = TEXT("LoadCharacterData");
 	Context.AddError(TEXT("Invalid health value"));
@@ -77,16 +77,16 @@ bool FDelveDeepValidationContextReportTest::RunTest(const FString& Parameters)
 }
 
 /**
- * Test FValidationContext reset functionality
+ * Test FDelveDeepValidationContext reset functionality
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepValidationContextResetTest, 
 	"DelveDeep.Validation.Reset", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepValidationContextResetTest::RunTest(const FString& Parameters)
 {
 	// Create validation context with data
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("TestSystem");
 	Context.OperationName = TEXT("TestOperation");
 	Context.AddError(TEXT("Test error"));
@@ -111,16 +111,16 @@ bool FDelveDeepValidationContextResetTest::RunTest(const FString& Parameters)
 }
 
 /**
- * Test FValidationContext with multiple errors and warnings
+ * Test FDelveDeepValidationContext with multiple errors and warnings
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepValidationContextMultipleIssuesTest, 
 	"DelveDeep.Validation.MultipleIssues", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepValidationContextMultipleIssuesTest::RunTest(const FString& Parameters)
 {
 	// Create validation context
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Configuration");
 	Context.OperationName = TEXT("ValidateAllData");
 
@@ -156,7 +156,7 @@ bool FDelveDeepValidationContextMultipleIssuesTest::RunTest(const FString& Param
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepCharacterDataValidationTest, 
 	"DelveDeep.Validation.CharacterData", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepCharacterDataValidationTest::RunTest(const FString& Parameters)
 {
@@ -166,7 +166,7 @@ bool FDelveDeepCharacterDataValidationTest::RunTest(const FString& Parameters)
 	CharacterData->BaseDamage = 15.0f;  // Valid
 	CharacterData->MoveSpeed = 300.0f;  // Valid
 	
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Configuration");
 	Context.OperationName = TEXT("TestCharacterValidation");
 	
@@ -202,7 +202,7 @@ bool FDelveDeepCharacterDataValidationTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepMonsterConfigValidationTest, 
 	"DelveDeep.Validation.MonsterConfig", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepMonsterConfigValidationTest::RunTest(const FString& Parameters)
 {
@@ -214,7 +214,7 @@ bool FDelveDeepMonsterConfigValidationTest::RunTest(const FString& Parameters)
 	MonsterConfig.DetectionRange = 500.0f; // Valid
 	MonsterConfig.AttackRange = 100.0f;    // Valid
 	
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Configuration");
 	Context.OperationName = TEXT("TestMonsterValidation");
 	
@@ -251,7 +251,7 @@ bool FDelveDeepMonsterConfigValidationTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepUpgradeDataValidationTest, 
 	"DelveDeep.Validation.UpgradeData", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepUpgradeDataValidationTest::RunTest(const FString& Parameters)
 {
@@ -262,7 +262,7 @@ bool FDelveDeepUpgradeDataValidationTest::RunTest(const FString& Parameters)
 	UpgradeData->MaxLevel = 10;               // Valid
 	UpgradeData->HealthModifier = 10.0f;      // Valid
 	
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Configuration");
 	Context.OperationName = TEXT("TestUpgradeValidation");
 	
@@ -298,7 +298,7 @@ bool FDelveDeepUpgradeDataValidationTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepWeaponDataValidationTest, 
 	"DelveDeep.Validation.WeaponData", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepWeaponDataValidationTest::RunTest(const FString& Parameters)
 {
@@ -308,7 +308,7 @@ bool FDelveDeepWeaponDataValidationTest::RunTest(const FString& Parameters)
 	WeaponData->AttackSpeed = 0.05f;     // Invalid: below min of 0.1
 	WeaponData->Range = 100.0f;          // Valid
 	
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Configuration");
 	Context.OperationName = TEXT("TestWeaponValidation");
 	
@@ -345,7 +345,7 @@ bool FDelveDeepWeaponDataValidationTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepAbilityDataValidationTest, 
 	"DelveDeep.Validation.AbilityData", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepAbilityDataValidationTest::RunTest(const FString& Parameters)
 {
@@ -355,7 +355,7 @@ bool FDelveDeepAbilityDataValidationTest::RunTest(const FString& Parameters)
 	AbilityData->ResourceCost = -10.0f;     // Invalid: cannot be negative
 	AbilityData->DamageMultiplier = 1.5f;   // Valid
 	
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Configuration");
 	Context.OperationName = TEXT("TestAbilityValidation");
 	
@@ -392,18 +392,18 @@ bool FDelveDeepAbilityDataValidationTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepValidationContextNestingTest, 
 	"DelveDeep.Validation.ContextNesting", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepValidationContextNestingTest::RunTest(const FString& Parameters)
 {
 	// Create parent context
-	FValidationContext ParentContext;
+	FDelveDeepValidationContext ParentContext;
 	ParentContext.SystemName = TEXT("ParentSystem");
 	ParentContext.OperationName = TEXT("ParentOperation");
 	ParentContext.AddError(TEXT("Parent error"));
 	
 	// Create child context
-	FValidationContext ChildContext;
+	FDelveDeepValidationContext ChildContext;
 	ChildContext.SystemName = TEXT("ChildSystem");
 	ChildContext.OperationName = TEXT("ChildOperation");
 	ChildContext.AddError(TEXT("Child error"));
@@ -432,19 +432,19 @@ bool FDelveDeepValidationContextNestingTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepValidationContextMergingTest, 
 	"DelveDeep.Validation.ContextMerging", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepValidationContextMergingTest::RunTest(const FString& Parameters)
 {
 	// Create first context
-	FValidationContext Context1;
+	FDelveDeepValidationContext Context1;
 	Context1.SystemName = TEXT("System1");
 	Context1.OperationName = TEXT("Operation1");
 	Context1.AddError(TEXT("Error from context 1"));
 	Context1.AddWarning(TEXT("Warning from context 1"));
 	
 	// Create second context
-	FValidationContext Context2;
+	FDelveDeepValidationContext Context2;
 	Context2.SystemName = TEXT("System2");
 	Context2.OperationName = TEXT("Operation2");
 	Context2.AddError(TEXT("Error from context 2"));
@@ -485,12 +485,12 @@ bool FDelveDeepValidationContextMergingTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepValidationContextMetadataTest, 
 	"DelveDeep.Validation.MetadataAttachment", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepValidationContextMetadataTest::RunTest(const FString& Parameters)
 {
 	// Create context and add issue
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("TestSystem");
 	Context.OperationName = TEXT("TestOperation");
 	Context.AddError(TEXT("Test error with metadata"));
@@ -525,12 +525,12 @@ bool FDelveDeepValidationContextMetadataTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepValidationContextDurationTest, 
 	"DelveDeep.Validation.DurationCalculation", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepValidationContextDurationTest::RunTest(const FString& Parameters)
 {
 	// Create context
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("TestSystem");
 	Context.OperationName = TEXT("TestOperation");
 	
@@ -569,7 +569,7 @@ bool FDelveDeepValidationContextDurationTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepValidationSubsystemInitTest, 
 	"DelveDeep.Validation.SubsystemInitialization", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepValidationSubsystemInitTest::RunTest(const FString& Parameters)
 {
@@ -597,7 +597,7 @@ bool FDelveDeepValidationSubsystemInitTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepValidationRuleRegistrationTest, 
 	"DelveDeep.Validation.RuleRegistration", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepValidationRuleRegistrationTest::RunTest(const FString& Parameters)
 {
@@ -614,7 +614,7 @@ bool FDelveDeepValidationRuleRegistrationTest::RunTest(const FString& Parameters
 	
 	// Create a simple validation rule
 	FValidationRuleDelegate TestRule;
-	TestRule.BindLambda([](const UObject* Object, FValidationContext& Context) -> bool
+	TestRule.BindLambda([](const UObject* Object, FDelveDeepValidationContext& Context) -> bool
 	{
 		Context.AddInfo(TEXT("Test rule executed"));
 		return true;
@@ -650,7 +650,7 @@ bool FDelveDeepValidationRuleRegistrationTest::RunTest(const FString& Parameters
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepValidationRuleExecutionTest, 
 	"DelveDeep.Validation.RuleExecution", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepValidationRuleExecutionTest::RunTest(const FString& Parameters)
 {
@@ -667,7 +667,7 @@ bool FDelveDeepValidationRuleExecutionTest::RunTest(const FString& Parameters)
 	
 	// Create a validation rule that adds an error
 	FValidationRuleDelegate FailingRule;
-	FailingRule.BindLambda([](const UObject* Object, FValidationContext& Context) -> bool
+	FailingRule.BindLambda([](const UObject* Object, FDelveDeepValidationContext& Context) -> bool
 	{
 		Context.AddError(TEXT("Validation failed"));
 		return false;
@@ -686,7 +686,7 @@ bool FDelveDeepValidationRuleExecutionTest::RunTest(const FString& Parameters)
 	UObject* TestObject = NewObject<UObject>();
 	
 	// Validate object
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	bool bResult = ValidationSubsystem->ValidateObject(TestObject, Context);
 	
 	// Verify rule was executed
@@ -695,7 +695,7 @@ bool FDelveDeepValidationRuleExecutionTest::RunTest(const FString& Parameters)
 	
 	// Find the child context for our rule
 	bool bFoundRuleContext = false;
-	for (const FValidationContext& ChildContext : Context.ChildContexts)
+	for (const FDelveDeepValidationContext& ChildContext : Context.ChildContexts)
 	{
 		if (ChildContext.OperationName == TEXT("FailingRule"))
 		{
@@ -717,7 +717,7 @@ bool FDelveDeepValidationRuleExecutionTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepValidationRulePriorityTest, 
 	"DelveDeep.Validation.RulePriority", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepValidationRulePriorityTest::RunTest(const FString& Parameters)
 {
@@ -736,21 +736,21 @@ bool FDelveDeepValidationRulePriorityTest::RunTest(const FString& Parameters)
 	TArray<FString> ExecutionOrder;
 	
 	FValidationRuleDelegate LowPriorityRule;
-	LowPriorityRule.BindLambda([&ExecutionOrder](const UObject* Object, FValidationContext& Context) -> bool
+	LowPriorityRule.BindLambda([&ExecutionOrder](const UObject* Object, FDelveDeepValidationContext& Context) -> bool
 	{
 		ExecutionOrder.Add(TEXT("LowPriority"));
 		return true;
 	});
 	
 	FValidationRuleDelegate HighPriorityRule;
-	HighPriorityRule.BindLambda([&ExecutionOrder](const UObject* Object, FValidationContext& Context) -> bool
+	HighPriorityRule.BindLambda([&ExecutionOrder](const UObject* Object, FDelveDeepValidationContext& Context) -> bool
 	{
 		ExecutionOrder.Add(TEXT("HighPriority"));
 		return true;
 	});
 	
 	FValidationRuleDelegate MediumPriorityRule;
-	MediumPriorityRule.BindLambda([&ExecutionOrder](const UObject* Object, FValidationContext& Context) -> bool
+	MediumPriorityRule.BindLambda([&ExecutionOrder](const UObject* Object, FDelveDeepValidationContext& Context) -> bool
 	{
 		ExecutionOrder.Add(TEXT("MediumPriority"));
 		return true;
@@ -763,7 +763,7 @@ bool FDelveDeepValidationRulePriorityTest::RunTest(const FString& Parameters)
 	
 	// Validate object
 	UObject* TestObject = NewObject<UObject>();
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	ValidationSubsystem->ValidateObject(TestObject, Context);
 	
 	// Verify execution order (higher priority first)
@@ -780,7 +780,7 @@ bool FDelveDeepValidationRulePriorityTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepValidationCachingTest, 
 	"DelveDeep.Validation.Caching", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepValidationCachingTest::RunTest(const FString& Parameters)
 {
@@ -799,7 +799,7 @@ bool FDelveDeepValidationCachingTest::RunTest(const FString& Parameters)
 	int32 ExecutionCount = 0;
 	
 	FValidationRuleDelegate CountingRule;
-	CountingRule.BindLambda([&ExecutionCount](const UObject* Object, FValidationContext& Context) -> bool
+	CountingRule.BindLambda([&ExecutionCount](const UObject* Object, FDelveDeepValidationContext& Context) -> bool
 	{
 		ExecutionCount++;
 		Context.AddInfo(FString::Printf(TEXT("Execution %d"), ExecutionCount));
@@ -812,17 +812,17 @@ bool FDelveDeepValidationCachingTest::RunTest(const FString& Parameters)
 	UObject* TestObject = NewObject<UObject>();
 	
 	// First validation - should execute rule
-	FValidationContext Context1;
+	FDelveDeepValidationContext Context1;
 	ValidationSubsystem->ValidateObjectWithCache(TestObject, Context1);
 	TestEqual(TEXT("Rule should execute once"), ExecutionCount, 1);
 	
 	// Second validation with cache - should NOT execute rule again
-	FValidationContext Context2;
+	FDelveDeepValidationContext Context2;
 	ValidationSubsystem->ValidateObjectWithCache(TestObject, Context2);
 	TestEqual(TEXT("Rule should not execute again (cached)"), ExecutionCount, 1);
 	
 	// Force revalidation - should execute rule again
-	FValidationContext Context3;
+	FDelveDeepValidationContext Context3;
 	ValidationSubsystem->ValidateObjectWithCache(TestObject, Context3, true);
 	TestEqual(TEXT("Rule should execute again (forced)"), ExecutionCount, 2);
 	
@@ -834,7 +834,7 @@ bool FDelveDeepValidationCachingTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepValidationCacheInvalidationTest, 
 	"DelveDeep.Validation.CacheInvalidation", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepValidationCacheInvalidationTest::RunTest(const FString& Parameters)
 {
@@ -853,7 +853,7 @@ bool FDelveDeepValidationCacheInvalidationTest::RunTest(const FString& Parameter
 	int32 ExecutionCount = 0;
 	
 	FValidationRuleDelegate CountingRule;
-	CountingRule.BindLambda([&ExecutionCount](const UObject* Object, FValidationContext& Context) -> bool
+	CountingRule.BindLambda([&ExecutionCount](const UObject* Object, FDelveDeepValidationContext& Context) -> bool
 	{
 		ExecutionCount++;
 		return true;
@@ -865,7 +865,7 @@ bool FDelveDeepValidationCacheInvalidationTest::RunTest(const FString& Parameter
 	UObject* TestObject = NewObject<UObject>();
 	
 	// First validation - should execute rule
-	FValidationContext Context1;
+	FDelveDeepValidationContext Context1;
 	ValidationSubsystem->ValidateObjectWithCache(TestObject, Context1);
 	TestEqual(TEXT("Rule should execute once"), ExecutionCount, 1);
 	
@@ -873,7 +873,7 @@ bool FDelveDeepValidationCacheInvalidationTest::RunTest(const FString& Parameter
 	ValidationSubsystem->InvalidateCache(TestObject);
 	
 	// Second validation - should execute rule again (cache invalidated)
-	FValidationContext Context2;
+	FDelveDeepValidationContext Context2;
 	ValidationSubsystem->ValidateObjectWithCache(TestObject, Context2);
 	TestEqual(TEXT("Rule should execute again after invalidation"), ExecutionCount, 2);
 	
@@ -885,7 +885,7 @@ bool FDelveDeepValidationCacheInvalidationTest::RunTest(const FString& Parameter
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepValidationCacheClearTest, 
 	"DelveDeep.Validation.CacheClear", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepValidationCacheClearTest::RunTest(const FString& Parameters)
 {
@@ -904,7 +904,7 @@ bool FDelveDeepValidationCacheClearTest::RunTest(const FString& Parameters)
 	int32 ExecutionCount = 0;
 	
 	FValidationRuleDelegate CountingRule;
-	CountingRule.BindLambda([&ExecutionCount](const UObject* Object, FValidationContext& Context) -> bool
+	CountingRule.BindLambda([&ExecutionCount](const UObject* Object, FDelveDeepValidationContext& Context) -> bool
 	{
 		ExecutionCount++;
 		return true;
@@ -917,9 +917,9 @@ bool FDelveDeepValidationCacheClearTest::RunTest(const FString& Parameters)
 	UObject* TestObject2 = NewObject<UObject>();
 	
 	// Validate both objects
-	FValidationContext Context1;
+	FDelveDeepValidationContext Context1;
 	ValidationSubsystem->ValidateObjectWithCache(TestObject1, Context1);
-	FValidationContext Context2;
+	FDelveDeepValidationContext Context2;
 	ValidationSubsystem->ValidateObjectWithCache(TestObject2, Context2);
 	TestEqual(TEXT("Rule should execute twice"), ExecutionCount, 2);
 	
@@ -927,9 +927,9 @@ bool FDelveDeepValidationCacheClearTest::RunTest(const FString& Parameters)
 	ValidationSubsystem->ClearValidationCache();
 	
 	// Validate both objects again - should execute rules again
-	FValidationContext Context3;
+	FDelveDeepValidationContext Context3;
 	ValidationSubsystem->ValidateObjectWithCache(TestObject1, Context3);
-	FValidationContext Context4;
+	FDelveDeepValidationContext Context4;
 	ValidationSubsystem->ValidateObjectWithCache(TestObject2, Context4);
 	TestEqual(TEXT("Rule should execute twice more after cache clear"), ExecutionCount, 4);
 	
@@ -941,7 +941,7 @@ bool FDelveDeepValidationCacheClearTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepValidationRuleUnregistrationTest, 
 	"DelveDeep.Validation.RuleUnregistration", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepValidationRuleUnregistrationTest::RunTest(const FString& Parameters)
 {
@@ -958,10 +958,10 @@ bool FDelveDeepValidationRuleUnregistrationTest::RunTest(const FString& Paramete
 	
 	// Register multiple rules
 	FValidationRuleDelegate Rule1;
-	Rule1.BindLambda([](const UObject* Object, FValidationContext& Context) -> bool { return true; });
+	Rule1.BindLambda([](const UObject* Object, FDelveDeepValidationContext& Context) -> bool { return true; });
 	
 	FValidationRuleDelegate Rule2;
-	Rule2.BindLambda([](const UObject* Object, FValidationContext& Context) -> bool { return true; });
+	Rule2.BindLambda([](const UObject* Object, FDelveDeepValidationContext& Context) -> bool { return true; });
 	
 	ValidationSubsystem->RegisterValidationRule(TEXT("Rule1"), UObject::StaticClass(), Rule1);
 	ValidationSubsystem->RegisterValidationRule(TEXT("Rule2"), UObject::StaticClass(), Rule2);

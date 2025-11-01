@@ -6,7 +6,7 @@ void UDelveDeepAbilityData::PostLoad()
 {
 	Super::PostLoad();
 	
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Configuration");
 	Context.OperationName = TEXT("LoadAbilityData");
 	
@@ -17,7 +17,7 @@ void UDelveDeepAbilityData::PostLoad()
 	}
 }
 
-bool UDelveDeepAbilityData::Validate(FValidationContext& Context) const
+bool UDelveDeepAbilityData::Validate(FDelveDeepValidationContext& Context) const
 {
 	bool bIsValid = true;
 	

@@ -285,7 +285,7 @@ void FDelveDeepEventCommands::ValidateAllPayloads(const TArray<FString>& Args)
 	FDelveDeepEventPayload BasePayload;
 	BasePayload.EventTag = FGameplayTag::RequestGameplayTag(FName("DelveDeep.Event.Test"));
 	
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("EventCommands");
 	Context.OperationName = TEXT("ValidatePayloads");
 

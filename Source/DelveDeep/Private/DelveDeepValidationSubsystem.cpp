@@ -10,7 +10,6 @@
 #include "HAL/PlatformFileManager.h"
 
 // Performance profiling stats
-DECLARE_STATS_GROUP(TEXT("DelveDeepValidation"), STATGROUP_DelveDeepValidation, STATCAT_Advanced);
 DECLARE_CYCLE_STAT(TEXT("Validate Object"), STAT_ValidateObject, STATGROUP_DelveDeepValidation);
 DECLARE_CYCLE_STAT(TEXT("Execute Rule"), STAT_ExecuteRule, STATGROUP_DelveDeepValidation);
 DECLARE_CYCLE_STAT(TEXT("Cache Lookup"), STAT_CacheLookup, STATGROUP_DelveDeepValidation);
@@ -148,7 +147,7 @@ void UDelveDeepValidationSubsystem::UnregisterAllRulesForClass(UClass* TargetCla
 	}
 }
 
-bool UDelveDeepValidationSubsystem::ValidateObject(const UObject* Object, FValidationContext& OutContext)
+bool UDelveDeepValidationSubsystem::ValidateObject(const UObject* Object, FDelveDeepValidationContext& OutContext)
 {
 	SCOPE_CYCLE_COUNTER(STAT_ValidateObject);
 	
@@ -199,7 +198,7 @@ bool UDelveDeepValidationSubsystem::ValidateObject(const UObject* Object, FValid
 	return bResult;
 }
 
-bool UDelveDeepValidationSubsystem::ValidateObjectWithCache(const UObject* Object, FValidationContext& OutContext, bool bForceRevalidate)
+bool UDelveDeepValidationSubsystem::ValidateObjectWithCache(const UObject* Object, FDelveDeepValidationContext& OutContext, bool bForceRevalidate)
 {
 	SCOPE_CYCLE_COUNTER(STAT_CacheLookup);
 	
@@ -236,7 +235,7 @@ bool UDelveDeepValidationSubsystem::ValidateObjectWithCache(const UObject* Objec
 	return bResult;
 }
 
-int32 UDelveDeepValidationSubsystem::ValidateObjects(const TArray<UObject*>& Objects, TArray<FValidationContext>& OutContexts, bool bUseCache)
+int32 UDelveDeepValidationSubsystem::ValidateObjects(const TArray<UObject*>& Objects, TArray<FDelveDeepValidationContext>& OutContexts, bool bUseCache)
 {
 	// Pre-allocate output array
 	OutContexts.SetNum(Objects.Num());
@@ -248,7 +247,7 @@ int32 UDelveDeepValidationSubsystem::ValidateObjects(const TArray<UObject*>& Obj
 	ParallelFor(Objects.Num(), [&](int32 Index)
 	{
 		UObject* Object = Objects[Index];
-		FValidationContext& Context = OutContexts[Index];
+		FDelveDeepValidationContext& Context = OutContexts[Index];
 		
 		if (!Object || !IsValid(Object))
 		{
@@ -326,7 +325,7 @@ TArray<FValidationRuleDefinition> UDelveDeepValidationSubsystem::GetRulesForClas
 	return Rules ? *Rules : TArray<FValidationRuleDefinition>();
 }
 
-bool UDelveDeepValidationSubsystem::ExecuteRulesForObject(const UObject* Object, FValidationContext& Context)
+bool UDelveDeepValidationSubsystem::ExecuteRulesForObject(const UObject* Object, FDelveDeepValidationContext& Context)
 {
 	if (!Object)
 	{
@@ -367,7 +366,7 @@ bool UDelveDeepValidationSubsystem::ExecuteRulesForObject(const UObject* Object,
 		if (Rule.ValidationDelegate.IsBound())
 		{
 			// Create child context for this rule
-			FValidationContext RuleContext;
+			FDelveDeepValidationContext RuleContext;
 			RuleContext.SystemName = TEXT("ValidationRule");
 			RuleContext.OperationName = Rule.RuleName.ToString();
 			RuleContext.CreationTime = FDateTime::Now();
@@ -441,7 +440,7 @@ uint32 UDelveDeepValidationSubsystem::CalculateObjectHash(const UObject* Object)
 	return Ar.GetCrc();
 }
 
-void UDelveDeepValidationSubsystem::UpdateMetrics(const FValidationContext& Context, double ExecutionTime)
+void UDelveDeepValidationSubsystem::UpdateMetrics(const FDelveDeepValidationContext& Context, double ExecutionTime)
 {
 	// Update atomic counters (thread-safe without lock)
 	Metrics.TotalValidations++;
@@ -482,7 +481,7 @@ void UDelveDeepValidationSubsystem::UpdateMetrics(const FValidationContext& Cont
 		}
 		
 		// Track child context metrics recursively
-		for (const FValidationContext& ChildContext : Context.ChildContexts)
+		for (const FDelveDeepValidationContext& ChildContext : Context.ChildContexts)
 		{
 			// Track error frequency from child contexts
 			for (const FString& Error : ChildContext.ValidationErrors)

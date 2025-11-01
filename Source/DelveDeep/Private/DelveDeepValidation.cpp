@@ -8,7 +8,7 @@ DECLARE_CYCLE_STAT_EXTERN(TEXT("Generate Report"), STAT_GenerateReport, STATGROU
 
 DEFINE_LOG_CATEGORY(LogDelveDeepConfig);
 
-void FValidationContext::AddError(const FString& Error)
+void FDelveDeepValidationContext::AddError(const FString& Error)
 {
 	// Add to legacy array for backward compatibility
 	ValidationErrors.Add(Error);
@@ -17,7 +17,7 @@ void FValidationContext::AddError(const FString& Error)
 	AddIssue(EValidationSeverity::Error, Error);
 }
 
-void FValidationContext::AddWarning(const FString& Warning)
+void FDelveDeepValidationContext::AddWarning(const FString& Warning)
 {
 	// Add to legacy array for backward compatibility
 	ValidationWarnings.Add(Warning);
@@ -26,7 +26,7 @@ void FValidationContext::AddWarning(const FString& Warning)
 	AddIssue(EValidationSeverity::Warning, Warning);
 }
 
-void FValidationContext::AddIssue(EValidationSeverity Severity, const FString& Message, 
+void FDelveDeepValidationContext::AddIssue(EValidationSeverity Severity, const FString& Message, 
 								  const FString& SourceFile, int32 SourceLine, 
 								  const FString& SourceFunction)
 {
@@ -65,32 +65,32 @@ void FValidationContext::AddIssue(EValidationSeverity Severity, const FString& M
 	}
 }
 
-void FValidationContext::AddCritical(const FString& Message)
+void FDelveDeepValidationContext::AddCritical(const FString& Message)
 {
 	AddIssue(EValidationSeverity::Critical, Message);
 }
 
-void FValidationContext::AddInfo(const FString& Message)
+void FDelveDeepValidationContext::AddInfo(const FString& Message)
 {
 	AddIssue(EValidationSeverity::Info, Message);
 }
 
-bool FValidationContext::HasCriticalIssues() const
+bool FDelveDeepValidationContext::HasCriticalIssues() const
 {
 	return GetIssueCount(EValidationSeverity::Critical) > 0;
 }
 
-bool FValidationContext::HasErrors() const
+bool FDelveDeepValidationContext::HasErrors() const
 {
 	return GetIssueCount(EValidationSeverity::Error) > 0;
 }
 
-bool FValidationContext::HasWarnings() const
+bool FDelveDeepValidationContext::HasWarnings() const
 {
 	return GetIssueCount(EValidationSeverity::Warning) > 0;
 }
 
-int32 FValidationContext::GetIssueCount(EValidationSeverity Severity) const
+int32 FDelveDeepValidationContext::GetIssueCount(EValidationSeverity Severity) const
 {
 	int32 Count = 0;
 	for (const FValidationIssue& Issue : Issues)
@@ -103,18 +103,18 @@ int32 FValidationContext::GetIssueCount(EValidationSeverity Severity) const
 	return Count;
 }
 
-bool FValidationContext::IsValid() const
+bool FDelveDeepValidationContext::IsValid() const
 {
 	// Check for Critical or Error severity issues
 	return !HasCriticalIssues() && !HasErrors();
 }
 
-void FValidationContext::AddChildContext(const FValidationContext& ChildContext)
+void FDelveDeepValidationContext::AddChildContext(const FDelveDeepValidationContext& ChildContext)
 {
 	ChildContexts.Add(ChildContext);
 }
 
-void FValidationContext::MergeContext(const FValidationContext& OtherContext)
+void FDelveDeepValidationContext::MergeContext(const FDelveDeepValidationContext& OtherContext)
 {
 	// Merge issues
 	Issues.Append(OtherContext.Issues);
@@ -127,7 +127,7 @@ void FValidationContext::MergeContext(const FValidationContext& OtherContext)
 	ChildContexts.Append(OtherContext.ChildContexts);
 }
 
-void FValidationContext::AttachMetadata(const FString& Key, const FString& Value)
+void FDelveDeepValidationContext::AttachMetadata(const FString& Key, const FString& Value)
 {
 	if (Issues.Num() > 0)
 	{
@@ -135,7 +135,7 @@ void FValidationContext::AttachMetadata(const FString& Key, const FString& Value
 	}
 }
 
-FTimespan FValidationContext::GetValidationDuration() const
+FTimespan FDelveDeepValidationContext::GetValidationDuration() const
 {
 	if (CompletionTime == FDateTime::MinValue())
 	{
@@ -145,13 +145,13 @@ FTimespan FValidationContext::GetValidationDuration() const
 	return CompletionTime - CreationTime;
 }
 
-FString FValidationContext::GetReport() const
+FString FDelveDeepValidationContext::GetReport() const
 {
 	SCOPE_CYCLE_COUNTER(STAT_GenerateReport);
 	return GetNestedReport(0);
 }
 
-FString FValidationContext::GetNestedReport(int32 IndentLevel) const
+FString FDelveDeepValidationContext::GetNestedReport(int32 IndentLevel) const
 {
 	FString Report;
 	FString Indent = FString::ChrN(IndentLevel * 2, ' ');
@@ -323,7 +323,7 @@ FString FValidationContext::GetNestedReport(int32 IndentLevel) const
 	return Report;
 }
 
-FString FValidationContext::GetReportJSON() const
+FString FDelveDeepValidationContext::GetReportJSON() const
 {
 	SCOPE_CYCLE_COUNTER(STAT_GenerateReport);
 	
@@ -430,7 +430,7 @@ FString FValidationContext::GetReportJSON() const
 	return JSON;
 }
 
-FString FValidationContext::GetReportCSV() const
+FString FDelveDeepValidationContext::GetReportCSV() const
 {
 	SCOPE_CYCLE_COUNTER(STAT_GenerateReport);
 	
@@ -487,7 +487,7 @@ FString FValidationContext::GetReportCSV() const
 	}
 	
 	// Add child context issues
-	for (const FValidationContext& ChildContext : ChildContexts)
+	for (const FDelveDeepValidationContext& ChildContext : ChildContexts)
 	{
 		// Recursively get child CSV (skip header)
 		FString ChildCSV = ChildContext.GetReportCSV();
@@ -502,7 +502,7 @@ FString FValidationContext::GetReportCSV() const
 	return CSV;
 }
 
-FString FValidationContext::GetReportHTML() const
+FString FDelveDeepValidationContext::GetReportHTML() const
 {
 	SCOPE_CYCLE_COUNTER(STAT_GenerateReport);
 	
@@ -661,7 +661,7 @@ FString FValidationContext::GetReportHTML() const
 	return HTML;
 }
 
-void FValidationContext::Reset()
+void FDelveDeepValidationContext::Reset()
 {
 	SystemName.Empty();
 	OperationName.Empty();

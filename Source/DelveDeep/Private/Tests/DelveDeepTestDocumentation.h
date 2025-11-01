@@ -144,10 +144,10 @@ public:
 	/**
 	 * Extracts metadata from a single automation test.
 	 * 
-	 * @param Test The automation test to extract metadata from
+	 * @param TestInfo The automation test info to extract metadata from
 	 * @return Test metadata structure
 	 */
-	static FTestMetadata ExtractTestMetadata(const FAutomationTestBase* Test);
+	static FTestMetadata ExtractTestMetadata(const FAutomationTestInfo& TestInfo);
 
 	/**
 	 * Parses test name to extract system and suite information.

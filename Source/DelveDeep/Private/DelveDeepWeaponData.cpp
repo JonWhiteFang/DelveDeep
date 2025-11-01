@@ -6,7 +6,7 @@ void UDelveDeepWeaponData::PostLoad()
 {
 	Super::PostLoad();
 	
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Configuration");
 	Context.OperationName = TEXT("LoadWeaponData");
 	
@@ -17,7 +17,7 @@ void UDelveDeepWeaponData::PostLoad()
 	}
 }
 
-bool UDelveDeepWeaponData::Validate(FValidationContext& Context) const
+bool UDelveDeepWeaponData::Validate(FDelveDeepValidationContext& Context) const
 {
 	bool bIsValid = true;
 	

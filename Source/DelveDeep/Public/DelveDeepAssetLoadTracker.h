@@ -14,27 +14,27 @@ struct DELVEDEEP_API FAssetLoadRecord
 	GENERATED_BODY()
 
 	/** Path to the loaded asset */
-	UPROPERTY(BlueprintReadOnly, Category = "Asset Loading")
+	UPROPERTY()
 	FString AssetPath;
 
 	/** Type of asset (Texture, Mesh, Sound, DataAsset, etc.) */
-	UPROPERTY(BlueprintReadOnly, Category = "Asset Loading")
+	UPROPERTY()
 	FName AssetType;
 
 	/** Load time in milliseconds */
-	UPROPERTY(BlueprintReadOnly, Category = "Asset Loading")
+	UPROPERTY()
 	float LoadTimeMs = 0.0f;
 
 	/** Asset size in bytes */
-	UPROPERTY(BlueprintReadOnly, Category = "Asset Loading")
-	uint64 AssetSize = 0;
+	UPROPERTY()
+	int64 AssetSize = 0;
 
 	/** Whether this was a synchronous load */
-	UPROPERTY(BlueprintReadOnly, Category = "Asset Loading")
+	UPROPERTY()
 	bool bSynchronous = true;
 
 	/** Timestamp when the load occurred */
-	UPROPERTY(BlueprintReadOnly, Category = "Asset Loading")
+	UPROPERTY()
 	FDateTime Timestamp;
 
 	FAssetLoadRecord()
@@ -47,7 +47,7 @@ struct DELVEDEEP_API FAssetLoadRecord
 	{
 	}
 
-	FAssetLoadRecord(const FString& InPath, FName InType, float InLoadTime, uint64 InSize, bool bInSynchronous)
+	FAssetLoadRecord(const FString& InPath, FName InType, float InLoadTime, int64 InSize, bool bInSynchronous)
 		: AssetPath(InPath)
 		, AssetType(InType)
 		, LoadTimeMs(InLoadTime)
@@ -67,39 +67,39 @@ struct DELVEDEEP_API FAssetLoadStatistics
 	GENERATED_BODY()
 
 	/** Asset type */
-	UPROPERTY(BlueprintReadOnly, Category = "Asset Loading")
+	UPROPERTY()
 	FName AssetType;
 
 	/** Total number of loads */
-	UPROPERTY(BlueprintReadOnly, Category = "Asset Loading")
+	UPROPERTY()
 	int32 TotalLoads = 0;
 
 	/** Number of synchronous loads */
-	UPROPERTY(BlueprintReadOnly, Category = "Asset Loading")
+	UPROPERTY()
 	int32 SynchronousLoads = 0;
 
 	/** Number of asynchronous loads */
-	UPROPERTY(BlueprintReadOnly, Category = "Asset Loading")
+	UPROPERTY()
 	int32 AsynchronousLoads = 0;
 
 	/** Average load time in milliseconds */
-	UPROPERTY(BlueprintReadOnly, Category = "Asset Loading")
+	UPROPERTY()
 	float AverageLoadTimeMs = 0.0f;
 
 	/** Minimum load time in milliseconds */
-	UPROPERTY(BlueprintReadOnly, Category = "Asset Loading")
+	UPROPERTY()
 	float MinLoadTimeMs = 0.0f;
 
 	/** Maximum load time in milliseconds */
-	UPROPERTY(BlueprintReadOnly, Category = "Asset Loading")
+	UPROPERTY()
 	float MaxLoadTimeMs = 0.0f;
 
 	/** Total size of all loaded assets in bytes */
-	UPROPERTY(BlueprintReadOnly, Category = "Asset Loading")
-	uint64 TotalSize = 0;
+	UPROPERTY()
+	int64 TotalSize = 0;
 
 	/** Number of slow loads (>100ms) */
-	UPROPERTY(BlueprintReadOnly, Category = "Asset Loading")
+	UPROPERTY()
 	int32 SlowLoadCount = 0;
 };
 
@@ -122,7 +122,7 @@ public:
 	 * @param AssetSize Asset size in bytes
 	 * @param bSynchronous Whether this was a synchronous load
 	 */
-	void RecordAssetLoad(const FString& AssetPath, float LoadTimeMs, uint64 AssetSize, bool bSynchronous = true);
+	void RecordAssetLoad(const FString& AssetPath, float LoadTimeMs, int64 AssetSize, bool bSynchronous = true);
 
 	/**
 	 * Get asset load statistics for a specific type
@@ -195,7 +195,7 @@ private:
 	 * @param AssetSize Asset size in bytes
 	 * @param bSynchronous Whether this was a synchronous load
 	 */
-	void UpdateStatistics(FName AssetType, float LoadTimeMs, uint64 AssetSize, bool bSynchronous);
+	void UpdateStatistics(FName AssetType, float LoadTimeMs, int64 AssetSize, bool bSynchronous);
 
 	/**
 	 * Check if load is slow and log warning if needed

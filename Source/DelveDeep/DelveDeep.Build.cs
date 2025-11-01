@@ -29,5 +29,11 @@ public class DelveDeep : ModuleRules
 			"Json",           // For test data loading
 			"JsonUtilities"  // For JSON serialization
 		});
+
+		// Add Private/Tests to include paths for test utilities
+		PrivateIncludePaths.AddRange(new string[]
+		{
+			"DelveDeep/Private/Tests"
+		});
 	}
 }

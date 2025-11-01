@@ -19,7 +19,7 @@
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FEventTelemetryPerformanceTrackingTest,
 	"DelveDeep.Integration.EventTelemetryPerformanceTracking",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FEventTelemetryPerformanceTrackingTest::RunTest(const FString& Parameters)
 {
@@ -96,7 +96,7 @@ bool FEventTelemetryPerformanceTrackingTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FEventListenerCountTrackingTest,
 	"DelveDeep.Integration.EventListenerCountTracking",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FEventListenerCountTrackingTest::RunTest(const FString& Parameters)
 {
@@ -191,7 +191,7 @@ bool FEventListenerCountTrackingTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FEventPriorityTrackingTest,
 	"DelveDeep.Integration.EventPriorityTracking",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FEventPriorityTrackingTest::RunTest(const FString& Parameters)
 {
@@ -293,7 +293,7 @@ bool FEventPriorityTrackingTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDeferredEventPerformanceTest,
 	"DelveDeep.Integration.DeferredEventPerformance",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDeferredEventPerformanceTest::RunTest(const FString& Parameters)
 {
@@ -363,7 +363,7 @@ bool FDeferredEventPerformanceTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FEventFilteringPerformanceTest,
 	"DelveDeep.Integration.EventFilteringPerformance",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FEventFilteringPerformanceTest::RunTest(const FString& Parameters)
 {
@@ -445,7 +445,7 @@ bool FEventFilteringPerformanceTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FEventMemoryTrackingTest,
 	"DelveDeep.Integration.EventMemoryTracking",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FEventMemoryTrackingTest::RunTest(const FString& Parameters)
 {

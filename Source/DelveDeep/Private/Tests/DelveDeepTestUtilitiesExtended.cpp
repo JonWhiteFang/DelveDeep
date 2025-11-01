@@ -196,7 +196,7 @@ namespace DelveDeepTestUtils
 
 	bool SimulateErrorScenario(
 		const FString& ErrorType,
-		FValidationContext& Context)
+		FDelveDeepValidationContext& Context)
 	{
 		Context.SystemName = TEXT("TestUtilities");
 		Context.OperationName = TEXT("SimulateErrorScenario");
@@ -294,7 +294,7 @@ namespace DelveDeepTestUtils
 	}
 
 	bool VerifyValidationErrorQuality(
-		const FValidationContext& Context,
+		const FDelveDeepValidationContext& Context,
 		const TArray<FString>& RequiredElements)
 	{
 		if (Context.ValidationErrors.Num() == 0)
@@ -321,9 +321,9 @@ namespace DelveDeepTestUtils
 	}
 
 	bool TestErrorPropagation(
-		const FValidationContext& SourceContext,
-		FValidationContext& TargetContext,
-		TFunction<void(const FValidationContext&, FValidationContext&)> PropagationFunc)
+		const FDelveDeepValidationContext& SourceContext,
+		FDelveDeepValidationContext& TargetContext,
+		TFunction<void(const FDelveDeepValidationContext&, FDelveDeepValidationContext&)> PropagationFunc)
 	{
 		if (!PropagationFunc)
 		{
@@ -552,7 +552,7 @@ namespace DelveDeepTestUtils
 	bool ValidateTestDataSchema(
 		UObject* Data,
 		const FString& SchemaType,
-		FValidationContext& Context)
+		FDelveDeepValidationContext& Context)
 	{
 		Context.SystemName = TEXT("TestUtilities");
 		Context.OperationName = TEXT("ValidateTestDataSchema");

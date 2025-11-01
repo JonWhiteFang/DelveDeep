@@ -155,11 +155,11 @@ private:
 	void LoadDataTables();
 
 	// Validation helpers
-	bool ValidateCharacterData(const UDelveDeepCharacterData* Data, FValidationContext& Context) const;
-	bool ValidateMonsterConfig(const FDelveDeepMonsterConfig* Config, FValidationContext& Context) const;
-	bool ValidateUpgradeData(const UDelveDeepUpgradeData* Data, FValidationContext& Context) const;
-	bool ValidateWeaponData(const UDelveDeepWeaponData* Data, FValidationContext& Context) const;
-	bool ValidateAbilityData(const UDelveDeepAbilityData* Data, FValidationContext& Context) const;
+	bool ValidateCharacterData(const UDelveDeepCharacterData* Data, FDelveDeepValidationContext& Context) const;
+	bool ValidateMonsterConfig(const FDelveDeepMonsterConfig* Config, FDelveDeepValidationContext& Context) const;
+	bool ValidateUpgradeData(const UDelveDeepUpgradeData* Data, FDelveDeepValidationContext& Context) const;
+	bool ValidateWeaponData(const UDelveDeepWeaponData* Data, FDelveDeepValidationContext& Context) const;
+	bool ValidateAbilityData(const UDelveDeepAbilityData* Data, FDelveDeepValidationContext& Context) const;
 
 	// Directory structure validation
 	void ValidateAssetDirectoryStructure();

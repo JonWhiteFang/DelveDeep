@@ -106,7 +106,7 @@ void UDelveDeepEquipmentComponent::RemoveWeaponModifiers(const UDelveDeepWeaponD
 	// Example: StatsComponent->RemoveStatModifier("Damage");
 }
 
-bool UDelveDeepEquipmentComponent::ValidateComponent(FValidationContext& Context) const
+bool UDelveDeepEquipmentComponent::ValidateComponent(FDelveDeepValidationContext& Context) const
 {
 	Context.SystemName = TEXT("Equipment");
 	Context.OperationName = TEXT("ValidateComponent");

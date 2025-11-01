@@ -22,7 +22,7 @@ DEFINE_LOG_CATEGORY(LogDelveDeepEventTests);
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepEventBroadcastSingleListenerTest, 
 	"DelveDeep.Events.BroadcastToSingleListener", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepEventBroadcastSingleListenerTest::RunTest(const FString& Parameters)
 {
@@ -77,7 +77,7 @@ bool FDelveDeepEventBroadcastSingleListenerTest::RunTest(const FString& Paramete
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepEventBroadcastMultipleListenersTest, 
 	"DelveDeep.Events.BroadcastToMultipleListeners", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepEventBroadcastMultipleListenersTest::RunTest(const FString& Parameters)
 {
@@ -152,7 +152,7 @@ bool FDelveDeepEventBroadcastMultipleListenersTest::RunTest(const FString& Param
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepEventPriorityOrderTest, 
 	"DelveDeep.Events.PriorityExecutionOrder", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepEventPriorityOrderTest::RunTest(const FString& Parameters)
 {
@@ -218,7 +218,7 @@ bool FDelveDeepEventPriorityOrderTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepEventHierarchicalTagMatchingTest, 
 	"DelveDeep.Events.HierarchicalTagMatching", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepEventHierarchicalTagMatchingTest::RunTest(const FString& Parameters)
 {
@@ -310,7 +310,7 @@ bool FDelveDeepEventHierarchicalTagMatchingTest::RunTest(const FString& Paramete
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepEventListenerRegistrationTest, 
 	"DelveDeep.Events.ListenerRegistration", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepEventListenerRegistrationTest::RunTest(const FString& Parameters)
 {
@@ -364,7 +364,7 @@ bool FDelveDeepEventListenerRegistrationTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_COMPLEX_AUTOMATION_TEST(FDelveDeepEventAsyncDeferredProcessingTest, 
 	"DelveDeep.Events.AsyncDeferredProcessing", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepEventAsyncDeferredProcessingTest::RunTest(const FString& Parameters)
 {
@@ -436,7 +436,7 @@ bool FDelveDeepEventAsyncDeferredProcessingTest::RunTest(const FString& Paramete
  */
 IMPLEMENT_COMPLEX_AUTOMATION_TEST(FDelveDeepEventAsyncTimerTest, 
 	"DelveDeep.Events.AsyncTimerCallback", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepEventAsyncTimerTest::RunTest(const FString& Parameters)
 {
@@ -495,7 +495,7 @@ bool FDelveDeepEventAsyncTimerTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepEventBroadcastPerformanceTest, 
 	"DelveDeep.Events.Performance.BroadcastTime", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::PerfFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::PerfFilter)
 
 bool FDelveDeepEventBroadcastPerformanceTest::RunTest(const FString& Parameters)
 {
@@ -547,7 +547,7 @@ bool FDelveDeepEventBroadcastPerformanceTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepEventDeferredPerformanceTest, 
 	"DelveDeep.Events.Performance.DeferredProcessing", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::PerfFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::PerfFilter)
 
 bool FDelveDeepEventDeferredPerformanceTest::RunTest(const FString& Parameters)
 {
@@ -612,7 +612,7 @@ bool FDelveDeepEventDeferredPerformanceTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepEventListenerOverheadTest, 
 	"DelveDeep.Events.Performance.ListenerOverhead", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::PerfFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::PerfFilter)
 
 bool FDelveDeepEventListenerOverheadTest::RunTest(const FString& Parameters)
 {

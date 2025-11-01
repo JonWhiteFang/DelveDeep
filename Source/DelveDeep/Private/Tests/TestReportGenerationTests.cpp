@@ -15,7 +15,7 @@
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTestReportGenerationTest,
 	"DelveDeep.Testing.ReportGeneration",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FTestReportGenerationTest::RunTest(const FString& Parameters)
 {
@@ -83,7 +83,7 @@ bool FTestReportGenerationTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTestReportMarkdownExportTest,
 	"DelveDeep.Testing.MarkdownExport",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FTestReportMarkdownExportTest::RunTest(const FString& Parameters)
 {
@@ -126,7 +126,7 @@ bool FTestReportMarkdownExportTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTestReportHTMLExportTest,
 	"DelveDeep.Testing.HTMLExport",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FTestReportHTMLExportTest::RunTest(const FString& Parameters)
 {
@@ -178,7 +178,7 @@ bool FTestReportHTMLExportTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTestReportJUnitExportTest,
 	"DelveDeep.Testing.JUnitExport",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FTestReportJUnitExportTest::RunTest(const FString& Parameters)
 {
@@ -230,7 +230,7 @@ bool FTestReportJUnitExportTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTestSuiteExtractionTest,
 	"DelveDeep.Testing.SuiteExtraction",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FTestSuiteExtractionTest::RunTest(const FString& Parameters)
 {
@@ -276,7 +276,7 @@ bool FTestSuiteExtractionTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FTestReportStatisticsTest,
 	"DelveDeep.Testing.ReportStatistics",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FTestReportStatisticsTest::RunTest(const FString& Parameters)
 {

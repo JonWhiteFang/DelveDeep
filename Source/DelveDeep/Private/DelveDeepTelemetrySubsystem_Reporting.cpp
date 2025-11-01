@@ -16,7 +16,7 @@
 
 bool UDelveDeepTelemetrySubsystem::GeneratePerformanceReport(FPerformanceReport& OutReport, float DurationSeconds)
 {
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Telemetry");
 	Context.OperationName = TEXT("GeneratePerformanceReport");
 
@@ -130,7 +130,7 @@ bool UDelveDeepTelemetrySubsystem::GeneratePerformanceReport(FPerformanceReport&
 
 bool UDelveDeepTelemetrySubsystem::ExportReportToCSV(const FPerformanceReport& Report, const FString& FilePath)
 {
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Telemetry");
 	Context.OperationName = TEXT("ExportReportToCSV");
 
@@ -240,7 +240,7 @@ bool UDelveDeepTelemetrySubsystem::ExportReportToCSV(const FPerformanceReport& R
 
 bool UDelveDeepTelemetrySubsystem::ExportReportToJSON(const FPerformanceReport& Report, const FString& FilePath)
 {
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Telemetry");
 	Context.OperationName = TEXT("ExportReportToJSON");
 

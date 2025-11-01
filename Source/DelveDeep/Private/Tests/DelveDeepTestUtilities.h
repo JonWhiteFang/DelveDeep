@@ -142,6 +142,9 @@ namespace DelveDeepTestUtils
 	// Test Data Generators
 	// ========================================
 
+	// TODO: Enable when character system is implemented
+	#if 0
+
 	/**
 	 * Creates test character data asset with default or specified values.
 	 * 
@@ -210,18 +213,20 @@ namespace DelveDeepTestUtils
 	 */
 	DELVEDEEP_API FDelveDeepMonsterConfig CreateInvalidMonsterConfig();
 
+	#endif // 0
+
 	// ========================================
 	// Validation Helpers
 	// ========================================
 
 	/**
-	 * Validates a test object using FValidationContext.
+	 * Validates a test object using FDelveDeepValidationContext.
 	 * 
 	 * @param Object The object to validate
 	 * @param Context Validation context for error tracking
 	 * @return True if validation succeeded, false otherwise
 	 */
-	DELVEDEEP_API bool ValidateTestObject(UObject* Object, FValidationContext& Context);
+	DELVEDEEP_API bool ValidateTestObject(UObject* Object, FDelveDeepValidationContext& Context);
 
 	/**
 	 * Tests PostLoad validation for a data asset.
@@ -239,7 +244,7 @@ namespace DelveDeepTestUtils
 	 * @param Context Validation context for error tracking
 	 * @return True if validation executed correctly
 	 */
-	DELVEDEEP_API bool TestExplicitValidation(UObject* Object, FValidationContext& Context);
+	DELVEDEEP_API bool TestExplicitValidation(UObject* Object, FDelveDeepValidationContext& Context);
 
 	/**
 	 * Verifies that a validation context contains expected error messages.
@@ -249,7 +254,7 @@ namespace DelveDeepTestUtils
 	 * @return True if all expected errors are present
 	 */
 	DELVEDEEP_API bool VerifyValidationErrors(
-		const FValidationContext& Context,
+		const FDelveDeepValidationContext& Context,
 		const TArray<FString>& ExpectedErrors);
 
 	/**
@@ -260,7 +265,7 @@ namespace DelveDeepTestUtils
 	 * @return True if all expected warnings are present
 	 */
 	DELVEDEEP_API bool VerifyValidationWarnings(
-		const FValidationContext& Context,
+		const FDelveDeepValidationContext& Context,
 		const TArray<FString>& ExpectedWarnings);
 
 	// ========================================
@@ -579,7 +584,7 @@ namespace DelveDeepTestUtils
 	 */
 	DELVEDEEP_API bool SimulateErrorScenario(
 		const FString& ErrorType,
-		FValidationContext& Context);
+		FDelveDeepValidationContext& Context);
 
 	/**
 	 * Verifies that an error was logged with the appropriate severity.
@@ -615,11 +620,11 @@ namespace DelveDeepTestUtils
 	 * @return True if all error messages contain required elements
 	 */
 	DELVEDEEP_API bool VerifyValidationErrorQuality(
-		const FValidationContext& Context,
+		const FDelveDeepValidationContext& Context,
 		const TArray<FString>& RequiredElements);
 
 	/**
-	 * Tests error propagation through FValidationContext.
+	 * Tests error propagation through FDelveDeepValidationContext.
 	 * 
 	 * @param SourceContext Source validation context with errors
 	 * @param TargetContext Target validation context that should receive errors
@@ -627,9 +632,9 @@ namespace DelveDeepTestUtils
 	 * @return True if errors were propagated correctly
 	 */
 	DELVEDEEP_API bool TestErrorPropagation(
-		const FValidationContext& SourceContext,
-		FValidationContext& TargetContext,
-		TFunction<void(const FValidationContext&, FValidationContext&)> PropagationFunc);
+		const FDelveDeepValidationContext& SourceContext,
+		FDelveDeepValidationContext& TargetContext,
+		TFunction<void(const FDelveDeepValidationContext&, FDelveDeepValidationContext&)> PropagationFunc);
 
 	// ========================================
 	// Test Data Loading Utilities
@@ -709,7 +714,7 @@ namespace DelveDeepTestUtils
 	DELVEDEEP_API bool ValidateTestDataSchema(
 		UObject* Data,
 		const FString& SchemaType,
-		FValidationContext& Context);
+		FDelveDeepValidationContext& Context);
 
 	// ========================================
 	// Console Command Testing

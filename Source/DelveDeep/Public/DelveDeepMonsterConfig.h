@@ -74,5 +74,5 @@ public:
 	 * @param Context The validation context for tracking errors and warnings
 	 * @return True if validation passed (no errors), false otherwise
 	 */
-	bool Validate(FValidationContext& Context) const;
+	bool Validate(FDelveDeepValidationContext& Context) const;
 };

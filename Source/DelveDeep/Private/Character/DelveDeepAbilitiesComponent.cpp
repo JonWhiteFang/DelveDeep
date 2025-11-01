@@ -42,7 +42,7 @@ void UDelveDeepAbilitiesComponent::InitializeFromCharacterData(const UDelveDeepC
 		TEXT("Abilities component initialized with %d abilities"), Abilities.Num());
 }
 
-bool UDelveDeepAbilitiesComponent::ValidateComponent(FValidationContext& Context) const
+bool UDelveDeepAbilitiesComponent::ValidateComponent(FDelveDeepValidationContext& Context) const
 {
 	Context.SystemName = TEXT("AbilitiesComponent");
 	Context.OperationName = TEXT("ValidateComponent");

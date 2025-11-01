@@ -12,7 +12,7 @@ class UDelveDeepEquipmentComponent;
 class UDelveDeepCharacterData;
 class UDelveDeepAbilityData;
 class UDelveDeepWeaponData;
-struct FValidationContext;
+struct FDelveDeepValidationContext;
 
 /**
  * Base character class for DelveDeep.
@@ -39,11 +39,11 @@ public:
 	void InitializeFromData();
 
 	/**
-	 * Validate character data using FValidationContext.
+	 * Validate character data using FDelveDeepValidationContext.
 	 * @param Context Validation context for error/warning tracking
 	 * @return True if character data is valid
 	 */
-	bool ValidateCharacterData(FValidationContext& Context) const;
+	bool ValidateCharacterData(FDelveDeepValidationContext& Context) const;
 
 	// Damage and healing
 	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Character")

@@ -10,7 +10,7 @@
 #include "Widgets/Views/SListView.h"
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/Images/SImage.h"
-#include "EditorStyleSet.h"
+#include "Styling/AppStyle.h"
 #include "Misc/AutomationTest.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogDelveDeepTestRunner, Log, All);

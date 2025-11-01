@@ -80,7 +80,7 @@ void UDelveDeepCharacterComponent::InitializeFromCharacterData(const UDelveDeepC
 	// Derived classes should override this method to load their specific data
 }
 
-bool UDelveDeepCharacterComponent::ValidateComponent(FValidationContext& Context) const
+bool UDelveDeepCharacterComponent::ValidateComponent(FDelveDeepValidationContext& Context) const
 {
 	// Base validation - check that component has a valid owner
 	Context.SystemName = TEXT("Character");

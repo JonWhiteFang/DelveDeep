@@ -48,7 +48,7 @@ struct DELVEDEEP_API FDelveDeepEventPayload
 	 * @param Context Validation context for error/warning tracking
 	 * @return True if payload is valid, false otherwise
 	 */
-	virtual bool Validate(FValidationContext& Context) const;
+	virtual bool Validate(FDelveDeepValidationContext& Context) const;
 
 	/**
 	 * Determines if this event should be replicated over the network.
@@ -65,10 +65,10 @@ struct DELVEDEEP_API FDelveDeepEventPayload
 
 protected:
 	/** Helper method to validate actor references */
-	bool ValidateActorReference(const TWeakObjectPtr<AActor>& Actor, const FString& ActorName, FValidationContext& Context) const;
+	bool ValidateActorReference(const TWeakObjectPtr<AActor>& Actor, const FString& ActorName, FDelveDeepValidationContext& Context) const;
 
 	/** Helper method to validate numeric ranges */
-	bool ValidateRange(float Value, float MinValue, float MaxValue, const FString& ValueName, FValidationContext& Context) const;
+	bool ValidateRange(float Value, float MinValue, float MaxValue, const FString& ValueName, FDelveDeepValidationContext& Context) const;
 };
 
 /**
@@ -96,7 +96,7 @@ struct DELVEDEEP_API FDelveDeepDamageEventPayload : public FDelveDeepEventPayloa
 	UPROPERTY(BlueprintReadOnly, Category = "Damage")
 	FGameplayTag DamageType;
 
-	virtual bool Validate(FValidationContext& Context) const override;
+	virtual bool Validate(FDelveDeepValidationContext& Context) const override;
 };
 
 /**
@@ -124,7 +124,7 @@ struct DELVEDEEP_API FDelveDeepHealthChangeEventPayload : public FDelveDeepEvent
 	UPROPERTY(BlueprintReadOnly, Category = "Health")
 	float MaxHealth = 0.0f;
 
-	virtual bool Validate(FValidationContext& Context) const override;
+	virtual bool Validate(FDelveDeepValidationContext& Context) const override;
 };
 
 /**
@@ -152,7 +152,7 @@ struct DELVEDEEP_API FDelveDeepKillEventPayload : public FDelveDeepEventPayload
 	UPROPERTY(BlueprintReadOnly, Category = "Kill")
 	FGameplayTag VictimType;
 
-	virtual bool Validate(FValidationContext& Context) const override;
+	virtual bool Validate(FDelveDeepValidationContext& Context) const override;
 };
 
 /**
@@ -180,7 +180,7 @@ struct DELVEDEEP_API FDelveDeepAttackEventPayload : public FDelveDeepEventPayloa
 	UPROPERTY(BlueprintReadOnly, Category = "Attack")
 	float AttackRadius = 0.0f;
 
-	virtual bool Validate(FValidationContext& Context) const override;
+	virtual bool Validate(FDelveDeepValidationContext& Context) const override;
 };
 
 /**
@@ -204,7 +204,7 @@ struct DELVEDEEP_API FDelveDeepCharacterDeathEventPayload : public FDelveDeepEve
 	UPROPERTY(BlueprintReadOnly, Category = "Death")
 	FVector DeathLocation = FVector::ZeroVector;
 
-	virtual bool Validate(FValidationContext& Context) const override;
+	virtual bool Validate(FDelveDeepValidationContext& Context) const override;
 };
 
 
@@ -234,7 +234,7 @@ struct DELVEDEEP_API FDelveDeepStatChangedPayload : public FDelveDeepEventPayloa
 	UPROPERTY(BlueprintReadOnly, Category = "Stats")
 	float NewValue = 0.0f;
 
-	virtual bool Validate(FValidationContext& Context) const override;
+	virtual bool Validate(FDelveDeepValidationContext& Context) const override;
 };
 
 /**
@@ -258,5 +258,5 @@ struct DELVEDEEP_API FDelveDeepAbilityUsedPayload : public FDelveDeepEventPayloa
 	UPROPERTY(BlueprintReadOnly, Category = "Ability")
 	float ResourceCost = 0.0f;
 
-	virtual bool Validate(FValidationContext& Context) const override;
+	virtual bool Validate(FDelveDeepValidationContext& Context) const override;
 };

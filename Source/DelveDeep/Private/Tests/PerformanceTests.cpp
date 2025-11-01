@@ -17,7 +17,7 @@
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepConfigInitializationPerformanceTest, 
 	"DelveDeep.Performance.InitializationTime",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepConfigInitializationPerformanceTest::RunTest(const FString& Parameters)
 {
@@ -59,7 +59,7 @@ bool FDelveDeepConfigInitializationPerformanceTest::RunTest(const FString& Param
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepConfigSingleQueryPerformanceTest, 
 	"DelveDeep.Performance.SingleQueryTime",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepConfigSingleQueryPerformanceTest::RunTest(const FString& Parameters)
 {
@@ -104,7 +104,7 @@ bool FDelveDeepConfigSingleQueryPerformanceTest::RunTest(const FString& Paramete
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepConfigBulkQueryPerformanceTest, 
 	"DelveDeep.Performance.BulkQueryPerformance",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepConfigBulkQueryPerformanceTest::RunTest(const FString& Parameters)
 {
@@ -206,7 +206,7 @@ bool FDelveDeepConfigBulkQueryPerformanceTest::RunTest(const FString& Parameters
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepConfigCacheHitRateTest, 
 	"DelveDeep.Performance.CacheHitRate",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepConfigCacheHitRateTest::RunTest(const FString& Parameters)
 {
@@ -292,7 +292,7 @@ bool FDelveDeepConfigCacheHitRateTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepConfigMemoryEfficiencyTest, 
 	"DelveDeep.Performance.MemoryEfficiency",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepConfigMemoryEfficiencyTest::RunTest(const FString& Parameters)
 {
@@ -357,7 +357,7 @@ bool FDelveDeepConfigMemoryEfficiencyTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepConfigConcurrentQueryTest, 
 	"DelveDeep.Performance.ConcurrentQueries",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepConfigConcurrentQueryTest::RunTest(const FString& Parameters)
 {
@@ -434,7 +434,7 @@ bool FDelveDeepConfigConcurrentQueryTest::RunTest(const FString& Parameters)
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepConfigValidationPerformanceTest, 
 	"DelveDeep.Performance.ValidationTime",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepConfigValidationPerformanceTest::RunTest(const FString& Parameters)
 {

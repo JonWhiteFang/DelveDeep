@@ -3,7 +3,7 @@
 #include "DelveDeepPerformanceBudget.h"
 #include "DelveDeepTelemetrySubsystem.h"
 
-bool FPerformanceBudgetEntry::Validate(FValidationContext& Context) const
+bool FPerformanceBudgetEntry::Validate(FDelveDeepValidationContext& Context) const
 {
 	bool bIsValid = true;
 
@@ -46,7 +46,7 @@ const FPerformanceBudgetEntry* UDelveDeepPerformanceBudget::GetSystemBudget(FNam
 	return nullptr;
 }
 
-bool UDelveDeepPerformanceBudget::Validate(FValidationContext& Context) const
+bool UDelveDeepPerformanceBudget::Validate(FDelveDeepValidationContext& Context) const
 {
 	bool bIsValid = true;
 
@@ -117,7 +117,7 @@ void UDelveDeepPerformanceBudget::PostLoad()
 	Super::PostLoad();
 
 	// Validate on load
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 	Context.SystemName = TEXT("Configuration");
 	Context.OperationName = TEXT("LoadPerformanceBudget");
 
@@ -141,7 +141,7 @@ EDataValidationResult UDelveDeepPerformanceBudget::IsDataValid(FDataValidationCo
 	EDataValidationResult Result = Super::IsDataValid(Context);
 
 	// Validate using our validation context
-	FValidationContext ValidationContext;
+	FDelveDeepValidationContext ValidationContext;
 	ValidationContext.SystemName = TEXT("Configuration");
 	ValidationContext.OperationName = TEXT("ValidatePerformanceBudget");
 

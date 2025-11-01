@@ -19,111 +19,111 @@ struct DELVEDEEP_API FPerformanceReport
 	GENERATED_BODY()
 
 	/** Timestamp when report was generated */
-	UPROPERTY(BlueprintReadOnly, Category = "Report")
+	UPROPERTY()
 	FDateTime GenerationTime;
 
 	/** Duration of data collection in seconds */
-	UPROPERTY(BlueprintReadOnly, Category = "Report")
+	UPROPERTY()
 	float DurationSeconds = 0.0f;
 
 	/** Build version */
-	UPROPERTY(BlueprintReadOnly, Category = "Report")
+	UPROPERTY()
 	FString BuildVersion;
 
 	/** Map name */
-	UPROPERTY(BlueprintReadOnly, Category = "Report")
+	UPROPERTY()
 	FString MapName;
 
 	// Frame Statistics
 
 	/** Average FPS over the reporting period */
-	UPROPERTY(BlueprintReadOnly, Category = "Frame")
+	UPROPERTY()
 	float AverageFPS = 0.0f;
 
 	/** Minimum FPS recorded */
-	UPROPERTY(BlueprintReadOnly, Category = "Frame")
+	UPROPERTY()
 	float MinFPS = 0.0f;
 
 	/** Maximum FPS recorded */
-	UPROPERTY(BlueprintReadOnly, Category = "Frame")
+	UPROPERTY()
 	float MaxFPS = 0.0f;
 
 	/** 1% low FPS (99th percentile worst frames) */
-	UPROPERTY(BlueprintReadOnly, Category = "Frame")
+	UPROPERTY()
 	float OnePercentLowFPS = 0.0f;
 
 	/** 0.1% low FPS (99.9th percentile worst frames) */
-	UPROPERTY(BlueprintReadOnly, Category = "Frame")
+	UPROPERTY()
 	float PointOnePercentLowFPS = 0.0f;
 
 	/** 50th percentile frame time (median) */
-	UPROPERTY(BlueprintReadOnly, Category = "Frame")
+	UPROPERTY()
 	float MedianFrameTimeMs = 0.0f;
 
 	/** 95th percentile frame time */
-	UPROPERTY(BlueprintReadOnly, Category = "Frame")
+	UPROPERTY()
 	float Percentile95FrameTimeMs = 0.0f;
 
 	/** 99th percentile frame time */
-	UPROPERTY(BlueprintReadOnly, Category = "Frame")
+	UPROPERTY()
 	float Percentile99FrameTimeMs = 0.0f;
 
 	/** Total frames recorded */
-	UPROPERTY(BlueprintReadOnly, Category = "Frame")
+	UPROPERTY()
 	int32 TotalFrames = 0;
 
 	/** Number of performance spikes detected */
-	UPROPERTY(BlueprintReadOnly, Category = "Frame")
+	UPROPERTY()
 	int32 SpikeCount = 0;
 
 	// System Performance
 
 	/** System performance breakdown */
-	UPROPERTY(BlueprintReadOnly, Category = "Systems")
+	UPROPERTY()
 	TArray<FSystemPerformanceData> SystemBreakdown;
 
 	/** Total budget violations across all systems */
-	UPROPERTY(BlueprintReadOnly, Category = "Systems")
+	UPROPERTY()
 	int32 TotalBudgetViolations = 0;
 
 	// Memory Statistics
 
 	/** Average memory usage in bytes */
-	UPROPERTY(BlueprintReadOnly, Category = "Memory")
-	uint64 AverageMemoryUsage = 0;
+	UPROPERTY()
+	int64 AverageMemoryUsage = 0;
 
 	/** Peak memory usage in bytes */
-	UPROPERTY(BlueprintReadOnly, Category = "Memory")
-	uint64 PeakMemoryUsage = 0;
+	UPROPERTY()
+	int64 PeakMemoryUsage = 0;
 
 	/** Minimum memory usage in bytes */
-	UPROPERTY(BlueprintReadOnly, Category = "Memory")
-	uint64 MinMemoryUsage = 0;
+	UPROPERTY()
+	int64 MinMemoryUsage = 0;
 
 	/** Memory growth rate in MB per minute */
-	UPROPERTY(BlueprintReadOnly, Category = "Memory")
+	UPROPERTY()
 	float MemoryGrowthRate = 0.0f;
 
 	/** Whether a memory leak was detected */
-	UPROPERTY(BlueprintReadOnly, Category = "Memory")
+	UPROPERTY()
 	bool bMemoryLeakDetected = false;
 
 	// Gameplay Metrics
 
 	/** Peak monster count during reporting period */
-	UPROPERTY(BlueprintReadOnly, Category = "Gameplay")
+	UPROPERTY()
 	int32 PeakMonsterCount = 0;
 
 	/** Peak projectile count during reporting period */
-	UPROPERTY(BlueprintReadOnly, Category = "Gameplay")
+	UPROPERTY()
 	int32 PeakProjectileCount = 0;
 
 	/** Peak particle count during reporting period */
-	UPROPERTY(BlueprintReadOnly, Category = "Gameplay")
+	UPROPERTY()
 	int32 PeakParticleCount = 0;
 
 	/** Total events processed during reporting period */
-	UPROPERTY(BlueprintReadOnly, Category = "Gameplay")
+	UPROPERTY()
 	int32 TotalEventsProcessed = 0;
 
 	FPerformanceReport()

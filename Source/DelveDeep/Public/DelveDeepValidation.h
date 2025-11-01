@@ -63,7 +63,7 @@ struct DELVEDEEP_API FValidationIssue
  * Enhanced with severity levels, source location tracking, and nested context support.
  */
 USTRUCT(BlueprintType)
-struct DELVEDEEP_API FValidationContext
+struct DELVEDEEP_API FDelveDeepValidationContext
 {
 	GENERATED_BODY()
 
@@ -97,12 +97,12 @@ public:
 	FDateTime CompletionTime;
 
 	/** Child validation contexts for nested validation (not exposed to Blueprint due to recursion) */
-	TArray<FValidationContext> ChildContexts;
+	TArray<FDelveDeepValidationContext> ChildContexts;
 
 	/**
 	 * Constructor - initializes creation time
 	 */
-	FValidationContext()
+	FDelveDeepValidationContext()
 	{
 		CreationTime = FDateTime::Now();
 	}
@@ -178,13 +178,13 @@ public:
 	 * Adds a child validation context for nested validation.
 	 * @param ChildContext The child context to add
 	 */
-	void AddChildContext(const FValidationContext& ChildContext);
+	void AddChildContext(const FDelveDeepValidationContext& ChildContext);
 
 	/**
 	 * Merges another validation context into this one.
 	 * @param OtherContext The context to merge
 	 */
-	void MergeContext(const FValidationContext& OtherContext);
+	void MergeContext(const FDelveDeepValidationContext& OtherContext);
 
 	/**
 	 * Attaches metadata to the most recent issue.
@@ -244,7 +244,7 @@ private:
  * @param Context The validation context to populate with issues
  * @return True if validation passed, false otherwise
  */
-DECLARE_DELEGATE_RetVal_TwoParams(bool, FValidationRuleDelegate, const UObject*, FValidationContext&);
+DECLARE_DELEGATE_RetVal_TwoParams(bool, FValidationRuleDelegate, const UObject*, FDelveDeepValidationContext&);
 
 /**
  * Definition of a validation rule with metadata.
@@ -303,7 +303,7 @@ struct DELVEDEEP_API FValidationCacheEntry
 	GENERATED_BODY()
 
 	/** The cached validation context */
-	FValidationContext Context;
+	FDelveDeepValidationContext Context;
 
 	/** Timestamp when this entry was cached */
 	FDateTime Timestamp;

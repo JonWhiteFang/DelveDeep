@@ -14,23 +14,23 @@ struct DELVEDEEP_API FMemorySnapshot
 	GENERATED_BODY()
 
 	/** Total memory usage in bytes */
-	UPROPERTY(BlueprintReadOnly, Category = "Memory")
-	uint64 TotalMemory = 0;
+	UPROPERTY()
+	int64 TotalMemory = 0;
 
 	/** Native (C++) memory usage in bytes */
-	UPROPERTY(BlueprintReadOnly, Category = "Memory")
-	uint64 NativeMemory = 0;
+	UPROPERTY()
+	int64 NativeMemory = 0;
 
 	/** Managed (UObject) memory usage in bytes */
-	UPROPERTY(BlueprintReadOnly, Category = "Memory")
-	uint64 ManagedMemory = 0;
+	UPROPERTY()
+	int64 ManagedMemory = 0;
 
 	/** Per-system memory allocations */
-	UPROPERTY(BlueprintReadOnly, Category = "Memory")
-	TMap<FName, uint64> PerSystemMemory;
+	UPROPERTY()
+	TMap<FName, int64> PerSystemMemory;
 
 	/** Timestamp when snapshot was taken */
-	UPROPERTY(BlueprintReadOnly, Category = "Memory")
+	UPROPERTY()
 	FDateTime Timestamp;
 
 	FMemorySnapshot()

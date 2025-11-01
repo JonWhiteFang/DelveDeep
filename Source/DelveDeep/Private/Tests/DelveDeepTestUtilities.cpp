@@ -222,7 +222,7 @@ namespace DelveDeepTestUtils
 	// Validation Helpers
 	// ========================================
 
-	bool ValidateTestObject(UObject* Object, FValidationContext& Context)
+	bool ValidateTestObject(UObject* Object, FDelveDeepValidationContext& Context)
 	{
 		Context.SystemName = TEXT("TestUtilities");
 		Context.OperationName = TEXT("ValidateTestObject");
@@ -252,7 +252,7 @@ namespace DelveDeepTestUtils
 		return true;
 	}
 
-	bool TestExplicitValidation(UObject* Object, FValidationContext& Context)
+	bool TestExplicitValidation(UObject* Object, FDelveDeepValidationContext& Context)
 	{
 		if (!IsValid(Object))
 		{
@@ -287,7 +287,7 @@ namespace DelveDeepTestUtils
 	}
 
 	bool VerifyValidationErrors(
-		const FValidationContext& Context,
+		const FDelveDeepValidationContext& Context,
 		const TArray<FString>& ExpectedErrors)
 	{
 		if (ExpectedErrors.Num() == 0)
@@ -320,7 +320,7 @@ namespace DelveDeepTestUtils
 	}
 
 	bool VerifyValidationWarnings(
-		const FValidationContext& Context,
+		const FDelveDeepValidationContext& Context,
 		const TArray<FString>& ExpectedWarnings)
 	{
 		if (ExpectedWarnings.Num() == 0)

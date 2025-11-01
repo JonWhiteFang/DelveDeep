@@ -47,7 +47,7 @@ public:
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepUpgradeCostCalculationIntegrationTest, 
 	"DelveDeep.Integration.UpgradeCostCalculation", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepUpgradeCostCalculationIntegrationTest::RunTest(const FString& Parameters)
 {
@@ -121,7 +121,7 @@ bool FDelveDeepUpgradeCostCalculationIntegrationTest::RunTest(const FString& Par
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepUpgradeDependencyChainIntegrationTest, 
 	"DelveDeep.Integration.UpgradeDependencyChain", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepUpgradeDependencyChainIntegrationTest::RunTest(const FString& Parameters)
 {
@@ -134,7 +134,7 @@ bool FDelveDeepUpgradeDependencyChainIntegrationTest::RunTest(const FString& Par
 	BaseUpgrade->HealthModifier = 10.0f;
 
 	// Validate base upgrade
-	FValidationContext BaseContext;
+	FDelveDeepValidationContext BaseContext;
 	BaseContext.SystemName = TEXT("Integration");
 	BaseContext.OperationName = TEXT("TestBaseUpgrade");
 	bool bBaseValid = BaseUpgrade->Validate(BaseContext);
@@ -151,7 +151,7 @@ bool FDelveDeepUpgradeDependencyChainIntegrationTest::RunTest(const FString& Par
 	Tier2Upgrade->RequiredUpgrades.Add(TSoftObjectPtr<UDelveDeepUpgradeData>(BaseUpgrade));
 
 	// Validate tier 2 upgrade
-	FValidationContext Tier2Context;
+	FDelveDeepValidationContext Tier2Context;
 	Tier2Context.SystemName = TEXT("Integration");
 	Tier2Context.OperationName = TEXT("TestTier2Upgrade");
 	bool bTier2Valid = Tier2Upgrade->Validate(Tier2Context);
@@ -184,7 +184,7 @@ bool FDelveDeepUpgradeDependencyChainIntegrationTest::RunTest(const FString& Par
 	Tier3Upgrade->RequiredUpgrades.Add(TSoftObjectPtr<UDelveDeepUpgradeData>(Tier2Upgrade));
 
 	// Validate tier 3 upgrade
-	FValidationContext Tier3Context;
+	FDelveDeepValidationContext Tier3Context;
 	Tier3Context.SystemName = TEXT("Integration");
 	Tier3Context.OperationName = TEXT("TestTier3Upgrade");
 	bool bTier3Valid = Tier3Upgrade->Validate(Tier3Context);
@@ -200,7 +200,7 @@ bool FDelveDeepUpgradeDependencyChainIntegrationTest::RunTest(const FString& Par
 	InvalidUpgrade->MaxLevel = 5;
 	InvalidUpgrade->RequiredUpgrades.Add(TSoftObjectPtr<UDelveDeepUpgradeData>(nullptr));
 
-	FValidationContext InvalidContext;
+	FDelveDeepValidationContext InvalidContext;
 	InvalidContext.SystemName = TEXT("Integration");
 	InvalidContext.OperationName = TEXT("TestInvalidUpgrade");
 	bool bInvalidValid = InvalidUpgrade->Validate(InvalidContext);
@@ -219,7 +219,7 @@ bool FDelveDeepUpgradeDependencyChainIntegrationTest::RunTest(const FString& Par
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepAssetReferenceResolutionIntegrationTest, 
 	"DelveDeep.Integration.AssetReferenceResolution", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepAssetReferenceResolutionIntegrationTest::RunTest(const FString& Parameters)
 {
@@ -232,7 +232,7 @@ bool FDelveDeepAssetReferenceResolutionIntegrationTest::RunTest(const FString& P
 	TestAbility->AoERadius = 150.0f;
 
 	// Validate ability data
-	FValidationContext AbilityContext;
+	FDelveDeepValidationContext AbilityContext;
 	AbilityContext.SystemName = TEXT("Integration");
 	AbilityContext.OperationName = TEXT("TestAbilityCreation");
 	bool bAbilityValid = TestAbility->Validate(AbilityContext);
@@ -251,7 +251,7 @@ bool FDelveDeepAssetReferenceResolutionIntegrationTest::RunTest(const FString& P
 	TestWeapon->SpecialAbility = TSoftObjectPtr<UDelveDeepAbilityData>(TestAbility);
 
 	// Validate weapon data
-	FValidationContext WeaponContext;
+	FDelveDeepValidationContext WeaponContext;
 	WeaponContext.SystemName = TEXT("Integration");
 	WeaponContext.OperationName = TEXT("TestWeaponCreation");
 	bool bWeaponValid = TestWeapon->Validate(WeaponContext);
@@ -286,7 +286,7 @@ bool FDelveDeepAssetReferenceResolutionIntegrationTest::RunTest(const FString& P
 	TestTrue(TEXT("Weapon without ability should have null reference"), WeaponWithoutAbility->SpecialAbility.IsNull());
 
 	// Validate weapon without ability (should still be valid, just may have warnings)
-	FValidationContext NoAbilityContext;
+	FDelveDeepValidationContext NoAbilityContext;
 	NoAbilityContext.SystemName = TEXT("Integration");
 	NoAbilityContext.OperationName = TEXT("TestWeaponWithoutAbility");
 	bool bNoAbilityValid = WeaponWithoutAbility->Validate(NoAbilityContext);
@@ -303,7 +303,7 @@ bool FDelveDeepAssetReferenceResolutionIntegrationTest::RunTest(const FString& P
  */
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FDelveDeepHotReloadIntegrationTest, 
 	"DelveDeep.Integration.HotReload", 
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FDelveDeepHotReloadIntegrationTest::RunTest(const FString& Parameters)
 {
@@ -319,7 +319,7 @@ bool FDelveDeepHotReloadIntegrationTest::RunTest(const FString& Parameters)
 	TestCharacter->MoveSpeed = 300.0f;
 
 	// Validate initial character data
-	FValidationContext InitialContext;
+	FDelveDeepValidationContext InitialContext;
 	InitialContext.SystemName = TEXT("Integration");
 	InitialContext.OperationName = TEXT("TestInitialCharacter");
 	bool bInitialValid = TestCharacter->Validate(InitialContext);
@@ -344,7 +344,7 @@ bool FDelveDeepHotReloadIntegrationTest::RunTest(const FString& Parameters)
 	TestCharacter->BaseDamage = 20.0f;
 
 	// Re-validate modified character data
-	FValidationContext ModifiedContext;
+	FDelveDeepValidationContext ModifiedContext;
 	ModifiedContext.SystemName = TEXT("Integration");
 	ModifiedContext.OperationName = TEXT("TestModifiedCharacter");
 	bool bModifiedValid = TestCharacter->Validate(ModifiedContext);
@@ -372,7 +372,7 @@ bool FDelveDeepHotReloadIntegrationTest::RunTest(const FString& Parameters)
 	double StartTime = FPlatformTime::Seconds();
 	
 	// Simulate reload by re-validating
-	FValidationContext ReloadContext;
+	FDelveDeepValidationContext ReloadContext;
 	ReloadContext.SystemName = TEXT("Integration");
 	ReloadContext.OperationName = TEXT("TestReloadValidation");
 	bool bReloadValid = TestCharacter->Validate(ReloadContext);

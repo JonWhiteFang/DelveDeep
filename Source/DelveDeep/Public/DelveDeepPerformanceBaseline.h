@@ -20,43 +20,42 @@ struct DELVEDEEP_API FPerformanceBaseline
 	GENERATED_BODY()
 
 	/** Name of this baseline */
-	UPROPERTY(BlueprintReadOnly, Category = "Baseline")
+	UPROPERTY()
 	FName BaselineName;
 
 	/** Timestamp when baseline was captured */
-	UPROPERTY(BlueprintReadOnly, Category = "Baseline")
+	UPROPERTY()
 	FDateTime CaptureTime;
 
 	/** Build version when baseline was captured */
-	UPROPERTY(BlueprintReadOnly, Category = "Baseline")
+	UPROPERTY()
 	FString BuildVersion;
 
 	/** Map name when baseline was captured */
-	UPROPERTY(BlueprintReadOnly, Category = "Baseline")
+	UPROPERTY()
 	FString MapName;
 
 	/** Average frame performance data */
-	UPROPERTY(BlueprintReadOnly, Category = "Baseline")
+	UPROPERTY()
 	FFramePerformanceData AverageFrameData;
 
 	/** Average FPS */
-	UPROPERTY(BlueprintReadOnly, Category = "Baseline")
+	UPROPERTY()
 	float AverageFPS = 0.0f;
 
 	/** 1% low FPS */
-	UPROPERTY(BlueprintReadOnly, Category = "Baseline")
+	UPROPERTY()
 	float OnePercentLowFPS = 0.0f;
 
 	/** System performance data at time of capture */
-	UPROPERTY(BlueprintReadOnly, Category = "Baseline")
+	UPROPERTY()
 	TMap<FName, FSystemPerformanceData> SystemData;
 
 	/** Memory snapshot at time of capture */
-	UPROPERTY(BlueprintReadOnly, Category = "Baseline")
 	FMemorySnapshot MemoryData;
 
 	/** Total frames captured for this baseline */
-	UPROPERTY(BlueprintReadOnly, Category = "Baseline")
+	UPROPERTY()
 	int32 TotalFramesCaptured = 0;
 
 	FPerformanceBaseline()

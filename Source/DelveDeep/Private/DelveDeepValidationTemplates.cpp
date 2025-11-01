@@ -8,7 +8,7 @@ namespace DelveDeepValidation
 	// This file contains additional helper functions
 
 	bool ValidateText(const FText& Value, const FString& PropertyName,
-					  FValidationContext& Context, bool bAllowEmpty,
+					  FDelveDeepValidationContext& Context, bool bAllowEmpty,
 					  EValidationSeverity Severity)
 	{
 		if (!bAllowEmpty && Value.IsEmpty())
@@ -20,7 +20,7 @@ namespace DelveDeepValidation
 	}
 
 	bool ValidateName(const FName& Value, const FString& PropertyName,
-					  FValidationContext& Context, bool bAllowNone,
+					  FDelveDeepValidationContext& Context, bool bAllowNone,
 					  EValidationSeverity Severity)
 	{
 		if (!bAllowNone && Value == NAME_None)
