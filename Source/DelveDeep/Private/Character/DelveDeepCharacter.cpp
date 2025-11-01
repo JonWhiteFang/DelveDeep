@@ -5,9 +5,9 @@
 #include "Character/DelveDeepStatsComponent.h"
 #include "Character/DelveDeepAbilitiesComponent.h"
 #include "Character/DelveDeepEquipmentComponent.h"
-#include "Configuration/DelveDeepConfigurationManager.h"
-#include "Configuration/DelveDeepCharacterData.h"
-#include "Validation/ValidationContext.h"
+#include "DelveDeepConfigurationManager.h"
+#include "DelveDeepCharacterData.h"
+#include "DelveDeepValidation.h"
 #include "DelveDeepEventSubsystem.h"
 #include "DelveDeepEventPayload.h"
 #include "DelveDeepTelemetrySubsystem.h"
@@ -222,21 +222,23 @@ void ADelveDeepCharacter::InitializeComponents()
 		TEXT("Components initialized for %s"), *GetName());
 }
 
-void ADelveDeepCharacter::TakeDamage(float DamageAmount, AActor* DamageSource)
+float ADelveDeepCharacter::TakeDamage(float Damage, const FDamageEvent& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	SCOPE_CYCLE_COUNTER(STAT_CharacterTakeDamage);
+	
+	// Call parent implementation
+	const float ActualDamage = Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
+	
 	// Validate damage amount
-	if (DamageAmount < 0.0f)
+	if (ActualDamage <= 0.0f)
 	{
-		UE_LOG(LogDelveDeepCharacter, Warning, 
-			TEXT("Attempted to apply negative damage: %.2f"), DamageAmount);
-		return;
+		return 0.0f;
 	}
 
 	// Cannot damage dead characters
 	if (bIsDead)
 	{
-		return;
+		return 0.0f;
 	}
 
 	// Validate stats component
@@ -244,17 +246,17 @@ void ADelveDeepCharacter::TakeDamage(float DamageAmount, AActor* DamageSource)
 	{
 		UE_LOG(LogDelveDeepCharacter, Error, 
 			TEXT("Cannot apply damage without stats component on %s"), *GetName());
-		return;
+		return 0.0f;
 	}
 
 	// Apply damage to health
-	StatsComponent->ModifyHealth(-DamageAmount);
+	StatsComponent->ModifyHealth(-ActualDamage);
 
 	// Broadcast damage event
-	BroadcastDamageEvent(DamageAmount, DamageSource);
+	BroadcastDamageEvent(ActualDamage, DamageCauser);
 
 	// Call Blueprint event
-	OnDamaged(DamageAmount, DamageSource);
+	OnDamaged(ActualDamage, DamageCauser);
 
 	// Apply visual feedback (sprite flash)
 	if (UPaperFlipbookComponent* SpriteComponent = GetSprite())
@@ -286,7 +288,16 @@ void ADelveDeepCharacter::TakeDamage(float DamageAmount, AActor* DamageSource)
 
 	UE_LOG(LogDelveDeepCharacter, Verbose, 
 		TEXT("%s took %.2f damage from %s"), 
-		*GetName(), DamageAmount, DamageSource ? *DamageSource->GetName() : TEXT("Unknown"));
+		*GetName(), ActualDamage, DamageCauser ? *DamageCauser->GetName() : TEXT("Unknown"));
+	
+	return ActualDamage;
+}
+
+void ADelveDeepCharacter::ApplySimpleDamage(float DamageAmount, AActor* DamageSource)
+{
+	// Create a simple damage event and call the full TakeDamage function
+	FDamageEvent DamageEvent;
+	TakeDamage(DamageAmount, DamageEvent, nullptr, DamageSource);
 }
 
 void ADelveDeepCharacter::Heal(float HealAmount)

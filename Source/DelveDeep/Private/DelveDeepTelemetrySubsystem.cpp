@@ -706,9 +706,9 @@ bool UDelveDeepTelemetrySubsystem::SaveProfilingSession(const FString& FilePath)
 	{
 		const FFramePerformanceData& Frame = CurrentSession.FrameData[i];
 		TSharedPtr<FJsonObject> FrameObj = MakeShared<FJsonObject>();
-		FrameObj->SetNumberField(TEXT("FrameTime"), Frame.FrameTime);
-		FrameObj->SetNumberField(TEXT("GameThreadTime"), Frame.GameThreadTime);
-		FrameObj->SetNumberField(TEXT("RenderThreadTime"), Frame.RenderThreadTime);
+		FrameObj->SetNumberField(TEXT("FrameTime"), Frame.FrameTimeMs);
+		FrameObj->SetNumberField(TEXT("GameThreadTime"), Frame.GameThreadTimeMs);
+		FrameObj->SetNumberField(TEXT("RenderThreadTime"), Frame.RenderThreadTimeMs);
 		FrameArray.Add(MakeShared<FJsonValueObject>(FrameObj));
 	}
 	JsonObject->SetArrayField(TEXT("FrameData"), FrameArray);

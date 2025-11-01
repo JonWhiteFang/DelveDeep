@@ -262,9 +262,9 @@ void FDelveDeepTelemetryCommands::ShowFrameStats(const TArray<FString>& Args)
 	const TArray<float> FrameHistory = Telemetry->GetFrameTimeHistory(60);
 
 	UE_LOG(LogDelveDeepTelemetryCommands, Display, TEXT("=== Frame Statistics ==="));
-	UE_LOG(LogDelveDeepTelemetryCommands, Display, TEXT("Frame Time: %s"), *FormatTime(FrameData.FrameTime));
-	UE_LOG(LogDelveDeepTelemetryCommands, Display, TEXT("Game Thread: %s"), *FormatTime(FrameData.GameThreadTime));
-	UE_LOG(LogDelveDeepTelemetryCommands, Display, TEXT("Render Thread: %s"), *FormatTime(FrameData.RenderThreadTime));
+	UE_LOG(LogDelveDeepTelemetryCommands, Display, TEXT("Frame Time: %s"), *FormatTime(FrameData.FrameTimeMs));
+	UE_LOG(LogDelveDeepTelemetryCommands, Display, TEXT("Game Thread: %s"), *FormatTime(FrameData.GameThreadTimeMs));
+	UE_LOG(LogDelveDeepTelemetryCommands, Display, TEXT("Render Thread: %s"), *FormatTime(FrameData.RenderThreadTimeMs));
 	UE_LOG(LogDelveDeepTelemetryCommands, Display, TEXT("Recent frames: %d"), FrameHistory.Num());
 }
 

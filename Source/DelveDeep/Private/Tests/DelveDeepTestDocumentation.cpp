@@ -174,17 +174,17 @@ TArray<FString> FTestDocumentationGenerator::ExtractTags(uint32 TestFlags, const
 	TArray<FString> Tags;
 
 	// Extract tags from test flags
-	if (TestFlags & EAutomationTestFlags::ProductFilter)
+	if (TestFlags & static_cast<uint32>(EAutomationTestFlags::ProductFilter))
 	{
 		Tags.Add(TEXT("unit"));
 	}
 
-	if (TestFlags & EAutomationTestFlags::PerfFilter)
+	if (TestFlags & static_cast<uint32>(EAutomationTestFlags::PerfFilter))
 	{
 		Tags.Add(TEXT("performance"));
 	}
 
-	if (TestFlags & EAutomationTestFlags::StressFilter)
+	if (TestFlags & static_cast<uint32>(EAutomationTestFlags::StressFilter))
 	{
 		Tags.Add(TEXT("stress"));
 	}

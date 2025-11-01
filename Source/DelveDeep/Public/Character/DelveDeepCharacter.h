@@ -46,8 +46,23 @@ public:
 	bool ValidateCharacterData(FDelveDeepValidationContext& Context) const;
 
 	// Damage and healing
+	/**
+	 * Override of APawn::TakeDamage to handle damage events.
+	 * @param Damage Amount of damage to apply
+	 * @param DamageEvent Damage event information
+	 * @param EventInstigator Controller that instigated the damage
+	 * @param DamageCauser Actor that caused the damage
+	 * @return Actual damage applied
+	 */
+	virtual float TakeDamage(float Damage, const FDamageEvent& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+
+	/**
+	 * Simplified damage function for Blueprint use.
+	 * @param DamageAmount Amount of damage to apply
+	 * @param DamageSource Actor that caused the damage
+	 */
 	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Character")
-	void TakeDamage(float DamageAmount, AActor* DamageSource);
+	void ApplySimpleDamage(float DamageAmount, AActor* DamageSource);
 
 	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Character")
 	void Heal(float HealAmount);

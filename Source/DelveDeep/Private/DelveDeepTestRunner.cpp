@@ -450,20 +450,20 @@ const FSlateBrush* SDelveDeepTestRunner::GetTestItemIcon(TSharedPtr<FDelveDeepTe
 
 	if (Item->IsSuite())
 	{
-		return FEditorStyle::GetBrush("Icons.FolderClosed");
+		return FAppStyle::GetBrush("Icons.FolderClosed");
 	}
 
 	if (Item->bRunning)
 	{
-		return FEditorStyle::GetBrush("Icons.CircleArrowRight");
+		return FAppStyle::GetBrush("Icons.CircleArrowRight");
 	}
 
 	if (Item->bPassed)
 	{
-		return FEditorStyle::GetBrush("Icons.Check");
+		return FAppStyle::GetBrush("Icons.Check");
 	}
 
-	return FEditorStyle::GetBrush("Icons.X");
+	return FAppStyle::GetBrush("Icons.X");
 }
 
 // Test runner row implementation
@@ -491,17 +491,17 @@ void SDelveDeepTestRunnerRow::Construct(
 				{
 					if (Item->IsSuite())
 					{
-						return FEditorStyle::GetBrush("Icons.FolderClosed");
+						return FAppStyle::GetBrush("Icons.FolderClosed");
 					}
 					if (Item->bRunning)
 					{
-						return FEditorStyle::GetBrush("Icons.CircleArrowRight");
+						return FAppStyle::GetBrush("Icons.CircleArrowRight");
 					}
 					if (Item->bPassed)
 					{
-						return FEditorStyle::GetBrush("Icons.Check");
+						return FAppStyle::GetBrush("Icons.Check");
 					}
-					return FEditorStyle::GetBrush("Icons.X");
+					return FAppStyle::GetBrush("Icons.X");
 				})
 			]
 

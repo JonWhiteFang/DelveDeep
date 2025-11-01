@@ -175,7 +175,7 @@ public:
 		FDelveDeepTestFixture::AfterEach();
 	}
 
-protected:
+public:
 	/**
 	 * Gets a subsystem from the test game instance.
 	 * 
@@ -187,6 +187,7 @@ protected:
 		return DelveDeepTestUtils::GetTestSubsystem<T>(GameInstance);
 	}
 
+protected:
 	/**
 	 * Verifies that a subsystem is initialized.
 	 * 

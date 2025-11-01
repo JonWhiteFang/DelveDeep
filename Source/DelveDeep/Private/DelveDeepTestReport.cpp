@@ -614,7 +614,7 @@ FString FTestReportGenerator::GenerateMarkdownSuiteBreakdown(const FDelveDeepTes
 	{
 		const FString& Suite = Pair.Key;
 		int32 TestCount = Pair.Value;
-		float* SuiteTime = Report.ExecutionTimeBySuite.Find(Suite);
+		const float* SuiteTime = Report.ExecutionTimeBySuite.Find(Suite);
 		float ExecutionTime = SuiteTime ? *SuiteTime : 0.0f;
 
 		Breakdown += FString::Printf(TEXT("| %s | %d | %s |\n"),

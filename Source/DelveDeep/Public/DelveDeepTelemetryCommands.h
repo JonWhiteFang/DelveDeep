@@ -32,7 +32,7 @@ public:
 	 */
 	static void UnregisterCommands();
 
-private:
+public:
 	// Frame tracking commands
 	static void ShowFPS(const TArray<FString>& Args);
 	static void ShowFrameStats(const TArray<FString>& Args);
@@ -75,6 +75,7 @@ private:
 	static void ShowGameplayMetrics(const TArray<FString>& Args);
 	static void ShowAssetLoads(const TArray<FString>& Args);
 
+private:
 	// Helper functions
 	static class UDelveDeepTelemetrySubsystem* GetTelemetrySubsystem();
 	static FString FormatBytes(uint64 Bytes);
