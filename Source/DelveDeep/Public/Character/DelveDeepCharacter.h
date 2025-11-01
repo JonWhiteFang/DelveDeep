@@ -29,6 +29,7 @@ public:
 
 	// Character data loading
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	/**
 	 * Initialize character from configuration data.
@@ -83,6 +84,38 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "DelveDeep|Character|Stats")
 	float GetMaxResource() const;
+
+	// Movement
+	/**
+	 * Update sprite facing direction based on movement velocity.
+	 * Called automatically when velocity changes.
+	 */
+	void UpdateSpriteFacingDirection();
+
+	// Sprite animations
+	/**
+	 * Play idle animation from character data.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Character|Animation")
+	void PlayIdleAnimation();
+
+	/**
+	 * Play walk animation from character data.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Character|Animation")
+	void PlayWalkAnimation();
+
+	/**
+	 * Play attack animation from character data.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Character|Animation")
+	void PlayAttackAnimation();
+
+	/**
+	 * Play death animation from character data.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Character|Animation")
+	void PlayDeathAnimation();
 
 protected:
 	/**

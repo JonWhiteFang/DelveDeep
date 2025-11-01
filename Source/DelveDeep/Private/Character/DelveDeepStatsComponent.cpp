@@ -13,6 +13,10 @@
 
 DEFINE_LOG_CATEGORY_STATIC(LogDelveDeepStats, Log, All);
 
+// Performance profiling stats
+DECLARE_STATS_GROUP(TEXT("DelveDeep"), STATGROUP_DelveDeep, STATCAT_Advanced);
+DECLARE_CYCLE_STAT(TEXT("Stats RecalculateStats"), STAT_StatsRecalculate, STATGROUP_DelveDeep);
+
 UDelveDeepStatsComponent::UDelveDeepStatsComponent()
 {
 	// Disable tick by default for performance
@@ -321,6 +325,7 @@ float UDelveDeepStatsComponent::GetModifiedStat(FName StatName) const
 
 void UDelveDeepStatsComponent::RecalculateStats()
 {
+	SCOPE_CYCLE_COUNTER(STAT_StatsRecalculate);
 	if (!bStatsDirty)
 	{
 		return;

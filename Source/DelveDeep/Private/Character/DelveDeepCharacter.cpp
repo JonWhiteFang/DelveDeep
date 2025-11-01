@@ -10,12 +10,21 @@
 #include "Validation/ValidationContext.h"
 #include "DelveDeepEventSubsystem.h"
 #include "DelveDeepEventPayload.h"
+#include "DelveDeepTelemetrySubsystem.h"
 #include "GameplayTagsManager.h"
 #include "TimerManager.h"
 #include "Components/CapsuleComponent.h"
 #include "PaperFlipbookComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogDelveDeepCharacter, Log, All);
+
+// Performance profiling stats
+DECLARE_STATS_GROUP(TEXT("DelveDeep"), STATGROUP_DelveDeep, STATCAT_Advanced);
+DECLARE_CYCLE_STAT(TEXT("Character TakeDamage"), STAT_CharacterTakeDamage, STATGROUP_DelveDeep);
+DECLARE_CYCLE_STAT(TEXT("Character Heal"), STAT_CharacterHeal, STATGROUP_DelveDeep);
+DECLARE_CYCLE_STAT(TEXT("Character Die"), STAT_CharacterDie, STATGROUP_DelveDeep);
+DECLARE_CYCLE_STAT(TEXT("Character InitializeFromData"), STAT_CharacterInitialize, STATGROUP_DelveDeep);
 
 ADelveDeepCharacter::ADelveDeepCharacter()
 {
@@ -42,12 +51,40 @@ void ADelveDeepCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// Register with telemetry subsystem
+	if (UGameInstance* GameInstance = GetGameInstance())
+	{
+		if (UDelveDeepTelemetrySubsystem* Telemetry = GameInstance->GetSubsystem<UDelveDeepTelemetrySubsystem>())
+		{
+			// Track character entity count
+			int32 CurrentCount = Telemetry->GetEntityCount(FName("Characters"));
+			Telemetry->TrackEntityCount(FName("Characters"), CurrentCount + 1);
+		}
+	}
+
 	// Initialize character from configuration data
 	InitializeFromData();
 }
 
+void ADelveDeepCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	// Unregister from telemetry subsystem
+	if (UGameInstance* GameInstance = GetGameInstance())
+	{
+		if (UDelveDeepTelemetrySubsystem* Telemetry = GameInstance->GetSubsystem<UDelveDeepTelemetrySubsystem>())
+		{
+			// Decrement character entity count
+			int32 CurrentCount = Telemetry->GetEntityCount(FName("Characters"));
+			Telemetry->TrackEntityCount(FName("Characters"), FMath::Max(0, CurrentCount - 1));
+		}
+	}
+
+	Super::EndPlay(EndPlayReason);
+}
+
 void ADelveDeepCharacter::InitializeFromData()
 {
+	SCOPE_CYCLE_COUNTER(STAT_CharacterInitialize);
 	// Validate character class name is set
 	if (CharacterClassName.IsNone())
 	{
@@ -187,6 +224,7 @@ void ADelveDeepCharacter::InitializeComponents()
 
 void ADelveDeepCharacter::TakeDamage(float DamageAmount, AActor* DamageSource)
 {
+	SCOPE_CYCLE_COUNTER(STAT_CharacterTakeDamage);
 	// Validate damage amount
 	if (DamageAmount < 0.0f)
 	{
@@ -253,6 +291,7 @@ void ADelveDeepCharacter::TakeDamage(float DamageAmount, AActor* DamageSource)
 
 void ADelveDeepCharacter::Heal(float HealAmount)
 {
+	SCOPE_CYCLE_COUNTER(STAT_CharacterHeal);
 	// Validate heal amount
 	if (HealAmount < 0.0f)
 	{
@@ -312,6 +351,7 @@ void ADelveDeepCharacter::Heal(float HealAmount)
 
 void ADelveDeepCharacter::Die()
 {
+	SCOPE_CYCLE_COUNTER(STAT_CharacterDie);
 	// Already dead
 	if (bIsDead)
 	{
@@ -335,6 +375,9 @@ void ADelveDeepCharacter::Die()
 
 	// Call Blueprint event
 	OnDeath();
+
+	// Play death animation
+	PlayDeathAnimation();
 
 	// Set timer to destroy actor after 2 seconds
 	GetWorld()->GetTimerManager().SetTimer(
@@ -389,6 +432,9 @@ void ADelveDeepCharacter::Respawn()
 		SpriteComponent->SetSpriteColor(FLinearColor::White);
 	}
 
+	// Reset to idle animation
+	PlayIdleAnimation();
+
 	UE_LOG(LogDelveDeepCharacter, Display, TEXT("%s respawned"), *GetName());
 }
 
@@ -438,8 +484,176 @@ void ADelveDeepCharacter::BroadcastDamageEvent(float DamageAmount, AActor* Damag
 				// Continue broadcasting despite validation warnings
 			}
 
-			EventSubsystem->BroadcastEvent(Payload);
+			 EventSubsystem->BroadcastEvent(Payload);
 		}
+	}
+}
+
+void ADelveDeepCharacter::UpdateSpriteFacingDirection()
+{
+	// Get sprite component
+	UPaperFlipbookComponent* SpriteComponent = GetSprite();
+	if (!SpriteComponent)
+	{
+		return;
+	}
+
+	// Get current velocity
+	FVector Velocity = GetVelocity();
+	
+	// Only update facing if moving horizontally
+	if (FMath::Abs(Velocity.X) > 1.0f)
+	{
+		// Flip sprite based on horizontal velocity
+		// Positive X = facing right (no flip)
+		// Negative X = facing left (flip)
+		bool bShouldFlip = Velocity.X < 0.0f;
+		
+		// Update sprite rotation to flip horizontally
+		if (bShouldFlip)
+		{
+			SpriteComponent->SetRelativeRotation(FRotator(0.0f, 180.0f, 0.0f));
+		}
+		else
+		{
+			SpriteComponent->SetRelativeRotation(FRotator::ZeroRotator);
+		}
+	}
+}
+
+void ADelveDeepCharacter::PlayIdleAnimation()
+{
+	if (!CharacterData)
+	{
+		UE_LOG(LogDelveDeepCharacter, Warning, TEXT("Cannot play idle animation without character data"));
+		return;
+	}
+
+	UPaperFlipbookComponent* SpriteComponent = GetSprite();
+	if (!SpriteComponent)
+	{
+		UE_LOG(LogDelveDeepCharacter, Warning, TEXT("Cannot play idle animation without sprite component"));
+		return;
+	}
+
+	// Load idle animation from character data
+	if (!CharacterData->IdleAnimation.IsNull())
+	{
+		if (UPaperFlipbook* IdleFlipbook = CharacterData->IdleAnimation.LoadSynchronous())
+		{
+			SpriteComponent->SetFlipbook(IdleFlipbook);
+			UE_LOG(LogDelveDeepCharacter, Verbose, TEXT("Playing idle animation for %s"), *GetName());
+		}
+		else
+		{
+			UE_LOG(LogDelveDeepCharacter, Warning, TEXT("Failed to load idle animation for %s"), *GetName());
+		}
+	}
+	else
+	{
+		UE_LOG(LogDelveDeepCharacter, Verbose, TEXT("No idle animation assigned for %s"), *GetName());
+	}
+}
+
+void ADelveDeepCharacter::PlayWalkAnimation()
+{
+	if (!CharacterData)
+	{
+		UE_LOG(LogDelveDeepCharacter, Warning, TEXT("Cannot play walk animation without character data"));
+		return;
+	}
+
+	UPaperFlipbookComponent* SpriteComponent = GetSprite();
+	if (!SpriteComponent)
+	{
+		UE_LOG(LogDelveDeepCharacter, Warning, TEXT("Cannot play walk animation without sprite component"));
+		return;
+	}
+
+	// Load walk animation from character data
+	if (!CharacterData->WalkAnimation.IsNull())
+	{
+		if (UPaperFlipbook* WalkFlipbook = CharacterData->WalkAnimation.LoadSynchronous())
+		{
+			SpriteComponent->SetFlipbook(WalkFlipbook);
+			UE_LOG(LogDelveDeepCharacter, Verbose, TEXT("Playing walk animation for %s"), *GetName());
+		}
+		else
+		{
+			UE_LOG(LogDelveDeepCharacter, Warning, TEXT("Failed to load walk animation for %s"), *GetName());
+		}
+	}
+	else
+	{
+		UE_LOG(LogDelveDeepCharacter, Verbose, TEXT("No walk animation assigned for %s"), *GetName());
+	}
+}
+
+void ADelveDeepCharacter::PlayAttackAnimation()
+{
+	if (!CharacterData)
+	{
+		UE_LOG(LogDelveDeepCharacter, Warning, TEXT("Cannot play attack animation without character data"));
+		return;
+	}
+
+	UPaperFlipbookComponent* SpriteComponent = GetSprite();
+	if (!SpriteComponent)
+	{
+		UE_LOG(LogDelveDeepCharacter, Warning, TEXT("Cannot play attack animation without sprite component"));
+		return;
+	}
+
+	// Load attack animation from character data
+	if (!CharacterData->AttackAnimation.IsNull())
+	{
+		if (UPaperFlipbook* AttackFlipbook = CharacterData->AttackAnimation.LoadSynchronous())
+		{
+			SpriteComponent->SetFlipbook(AttackFlipbook);
+			UE_LOG(LogDelveDeepCharacter, Verbose, TEXT("Playing attack animation for %s"), *GetName());
+		}
+		else
+		{
+			UE_LOG(LogDelveDeepCharacter, Warning, TEXT("Failed to load attack animation for %s"), *GetName());
+		}
+	}
+	else
+	{
+		UE_LOG(LogDelveDeepCharacter, Verbose, TEXT("No attack animation assigned for %s"), *GetName());
+	}
+}
+
+void ADelveDeepCharacter::PlayDeathAnimation()
+{
+	if (!CharacterData)
+	{
+		UE_LOG(LogDelveDeepCharacter, Warning, TEXT("Cannot play death animation without character data"));
+		return;
+	}
+
+	UPaperFlipbookComponent* SpriteComponent = GetSprite();
+	if (!SpriteComponent)
+	{
+		UE_LOG(LogDelveDeepCharacter, Warning, TEXT("Cannot play death animation without sprite component"));
+		return;
+	}
+
+	// Load death animation from character data
+	if (!CharacterData->DeathAnimation.IsNull())
+	{
+		if (UPaperFlipbook* DeathFlipbook = CharacterData->DeathAnimation.LoadSynchronous())
+		{
+			SpriteComponent->SetFlipbook(DeathFlipbook);
+			UE_LOG(LogDelveDeepCharacter, Verbose, TEXT("Playing death animation for %s"), *GetName());
+		}
+		else
+		{
+			UE_LOG(LogDelveDeepCharacter, Warning, TEXT("Failed to load death animation for %s"), *GetName());
+		}
+	}
+	else
+	{
+		UE_LOG(LogDelveDeepCharacter, Verbose, TEXT("No death animation assigned for %s"), *GetName());
 	}
 }
 
