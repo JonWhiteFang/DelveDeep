@@ -104,7 +104,7 @@ struct DELVEDEEP_API FProfilingSession
 /**
  * Profiling session report with aggregated statistics
  */
-USTRUCT(BlueprintType)
+USTRUCT()
 struct DELVEDEEP_API FProfilingSessionReport
 {
 	GENERATED_BODY()

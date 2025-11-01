@@ -8,7 +8,7 @@
 /**
  * Memory snapshot for a single point in time
  */
-USTRUCT(BlueprintType)
+USTRUCT()
 struct DELVEDEEP_API FMemorySnapshot
 {
 	GENERATED_BODY()

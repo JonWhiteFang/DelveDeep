@@ -13,7 +13,7 @@
  * 
  * Aggregated performance data over a time period with comprehensive statistics.
  */
-USTRUCT(BlueprintType)
+USTRUCT()
 struct DELVEDEEP_API FPerformanceReport
 {
 	GENERATED_BODY()

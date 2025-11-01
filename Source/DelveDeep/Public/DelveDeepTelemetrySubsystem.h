@@ -166,7 +166,7 @@ public:
 	 * @return Memory usage in bytes
 	 */
 	UFUNCTION(BlueprintPure, Category = "DelveDeep|Telemetry")
-	uint64 GetSystemMemoryUsage(FName SystemName) const;
+	int64 GetSystemMemoryUsage(FName SystemName) const;
 
 	/**
 	 * Track memory allocation for a system
@@ -374,7 +374,6 @@ public:
 	 * @param OutReport Generated report
 	 * @return True if report was generated successfully
 	 */
-	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
 	bool GenerateProfilingReport(FProfilingSessionReport& OutReport);
 
 	/**
@@ -452,14 +451,12 @@ public:
 	 * @param AssetType Type of asset
 	 * @return Statistics for that asset type
 	 */
-	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
 	FAssetLoadStatistics GetAssetLoadStatistics(FName AssetType) const;
 
 	/**
 	 * Get asset load statistics for all types
 	 * @return Array of statistics for all asset types
 	 */
-	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
 	TArray<FAssetLoadStatistics> GetAllAssetLoadStatistics() const;
 
 	/**
@@ -467,7 +464,6 @@ public:
 	 * @param Count Number of recent records to retrieve (default: 100)
 	 * @return Array of recent load records
 	 */
-	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
 	TArray<FAssetLoadRecord> GetRecentAssetLoads(int32 Count = 100) const;
 
 	/**
@@ -475,7 +471,6 @@ public:
 	 * @param Count Number of slowest loads to retrieve (default: 10)
 	 * @return Array of slowest load records
 	 */
-	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Telemetry")
 	TArray<FAssetLoadRecord> GetSlowestAssetLoads(int32 Count = 10) const;
 
 	/**

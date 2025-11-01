@@ -96,8 +96,7 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Validation")
 	FDateTime CompletionTime;
 
-	/** Child validation contexts for nested validation */
-	UPROPERTY(BlueprintReadOnly, Category = "Validation")
+	/** Child validation contexts for nested validation (not exposed to Blueprint due to recursion) */
 	TArray<FValidationContext> ChildContexts;
 
 	/**
@@ -112,14 +111,12 @@ public:
 	 * Adds an error to the validation context.
 	 * @param Error The error message to add
 	 */
-	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
 	void AddError(const FString& Error);
 
 	/**
 	 * Adds a warning to the validation context.
 	 * @param Warning The warning message to add
 	 */
-	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
 	void AddWarning(const FString& Warning);
 
 	/**
@@ -130,7 +127,6 @@ public:
 	 * @param SourceLine The line number in the source file (optional)
 	 * @param SourceFunction The function name where the issue was added (optional)
 	 */
-	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
 	void AddIssue(EValidationSeverity Severity, const FString& Message, 
 				  const FString& SourceFile = TEXT(""), int32 SourceLine = 0, 
 				  const FString& SourceFunction = TEXT(""));
@@ -139,35 +135,30 @@ public:
 	 * Adds a critical issue to the validation context.
 	 * @param Message The critical issue message
 	 */
-	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
 	void AddCritical(const FString& Message);
 
 	/**
 	 * Adds an informational message to the validation context.
 	 * @param Message The informational message
 	 */
-	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
 	void AddInfo(const FString& Message);
 
 	/**
 	 * Checks if the validation context has any critical issues.
 	 * @return True if there are critical issues, false otherwise
 	 */
-	UFUNCTION(BlueprintPure, Category = "DelveDeep|Validation")
 	bool HasCriticalIssues() const;
 
 	/**
 	 * Checks if the validation context has any errors.
 	 * @return True if there are errors, false otherwise
 	 */
-	UFUNCTION(BlueprintPure, Category = "DelveDeep|Validation")
 	bool HasErrors() const;
 
 	/**
 	 * Checks if the validation context has any warnings.
 	 * @return True if there are warnings, false otherwise
 	 */
-	UFUNCTION(BlueprintPure, Category = "DelveDeep|Validation")
 	bool HasWarnings() const;
 
 	/**
@@ -175,28 +166,24 @@ public:
 	 * @param Severity The severity level to count
 	 * @return The number of issues with the specified severity
 	 */
-	UFUNCTION(BlueprintPure, Category = "DelveDeep|Validation")
 	int32 GetIssueCount(EValidationSeverity Severity) const;
 
 	/**
 	 * Checks if the validation context has no errors or critical issues.
 	 * @return True if there are no validation errors or critical issues, false otherwise
 	 */
-	UFUNCTION(BlueprintPure, Category = "DelveDeep|Validation")
 	bool IsValid() const;
 
 	/**
 	 * Adds a child validation context for nested validation.
 	 * @param ChildContext The child context to add
 	 */
-	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
 	void AddChildContext(const FValidationContext& ChildContext);
 
 	/**
 	 * Merges another validation context into this one.
 	 * @param OtherContext The context to merge
 	 */
-	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
 	void MergeContext(const FValidationContext& OtherContext);
 
 	/**
@@ -204,14 +191,12 @@ public:
 	 * @param Key The metadata key
 	 * @param Value The metadata value
 	 */
-	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
 	void AttachMetadata(const FString& Key, const FString& Value);
 
 	/**
 	 * Gets the validation duration (time between creation and completion).
 	 * @return The validation duration as a timespan
 	 */
-	UFUNCTION(BlueprintPure, Category = "DelveDeep|Validation")
 	FTimespan GetValidationDuration() const;
 
 	/**
@@ -219,28 +204,24 @@ public:
 	 * Groups issues by severity with visual distinction and includes nested contexts.
 	 * @return A formatted string containing the validation report
 	 */
-	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
 	FString GetReport() const;
 
 	/**
 	 * Generates a JSON-formatted validation report with all context data.
 	 * @return A JSON string containing the validation report
 	 */
-	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
 	FString GetReportJSON() const;
 
 	/**
 	 * Generates a CSV-formatted validation report for spreadsheet analysis.
 	 * @return A CSV string containing the validation report
 	 */
-	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
 	FString GetReportCSV() const;
 
 	/**
 	 * Generates an HTML-formatted validation report with color coding and interactivity.
 	 * @return An HTML string containing the validation report
 	 */
-	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Validation")
 	FString GetReportHTML() const;
 
 	/**

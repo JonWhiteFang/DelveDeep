@@ -9,49 +9,39 @@
  * Individual test result information.
  * Contains detailed information about a single test execution.
  */
-USTRUCT(BlueprintType)
+USTRUCT()
 struct DELVEDEEP_API FDelveDeepTestResult
 {
 	GENERATED_BODY()
 
 	/** Name of the test */
-	UPROPERTY(BlueprintReadOnly, Category = "Test Result")
 	FString TestName;
 
 	/** Full path of the test (e.g., "DelveDeep.Configuration.AssetCaching") */
-	UPROPERTY(BlueprintReadOnly, Category = "Test Result")
 	FString TestPath;
 
 	/** Whether the test passed */
-	UPROPERTY(BlueprintReadOnly, Category = "Test Result")
 	bool bPassed = false;
 
 	/** Execution time in seconds */
-	UPROPERTY(BlueprintReadOnly, Category = "Test Result")
 	float ExecutionTime = 0.0f;
 
 	/** Error messages from test failures */
-	UPROPERTY(BlueprintReadOnly, Category = "Test Result")
 	TArray<FString> Errors;
 
 	/** Warning messages from test execution */
-	UPROPERTY(BlueprintReadOnly, Category = "Test Result")
 	TArray<FString> Warnings;
 
 	/** Timestamp when test was executed */
-	UPROPERTY(BlueprintReadOnly, Category = "Test Result")
 	FDateTime ExecutionTimestamp;
 
 	/** Test suite this test belongs to (e.g., "Configuration", "Events") */
-	UPROPERTY(BlueprintReadOnly, Category = "Test Result")
 	FString TestSuite;
 
 	/** Memory allocated during test execution (bytes) */
-	UPROPERTY(BlueprintReadOnly, Category = "Test Result")
 	uint64 MemoryAllocated = 0;
 
 	/** Number of allocations during test execution */
-	UPROPERTY(BlueprintReadOnly, Category = "Test Result")
 	int32 AllocationCount = 0;
 
 	FDelveDeepTestResult()
@@ -68,57 +58,45 @@ struct DELVEDEEP_API FDelveDeepTestResult
  * Comprehensive test report with statistics and results.
  * Contains aggregated information about all test executions.
  */
-USTRUCT(BlueprintType)
+USTRUCT()
 struct DELVEDEEP_API FDelveDeepTestReport
 {
 	GENERATED_BODY()
 
 	/** Timestamp when report was generated */
-	UPROPERTY(BlueprintReadOnly, Category = "Test Report")
 	FDateTime GenerationTime;
 
 	/** Build version or commit hash */
-	UPROPERTY(BlueprintReadOnly, Category = "Test Report")
 	FString BuildVersion;
 
 	/** Total number of tests executed */
-	UPROPERTY(BlueprintReadOnly, Category = "Test Report")
 	int32 TotalTests = 0;
 
 	/** Number of tests that passed */
-	UPROPERTY(BlueprintReadOnly, Category = "Test Report")
 	int32 PassedTests = 0;
 
 	/** Number of tests that failed */
-	UPROPERTY(BlueprintReadOnly, Category = "Test Report")
 	int32 FailedTests = 0;
 
 	/** Number of tests that were skipped */
-	UPROPERTY(BlueprintReadOnly, Category = "Test Report")
 	int32 SkippedTests = 0;
 
 	/** Total execution time for all tests in seconds */
-	UPROPERTY(BlueprintReadOnly, Category = "Test Report")
 	float TotalExecutionTime = 0.0f;
 
 	/** Individual test results */
-	UPROPERTY(BlueprintReadOnly, Category = "Test Report")
 	TArray<FDelveDeepTestResult> Results;
 
 	/** Number of tests per suite */
-	UPROPERTY(BlueprintReadOnly, Category = "Test Report")
 	TMap<FString, int32> TestsBySuite;
 
 	/** Execution time per suite in seconds */
-	UPROPERTY(BlueprintReadOnly, Category = "Test Report")
 	TMap<FString, float> ExecutionTimeBySuite;
 
 	/** Total memory allocated across all tests (bytes) */
-	UPROPERTY(BlueprintReadOnly, Category = "Test Report")
 	uint64 TotalMemoryAllocated = 0;
 
 	/** Total number of allocations across all tests */
-	UPROPERTY(BlueprintReadOnly, Category = "Test Report")
 	int32 TotalAllocations = 0;
 
 	FDelveDeepTestReport()

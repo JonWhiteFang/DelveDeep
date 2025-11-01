@@ -103,33 +103,5 @@ public:
 		FGameplayTag AttackType,
 		float AttackRadius = 0.0f);
 
-	/**
-	 * Registers a Blueprint listener for a specific event tag.
-	 * Note: For C++ listeners, use UDelveDeepEventSubsystem::RegisterListener directly.
-	 * @param WorldContextObject Object providing world context
-	 * @param EventTag The GameplayTag identifying the event type to listen for
-	 * @param Callback The delegate to invoke when the event is broadcast
-	 * @param Owner The object registering the listener (for automatic cleanup)
-	 * @param Priority The priority level for this listener
-	 * @return Handle that can be used to unregister the listener
-	 */
-	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Events",
-		meta = (WorldContext = "WorldContextObject"))
-	static FDelegateHandle RegisterListenerBlueprint(
-		UObject* WorldContextObject,
-		FGameplayTag EventTag,
-		FDelveDeepEventDelegate Callback,
-		UObject* Owner,
-		EDelveDeepEventPriority Priority = EDelveDeepEventPriority::Normal);
 
-	/**
-	 * Unregisters a Blueprint listener using its handle.
-	 * @param WorldContextObject Object providing world context
-	 * @param Handle The handle returned from RegisterListenerBlueprint
-	 */
-	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Events",
-		meta = (WorldContext = "WorldContextObject"))
-	static void UnregisterListenerBlueprint(
-		UObject* WorldContextObject,
-		FDelegateHandle Handle);
 };

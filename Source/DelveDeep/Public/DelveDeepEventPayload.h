@@ -207,29 +207,7 @@ struct DELVEDEEP_API FDelveDeepCharacterDeathEventPayload : public FDelveDeepEve
 	virtual bool Validate(FValidationContext& Context) const override;
 };
 
-/**
- * Event payload for damage events (simplified version for character damage).
- * Contains information about damage dealt to a character.
- */
-USTRUCT(BlueprintType)
-struct DELVEDEEP_API FDelveDeepDamageEventPayload : public FDelveDeepEventPayload
-{
-	GENERATED_BODY()
 
-	/** The character receiving the damage */
-	UPROPERTY(BlueprintReadOnly, Category = "Damage")
-	TWeakObjectPtr<AActor> Character;
-
-	/** Amount of damage dealt */
-	UPROPERTY(BlueprintReadOnly, Category = "Damage")
-	float DamageAmount = 0.0f;
-
-	/** The actor that dealt the damage (may be null) */
-	UPROPERTY(BlueprintReadOnly, Category = "Damage")
-	TWeakObjectPtr<AActor> DamageSource;
-
-	virtual bool Validate(FValidationContext& Context) const override;
-};
 
 /**
  * Event payload for character stat changed events.

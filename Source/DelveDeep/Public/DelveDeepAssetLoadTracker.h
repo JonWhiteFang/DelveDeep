@@ -8,7 +8,7 @@
 /**
  * Asset load record for tracking asset loading performance
  */
-USTRUCT(BlueprintType)
+USTRUCT()
 struct DELVEDEEP_API FAssetLoadRecord
 {
 	GENERATED_BODY()
@@ -61,7 +61,7 @@ struct DELVEDEEP_API FAssetLoadRecord
 /**
  * Asset load statistics for a specific asset type
  */
-USTRUCT(BlueprintType)
+USTRUCT()
 struct DELVEDEEP_API FAssetLoadStatistics
 {
 	GENERATED_BODY()

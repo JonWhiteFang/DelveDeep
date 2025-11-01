@@ -4,6 +4,68 @@
 
 All C++ classes must be Blueprint-ready. This enables future UE5 Editor integration and allows designers to extend functionality without code changes.
 
+## Critical Blueprint Type Restrictions
+
+### Unsupported Types in Blueprint
+
+The following types **cannot** be exposed to Blueprint and will cause compilation errors:
+
+- `uint64` - Use `int64` instead if Blueprint exposure is needed
+- `FDelegateHandle` - Not a USTRUCT, cannot be used in UFUNCTION
+- Struct pointers (`FMyStruct*`) - Use by-value return or output parameters
+- Recursive struct arrays with UPROPERTY (e.g., `TArray<FValidationContext>` inside `FValidationContext`)
+- `TMap<FName, uint64>` - Use `TMap<FName, int64>` instead
+
+### UFUNCTION Restrictions
+
+- **UFUNCTION can only be used in UCLASS** - Never use UFUNCTION in USTRUCT
+- Struct methods in USTRUCT must be regular C++ functions without UFUNCTION
+- To expose struct functionality to Blueprint, create a Blueprint Function Library (UCLASS) with static functions
+
+### Struct Pointer Returns
+
+Instead of returning struct pointers from UFUNCTION:
+
+```cpp
+// ❌ DON'T - Struct pointers not allowed in UFUNCTION
+UFUNCTION(BlueprintCallable)
+const FMyStruct* GetData(FName Key) const;
+
+// ✅ DO - Use output parameter
+UFUNCTION(BlueprintCallable)
+bool GetData(FName Key, FMyStruct& OutData) const;
+
+// ✅ DO - Return by value (for small structs)
+UFUNCTION(BlueprintCallable)
+FMyStruct GetData(FName Key) const;
+```
+
+### Recursive Struct Definitions
+
+Structs cannot contain UPROPERTY arrays of themselves:
+
+```cpp
+// ❌ DON'T - Recursive UPROPERTY not allowed
+USTRUCT(BlueprintType)
+struct FValidationContext
+{
+    GENERATED_BODY()
+    
+    UPROPERTY(BlueprintReadOnly)
+    TArray<FValidationContext> ChildContexts; // ERROR!
+};
+
+// ✅ DO - Remove UPROPERTY for recursive members
+USTRUCT(BlueprintType)
+struct FValidationContext
+{
+    GENERATED_BODY()
+    
+    // Not exposed to Blueprint due to recursion
+    TArray<FValidationContext> ChildContexts;
+};
+```
+
 ## Required UCLASS Specifiers
 
 ```cpp
@@ -313,9 +375,19 @@ public:
 ❌ **Don't** forget DELVEDEEP_API macro for public classes
 ❌ **Don't** use TArray/TMap in UPROPERTY without BlueprintReadWrite/ReadOnly
 ❌ **Don't** forget to add Category to UFUNCTION/UPROPERTY
+❌ **Don't** use UFUNCTION macros in USTRUCT (only allowed in UCLASS)
+❌ **Don't** use uint64 in BlueprintType structs (not supported by Blueprint)
+❌ **Don't** return struct pointers from UFUNCTION (use by-value or reference parameters)
+❌ **Don't** create recursive struct definitions with UPROPERTY arrays
+❌ **Don't** use FDelegateHandle in UFUNCTION (not a USTRUCT)
+❌ **Don't** mark structs as BlueprintType if they contain non-Blueprint types
 
 ✅ **Do** validate all Blueprint-callable function inputs
 ✅ **Do** use appropriate specifiers (EditAnywhere, BlueprintReadOnly, etc.)
 ✅ **Do** provide meaningful return values and output parameters
 ✅ **Do** use meta specifiers for better Editor experience
 ✅ **Do** test Blueprint integration even in code-only environment
+✅ **Do** use int64 instead of uint64 for Blueprint-exposed types
+✅ **Do** return structs by value or use output parameters instead of pointers
+✅ **Do** remove UPROPERTY from fields in non-Blueprint structs
+✅ **Do** use non-UPROPERTY members for recursive struct relationships

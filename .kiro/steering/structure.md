@@ -5,7 +5,10 @@
 ```
 DelveDeep/
 ├── Source/                    # C++ source code
+│   ├── DelveDeep.Target.cs   # Game build target (REQUIRED)
+│   ├── DelveDeepEditor.Target.cs  # Editor build target (REQUIRED)
 │   ├── DelveDeep/            # Main game module
+│   │   ├── DelveDeep.Build.cs  # Module build rules
 │   │   ├── Public/           # Header files (.h)
 │   │   └── Private/          # Implementation files (.cpp)
 │   ├── DelveDeepCore/        # Shared utilities
@@ -23,6 +26,48 @@ DelveDeep/
 └── .kiro/                    # Kiro IDE configuration
     ├── specs/                # Feature specifications
     └── steering/             # AI assistant guidance
+```
+
+## Required Build Files
+
+### Target Files (Critical)
+
+Every Unreal project **must** have Target.cs files in the Source directory. Without these, the project will not compile.
+
+**Source/DelveDeep.Target.cs:**
+```cpp
+using UnrealBuildTool;
+using System.Collections.Generic;
+
+public class DelveDeepTarget : TargetRules
+{
+    public DelveDeepTarget(TargetInfo Target) : base(Target)
+    {
+        Type = TargetType.Game;
+        DefaultBuildSettings = BuildSettingsVersion.V5;
+        IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_6;
+        
+        ExtraModuleNames.AddRange(new string[] { "DelveDeep" });
+    }
+}
+```
+
+**Source/DelveDeepEditor.Target.cs:**
+```cpp
+using UnrealBuildTool;
+using System.Collections.Generic;
+
+public class DelveDeepEditorTarget : TargetRules
+{
+    public DelveDeepEditorTarget(TargetInfo Target) : base(Target)
+    {
+        Type = TargetType.Editor;
+        DefaultBuildSettings = BuildSettingsVersion.V5;
+        IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_6;
+        
+        ExtraModuleNames.AddRange(new string[] { "DelveDeep" });
+    }
+}
 ```
 
 ## Naming Conventions (Mandatory)

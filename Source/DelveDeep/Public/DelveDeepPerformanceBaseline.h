@@ -14,7 +14,7 @@
  * Captures a snapshot of performance metrics under controlled conditions
  * for comparison with future performance measurements.
  */
-USTRUCT(BlueprintType)
+USTRUCT()
 struct DELVEDEEP_API FPerformanceBaseline
 {
 	GENERATED_BODY()

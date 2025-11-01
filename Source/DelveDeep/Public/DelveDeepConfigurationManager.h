@@ -45,10 +45,11 @@ public:
 	 * Retrieves monster configuration by name from data table.
 	 * 
 	 * @param MonsterName The name of the monster to retrieve
-	 * @return Const pointer to monster config, or nullptr if not found
+	 * @param OutConfig Output parameter for the monster config
+	 * @return True if the monster was found, false otherwise
 	 */
 	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Configuration")
-	const FDelveDeepMonsterConfig* GetMonsterConfig(FName MonsterName) const;
+	bool GetMonsterConfig(FName MonsterName, FDelveDeepMonsterConfig& OutConfig) const;
 
 	// Upgrade data access
 	/**
