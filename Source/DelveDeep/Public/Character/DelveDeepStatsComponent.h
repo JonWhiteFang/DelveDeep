@@ -115,6 +115,22 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Stats")
 	void ResetToMaxValues();
 
+	// Stat modifier system
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Stats")
+	void AddStatModifier(FName StatName, float Modifier, float Duration);
+
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Stats")
+	void RemoveStatModifier(FName StatName);
+
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Stats")
+	void ClearAllModifiers();
+
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Stats")
+	float GetModifiedStat(FName StatName) const;
+
+	// Recalculate all stats with modifiers applied
+	void RecalculateStats();
+
 	// Blueprint events
 	UFUNCTION(BlueprintImplementableEvent, Category = "DelveDeep|Stats")
 	void OnStatChanged(FName StatName, float OldValue, float NewValue);
@@ -133,4 +149,26 @@ protected:
 	 * Flag indicating stats need recalculation.
 	 */
 	bool bStatsDirty;
+
+	/**
+	 * Cached modified stats (recalculated when dirty).
+	 */
+	float CachedMaxHealth;
+	float CachedMaxResource;
+	float CachedMoveSpeed;
+
+	/**
+	 * Timer handle for cleaning up expired modifiers.
+	 */
+	FTimerHandle CleanupTimerHandle;
+
+	/**
+	 * Apply modifiers to a base stat value.
+	 */
+	float ApplyModifiers(FName StatName, float BaseValue) const;
+
+	/**
+	 * Clean up expired stat modifiers.
+	 */
+	void CleanupExpiredModifiers();
 };

@@ -42,6 +42,23 @@ public:
 	 */
 	bool ValidateCharacterData(FValidationContext& Context) const;
 
+	// Damage and healing
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Character")
+	void TakeDamage(float DamageAmount, AActor* DamageSource);
+
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Character")
+	void Heal(float HealAmount);
+
+	// Death and respawn
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Character")
+	void Die();
+
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Character")
+	void Respawn();
+
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Character")
+	bool IsDead() const { return bIsDead; }
+
 	// Component accessors
 	UFUNCTION(BlueprintPure, Category = "DelveDeep|Character")
 	UDelveDeepStatsComponent* GetStatsComponent() const { return StatsComponent; }
@@ -57,6 +74,31 @@ protected:
 	 * Initialize all character components after data is loaded.
 	 */
 	void InitializeComponents();
+
+	// Blueprint events
+	UFUNCTION(BlueprintImplementableEvent, Category = "DelveDeep|Character")
+	void OnDamaged(float DamageAmount, AActor* DamageSource);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "DelveDeep|Character")
+	void OnHealed(float HealAmount);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "DelveDeep|Character")
+	void OnDeath();
+
+	/**
+	 * Broadcast damage event through event subsystem.
+	 */
+	void BroadcastDamageEvent(float DamageAmount, AActor* DamageSource);
+
+	/**
+	 * Broadcast heal event through event subsystem.
+	 */
+	void BroadcastHealEvent(float HealAmount);
+
+	/**
+	 * Broadcast death event through event subsystem.
+	 */
+	void BroadcastDeathEvent(AActor* Killer);
 
 	/**
 	 * Name used to lookup character data from configuration manager.
@@ -87,4 +129,15 @@ protected:
 	 */
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "DelveDeep|Character")
 	const UDelveDeepCharacterData* CharacterData;
+
+	/**
+	 * Flag indicating if character is dead.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "DelveDeep|Character")
+	bool bIsDead;
+
+	/**
+	 * Timer handle for destroying actor after death.
+	 */
+	FTimerHandle DeathTimerHandle;
 };

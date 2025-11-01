@@ -207,3 +207,50 @@ bool FDelveDeepEventPayload::ValidateRange(float Value, float MinValue, float Ma
 
 	return true;
 }
+
+bool FDelveDeepCharacterDeathEventPayload::Validate(FValidationContext& Context) const
+{
+	bool bIsValid = Super::Validate(Context);
+
+	if (!ValidateActorReference(Character, TEXT("Character"), Context))
+	{
+		bIsValid = false;
+	}
+
+	// Killer can be null for environmental deaths
+	if (Killer.IsValid() && !Killer.Get())
+	{
+		Context.AddWarning(TEXT("Killer reference is stale"));
+	}
+
+	return bIsValid;
+}
+
+bool FDelveDeepDamageEventPayload::Validate(FValidationContext& Context) const
+{
+	bool bIsValid = Super::Validate(Context);
+
+	if (!ValidateActorReference(Character, TEXT("Character"), Context))
+	{
+		bIsValid = false;
+	}
+
+	if (DamageAmount < 0.0f)
+	{
+		Context.AddError(FString::Printf(TEXT("Damage amount is negative: %.2f"), DamageAmount));
+		bIsValid = false;
+	}
+
+	if (DamageAmount > 100000.0f)
+	{
+		Context.AddWarning(FString::Printf(TEXT("Unusually high damage amount: %.2f"), DamageAmount));
+	}
+
+	// DamageSource can be null
+	if (DamageSource.IsValid() && !DamageSource.Get())
+	{
+		Context.AddWarning(TEXT("DamageSource reference is stale"));
+	}
+
+	return bIsValid;
+}

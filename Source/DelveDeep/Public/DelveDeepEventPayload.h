@@ -182,3 +182,51 @@ struct DELVEDEEP_API FDelveDeepAttackEventPayload : public FDelveDeepEventPayloa
 
 	virtual bool Validate(FValidationContext& Context) const override;
 };
+
+/**
+ * Event payload for character death events.
+ * Contains information about character deaths, including killer and death location.
+ */
+USTRUCT(BlueprintType)
+struct DELVEDEEP_API FDelveDeepCharacterDeathEventPayload : public FDelveDeepEventPayload
+{
+	GENERATED_BODY()
+
+	/** The character that died */
+	UPROPERTY(BlueprintReadOnly, Category = "Death")
+	TWeakObjectPtr<AActor> Character;
+
+	/** The actor that killed the character (may be null for environmental deaths) */
+	UPROPERTY(BlueprintReadOnly, Category = "Death")
+	TWeakObjectPtr<AActor> Killer;
+
+	/** Location where the death occurred */
+	UPROPERTY(BlueprintReadOnly, Category = "Death")
+	FVector DeathLocation = FVector::ZeroVector;
+
+	virtual bool Validate(FValidationContext& Context) const override;
+};
+
+/**
+ * Event payload for damage events (simplified version for character damage).
+ * Contains information about damage dealt to a character.
+ */
+USTRUCT(BlueprintType)
+struct DELVEDEEP_API FDelveDeepDamageEventPayload : public FDelveDeepEventPayload
+{
+	GENERATED_BODY()
+
+	/** The character receiving the damage */
+	UPROPERTY(BlueprintReadOnly, Category = "Damage")
+	TWeakObjectPtr<AActor> Character;
+
+	/** Amount of damage dealt */
+	UPROPERTY(BlueprintReadOnly, Category = "Damage")
+	float DamageAmount = 0.0f;
+
+	/** The actor that dealt the damage (may be null) */
+	UPROPERTY(BlueprintReadOnly, Category = "Damage")
+	TWeakObjectPtr<AActor> DamageSource;
+
+	virtual bool Validate(FValidationContext& Context) const override;
+};

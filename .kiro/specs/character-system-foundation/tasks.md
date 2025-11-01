@@ -69,7 +69,7 @@
   - Validate delta parameter using FValidationContext
   - _Requirements: 3.3, 3.4, 4.5, 8.2_
 
-- [ ] 8. Implement stat modifier system
+- [x] 8. Implement stat modifier system
   - Create AddStatModifier() method accepting StatName, Modifier, Duration
   - Store modifiers in ActiveModifiers TMap
   - Implement RemoveStatModifier() method
@@ -79,7 +79,7 @@
   - Set up timer for CleanupExpiredModifiers() every 1 second
   - _Requirements: 8.3, 8.4, 8.5_
 
-- [ ] 9. Implement stat caching and recalculation
+- [x] 9. Implement stat caching and recalculation
   - Cache MaxHealth, MaxResource, MoveSpeed in component
   - Only recalculate when bStatsDirty is true
   - Implement GetModifiedStat() method returning cached values
@@ -87,7 +87,7 @@
   - Mark stats dirty when modifiers added/removed
   - _Requirements: 8.4, 12.2, 16.3_
 
-- [ ] 10. Implement character damage handling
+- [x] 10. Implement character damage handling
   - Create TakeDamage() method in ADelveDeepCharacter
   - Accept DamageAmount and DamageSource parameters
   - Validate damage amount is positive using FValidationContext
@@ -97,7 +97,7 @@
   - Apply damage visual feedback (sprite flash)
   - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
 
-- [ ] 11. Implement character healing
+- [x] 11. Implement character healing
   - Create Heal() method in ADelveDeepCharacter
   - Accept HealAmount parameter
   - Validate heal amount is positive using FValidationContext
@@ -107,7 +107,7 @@
   - Apply healing visual effect (sprite glow)
   - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5_
 
-- [ ] 12. Implement character death handling
+- [x] 12. Implement character death handling
   - Create Die() method in ADelveDeepCharacter
   - Set bIsDead flag to true
   - Disable input and collision
@@ -117,7 +117,7 @@
   - Set timer to destroy actor after 2 seconds
   - _Requirements: 1.5, 9.1, 9.2, 9.3, 9.4_
 
-- [ ] 13. Implement character respawn
+- [x] 13. Implement character respawn
   - Create Respawn() method in ADelveDeepCharacter
   - Reset bIsDead flag to false
   - Call StatsComponent->ResetToMaxValues()
@@ -125,6 +125,7 @@
   - Re-enable input and collision
   - Reset sprite to idle animation
   - _Requirements: 9.5_
+  - _Note: Sprite animation reset deferred to task 25 (sprite rendering integration)_
 
 - [ ] 14. Create Warrior character class
   - Create DelveDeepWarrior.h and .cpp

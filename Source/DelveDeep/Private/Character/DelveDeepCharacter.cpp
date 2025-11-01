@@ -8,6 +8,12 @@
 #include "Configuration/DelveDeepConfigurationManager.h"
 #include "Configuration/DelveDeepCharacterData.h"
 #include "Validation/ValidationContext.h"
+#include "DelveDeepEventSubsystem.h"
+#include "DelveDeepEventPayload.h"
+#include "GameplayTagsManager.h"
+#include "TimerManager.h"
+#include "Components/CapsuleComponent.h"
+#include "PaperFlipbookComponent.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogDelveDeepCharacter, Log, All);
 
@@ -27,6 +33,9 @@ ADelveDeepCharacter::ADelveDeepCharacter()
 
 	// Initialize character data to nullptr
 	CharacterData = nullptr;
+
+	// Initialize death flag
+	bIsDead = false;
 }
 
 void ADelveDeepCharacter::BeginPlay()
@@ -174,4 +183,266 @@ void ADelveDeepCharacter::InitializeComponents()
 
 	UE_LOG(LogDelveDeepCharacter, Verbose, 
 		TEXT("Components initialized for %s"), *GetName());
+}
+
+void ADelveDeepCharacter::TakeDamage(float DamageAmount, AActor* DamageSource)
+{
+	// Validate damage amount
+	if (DamageAmount < 0.0f)
+	{
+		UE_LOG(LogDelveDeepCharacter, Warning, 
+			TEXT("Attempted to apply negative damage: %.2f"), DamageAmount);
+		return;
+	}
+
+	// Cannot damage dead characters
+	if (bIsDead)
+	{
+		return;
+	}
+
+	// Validate stats component
+	if (!StatsComponent)
+	{
+		UE_LOG(LogDelveDeepCharacter, Error, 
+			TEXT("Cannot apply damage without stats component on %s"), *GetName());
+		return;
+	}
+
+	// Apply damage to health
+	StatsComponent->ModifyHealth(-DamageAmount);
+
+	// Broadcast damage event
+	BroadcastDamageEvent(DamageAmount, DamageSource);
+
+	// Call Blueprint event
+	OnDamaged(DamageAmount, DamageSource);
+
+	// Apply visual feedback (sprite flash)
+	if (UPaperFlipbookComponent* SpriteComponent = GetSprite())
+	{
+		// Flash red for damage feedback
+		SpriteComponent->SetSpriteColor(FLinearColor(1.0f, 0.5f, 0.5f, 1.0f));
+		
+		// Reset color after 0.1 seconds
+		FTimerHandle FlashTimerHandle;
+		GetWorld()->GetTimerManager().SetTimer(
+			FlashTimerHandle,
+			[this, SpriteComponent]()
+			{
+				if (SpriteComponent)
+				{
+					SpriteComponent->SetSpriteColor(FLinearColor::White);
+				}
+			},
+			0.1f,
+			false
+		);
+	}
+
+	// Check for death
+	if (StatsComponent->GetCurrentHealth() <= 0.0f)
+	{
+		Die();
+	}
+
+	UE_LOG(LogDelveDeepCharacter, Verbose, 
+		TEXT("%s took %.2f damage from %s"), 
+		*GetName(), DamageAmount, DamageSource ? *DamageSource->GetName() : TEXT("Unknown"));
+}
+
+void ADelveDeepCharacter::Heal(float HealAmount)
+{
+	// Validate heal amount
+	if (HealAmount < 0.0f)
+	{
+		UE_LOG(LogDelveDeepCharacter, Warning, 
+			TEXT("Attempted to apply negative healing: %.2f"), HealAmount);
+		return;
+	}
+
+	// Cannot heal dead characters
+	if (bIsDead)
+	{
+		return;
+	}
+
+	// Validate stats component
+	if (!StatsComponent)
+	{
+		UE_LOG(LogDelveDeepCharacter, Error, 
+			TEXT("Cannot apply healing without stats component on %s"), *GetName());
+		return;
+	}
+
+	// Apply healing to health
+	StatsComponent->ModifyHealth(HealAmount);
+
+	// Broadcast heal event
+	BroadcastHealEvent(HealAmount);
+
+	// Call Blueprint event
+	OnHealed(HealAmount);
+
+	// Apply visual feedback (sprite glow)
+	if (UPaperFlipbookComponent* SpriteComponent = GetSprite())
+	{
+		// Glow green for healing feedback
+		SpriteComponent->SetSpriteColor(FLinearColor(0.5f, 1.0f, 0.5f, 1.0f));
+		
+		// Reset color after 0.2 seconds
+		FTimerHandle GlowTimerHandle;
+		GetWorld()->GetTimerManager().SetTimer(
+			GlowTimerHandle,
+			[this, SpriteComponent]()
+			{
+				if (SpriteComponent)
+				{
+					SpriteComponent->SetSpriteColor(FLinearColor::White);
+				}
+			},
+			0.2f,
+			false
+		);
+	}
+
+	UE_LOG(LogDelveDeepCharacter, Verbose, 
+		TEXT("%s healed for %.2f"), *GetName(), HealAmount);
+}
+
+void ADelveDeepCharacter::Die()
+{
+	// Already dead
+	if (bIsDead)
+	{
+		return;
+	}
+
+	// Set death flag
+	bIsDead = true;
+
+	// Disable input
+	DisableInput(nullptr);
+
+	// Disable collision
+	if (UCapsuleComponent* CapsuleComp = GetCapsuleComponent())
+	{
+		CapsuleComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+
+	// Broadcast death event
+	BroadcastDeathEvent(nullptr); // TODO: Track killer
+
+	// Call Blueprint event
+	OnDeath();
+
+	// Set timer to destroy actor after 2 seconds
+	GetWorld()->GetTimerManager().SetTimer(
+		DeathTimerHandle,
+		[this]()
+		{
+			Destroy();
+		},
+		2.0f,
+		false
+	);
+
+	UE_LOG(LogDelveDeepCharacter, Display, TEXT("%s died"), *GetName());
+}
+
+void ADelveDeepCharacter::Respawn()
+{
+	// Already alive
+	if (!bIsDead)
+	{
+		return;
+	}
+
+	// Reset death flag
+	bIsDead = false;
+
+	// Clear death timer if active
+	if (DeathTimerHandle.IsValid())
+	{
+		GetWorld()->GetTimerManager().ClearTimer(DeathTimerHandle);
+	}
+
+	// Reset stats to maximum values
+	if (StatsComponent)
+	{
+		StatsComponent->ResetToMaxValues();
+		StatsComponent->ClearAllModifiers();
+	}
+
+	// Re-enable input
+	EnableInput(nullptr);
+
+	// Re-enable collision
+	if (UCapsuleComponent* CapsuleComp = GetCapsuleComponent())
+	{
+		CapsuleComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	}
+
+	// Reset sprite color
+	if (UPaperFlipbookComponent* SpriteComponent = GetSprite())
+	{
+		SpriteComponent->SetSpriteColor(FLinearColor::White);
+	}
+
+	UE_LOG(LogDelveDeepCharacter, Display, TEXT("%s respawned"), *GetName());
+}
+
+void ADelveDeepCharacter::BroadcastDamageEvent(float DamageAmount, AActor* DamageSource)
+{
+	if (UGameInstance* GameInstance = GetGameInstance())
+	{
+		if (UDelveDeepEventSubsystem* EventSubsystem = GameInstance->GetSubsystem<UDelveDeepEventSubsystem>())
+		{
+			FDelveDeepDamageEventPayload Payload;
+			Payload.EventTag = FGameplayTag::RequestGameplayTag(FName("DelveDeep.Character.Damaged"));
+			Payload.Character = this;
+			Payload.DamageAmount = DamageAmount;
+			Payload.DamageSource = DamageSource;
+			Payload.Instigator = DamageSource;
+
+			EventSubsystem->BroadcastEvent(Payload);
+		}
+	}
+}
+
+void ADelveDeepCharacter::BroadcastHealEvent(float HealAmount)
+{
+	if (UGameInstance* GameInstance = GetGameInstance())
+	{
+		if (UDelveDeepEventSubsystem* EventSubsystem = GameInstance->GetSubsystem<UDelveDeepEventSubsystem>())
+		{
+			FDelveDeepHealthChangeEventPayload Payload;
+			Payload.EventTag = FGameplayTag::RequestGameplayTag(FName("DelveDeep.Character.Healed"));
+			Payload.Character = this;
+			Payload.PreviousHealth = StatsComponent ? StatsComponent->GetCurrentHealth() - HealAmount : 0.0f;
+			Payload.NewHealth = StatsComponent ? StatsComponent->GetCurrentHealth() : 0.0f;
+			Payload.MaxHealth = StatsComponent ? StatsComponent->GetMaxHealth() : 0.0f;
+			Payload.Instigator = this;
+
+			EventSubsystem->BroadcastEvent(Payload);
+		}
+	}
+}
+
+void ADelveDeepCharacter::BroadcastDeathEvent(AActor* Killer)
+{
+	if (UGameInstance* GameInstance = GetGameInstance())
+	{
+		if (UDelveDeepEventSubsystem* EventSubsystem = GameInstance->GetSubsystem<UDelveDeepEventSubsystem>())
+		{
+			FDelveDeepCharacterDeathEventPayload Payload;
+			Payload.EventTag = FGameplayTag::RequestGameplayTag(FName("DelveDeep.Character.Death"));
+			Payload.Character = this;
+			Payload.Killer = Killer;
+			Payload.DeathLocation = GetActorLocation();
+			Payload.Instigator = Killer;
+
+			EventSubsystem->BroadcastEvent(Payload);
+		}
+	}
 }
