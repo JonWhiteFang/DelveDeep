@@ -10,6 +10,8 @@ class UDelveDeepStatsComponent;
 class UDelveDeepAbilitiesComponent;
 class UDelveDeepEquipmentComponent;
 class UDelveDeepCharacterData;
+class UDelveDeepAbilityData;
+class UDelveDeepWeaponData;
 struct FValidationContext;
 
 /**
@@ -69,6 +71,19 @@ public:
 	UFUNCTION(BlueprintPure, Category = "DelveDeep|Character")
 	UDelveDeepEquipmentComponent* GetEquipmentComponent() const { return EquipmentComponent; }
 
+	// Stats accessors
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Character|Stats")
+	float GetCurrentHealth() const;
+
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Character|Stats")
+	float GetMaxHealth() const;
+
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Character|Stats")
+	float GetCurrentResource() const;
+
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Character|Stats")
+	float GetMaxResource() const;
+
 protected:
 	/**
 	 * Initialize all character components after data is loaded.
@@ -84,6 +99,18 @@ protected:
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "DelveDeep|Character")
 	void OnDeath();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "DelveDeep|Character")
+	void OnStatChanged(FName StatName, float OldValue, float NewValue);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "DelveDeep|Character")
+	void OnResourceChanged(float OldValue, float NewValue);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "DelveDeep|Character")
+	void OnAbilityUsed(const UDelveDeepAbilityData* Ability);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "DelveDeep|Character")
+	void OnWeaponEquipped(const UDelveDeepWeaponData* Weapon);
 
 	/**
 	 * Broadcast damage event through event subsystem.

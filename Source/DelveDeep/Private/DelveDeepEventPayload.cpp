@@ -254,3 +254,73 @@ bool FDelveDeepDamageEventPayload::Validate(FValidationContext& Context) const
 
 	return bIsValid;
 }
+
+bool FDelveDeepStatChangedPayload::Validate(FValidationContext& Context) const
+{
+	Context.SystemName = TEXT("EventSystem");
+	Context.OperationName = TEXT("ValidateStatChangedEvent");
+
+	bool bIsValid = FDelveDeepEventPayload::Validate(Context);
+
+	if (!ValidateActorReference(Character, TEXT("Character"), Context))
+	{
+		bIsValid = false;
+	}
+
+	if (StatName.IsNone())
+	{
+		Context.AddError(TEXT("StatName is not set"));
+		bIsValid = false;
+	}
+
+	if (OldValue < 0.0f)
+	{
+		Context.AddWarning(FString::Printf(TEXT("OldValue is negative: %.2f"), OldValue));
+	}
+
+	if (NewValue < 0.0f)
+	{
+		Context.AddWarning(FString::Printf(TEXT("NewValue is negative: %.2f"), NewValue));
+	}
+
+	if (OldValue > 100000.0f || NewValue > 100000.0f)
+	{
+		Context.AddWarning(FString::Printf(
+			TEXT("Unusually high stat values - Old: %.2f, New: %.2f"), 
+			OldValue, NewValue));
+	}
+
+	return bIsValid;
+}
+
+bool FDelveDeepAbilityUsedPayload::Validate(FValidationContext& Context) const
+{
+	Context.SystemName = TEXT("EventSystem");
+	Context.OperationName = TEXT("ValidateAbilityUsedEvent");
+
+	bool bIsValid = FDelveDeepEventPayload::Validate(Context);
+
+	if (!ValidateActorReference(Character, TEXT("Character"), Context))
+	{
+		bIsValid = false;
+	}
+
+	if (Ability.IsNull())
+	{
+		Context.AddError(TEXT("Ability reference is null"));
+		bIsValid = false;
+	}
+
+	if (ResourceCost < 0.0f)
+	{
+		Context.AddError(FString::Printf(TEXT("Resource cost is negative: %.2f"), ResourceCost));
+		bIsValid = false;
+	}
+
+	if (ResourceCost > 1000.0f)
+	{
+		Context.AddWarning(FString::Printf(TEXT("Unusually high resource cost: %.2f"), ResourceCost));
+	}
+
+	return bIsValid;
+}

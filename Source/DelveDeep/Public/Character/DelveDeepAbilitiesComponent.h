@@ -7,6 +7,7 @@
 #include "DelveDeepAbilitiesComponent.generated.h"
 
 class UDelveDeepCharacterData;
+class UDelveDeepAbilityData;
 struct FValidationContext;
 
 /**
@@ -25,6 +26,29 @@ public:
 	virtual void InitializeFromCharacterData(const UDelveDeepCharacterData* Data) override;
 	virtual bool ValidateComponent(FValidationContext& Context) const override;
 
+	// Ability management
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Character|Abilities")
+	void AddAbility(const UDelveDeepAbilityData* Ability);
+
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Character|Abilities")
+	void RemoveAbility(const UDelveDeepAbilityData* Ability);
+
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Character|Abilities")
+	int32 GetAbilityCount() const { return Abilities.Num(); }
+
+	// Ability usage (placeholder)
+	UFUNCTION(BlueprintCallable, Category = "DelveDeep|Character|Abilities")
+	bool UseAbility(int32 AbilityIndex);
+
+	UFUNCTION(BlueprintPure, Category = "DelveDeep|Character|Abilities")
+	bool CanUseAbility(int32 AbilityIndex) const;
+
 protected:
-	// Placeholder for future implementation
+	/** Array of ability references loaded from character data */
+	UPROPERTY(BlueprintReadOnly, Category = "DelveDeep|Character|Abilities")
+	TArray<const UDelveDeepAbilityData*> Abilities;
+
+	/** Map tracking ability cooldowns */
+	UPROPERTY()
+	TMap<const UDelveDeepAbilityData*, float> AbilityCooldowns;
 };

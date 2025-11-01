@@ -230,3 +230,55 @@ struct DELVEDEEP_API FDelveDeepDamageEventPayload : public FDelveDeepEventPayloa
 
 	virtual bool Validate(FValidationContext& Context) const override;
 };
+
+/**
+ * Event payload for character stat changed events.
+ * Contains information about stat changes, including stat name and old/new values.
+ */
+USTRUCT(BlueprintType)
+struct DELVEDEEP_API FDelveDeepStatChangedPayload : public FDelveDeepEventPayload
+{
+	GENERATED_BODY()
+
+	/** The character whose stat changed */
+	UPROPERTY(BlueprintReadOnly, Category = "Stats")
+	TWeakObjectPtr<AActor> Character;
+
+	/** Name of the stat that changed (e.g., "Health", "Mana", "Damage") */
+	UPROPERTY(BlueprintReadOnly, Category = "Stats")
+	FName StatName;
+
+	/** Stat value before the change */
+	UPROPERTY(BlueprintReadOnly, Category = "Stats")
+	float OldValue = 0.0f;
+
+	/** Stat value after the change */
+	UPROPERTY(BlueprintReadOnly, Category = "Stats")
+	float NewValue = 0.0f;
+
+	virtual bool Validate(FValidationContext& Context) const override;
+};
+
+/**
+ * Event payload for ability used events.
+ * Contains information about ability usage, including character, ability, and resource cost.
+ */
+USTRUCT(BlueprintType)
+struct DELVEDEEP_API FDelveDeepAbilityUsedPayload : public FDelveDeepEventPayload
+{
+	GENERATED_BODY()
+
+	/** The character that used the ability */
+	UPROPERTY(BlueprintReadOnly, Category = "Ability")
+	TWeakObjectPtr<AActor> Character;
+
+	/** The ability that was used (soft object pointer to ability data asset) */
+	UPROPERTY(BlueprintReadOnly, Category = "Ability")
+	TSoftObjectPtr<class UDelveDeepAbilityData> Ability;
+
+	/** Resource cost paid to use the ability */
+	UPROPERTY(BlueprintReadOnly, Category = "Ability")
+	float ResourceCost = 0.0f;
+
+	virtual bool Validate(FValidationContext& Context) const override;
+};

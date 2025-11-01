@@ -168,7 +168,7 @@
   - Set MaxSouls to 10.0f
   - _Requirements: 4.4, 7.4, 7.5_
 
-- [ ] 18. Implement event payload structures
+- [x] 18. Implement event payload structures
   - Create FDelveDeepCharacterDeathPayload struct in DelveDeepEventPayload.h
   - Add Character, Killer, DeathLocation properties
   - Create FDelveDeepStatChangedPayload struct
@@ -178,7 +178,7 @@
   - Mark all structs with BlueprintType specifier
   - _Requirements: 18.2, 18.4_
 
-- [ ] 19. Implement event broadcasting
+- [x] 19. Implement event broadcasting
   - Create BroadcastDeathEvent() in ADelveDeepCharacter
   - Create BroadcastDamageEvent() with damage details
   - Create BroadcastHealEvent() with heal amount
@@ -187,7 +187,7 @@
   - Validate event payloads using FValidationContext
   - _Requirements: 3.4, 3.5, 18.1, 18.3, 18.5_
 
-- [ ] 20. Implement Blueprint events
+- [x] 20. Implement Blueprint events
   - Add OnDeath BlueprintImplementableEvent to ADelveDeepCharacter
   - Add OnDamaged BlueprintImplementableEvent with DamageAmount and DamageSource
   - Add OnHealed BlueprintImplementableEvent with HealAmount
@@ -197,7 +197,7 @@
   - Add OnWeaponEquipped BlueprintImplementableEvent with Weapon
   - _Requirements: 15.4_
 
-- [ ] 21. Implement Blueprint-callable methods
+- [x] 21. Implement Blueprint-callable methods
   - Mark GetCurrentHealth(), GetMaxHealth() with BlueprintPure
   - Mark GetCurrentResource(), GetMaxResource() with BlueprintPure
   - Mark TakeDamage(), Heal() with BlueprintCallable
@@ -206,7 +206,7 @@
   - Add Category meta specifier to all Blueprint-exposed members
   - _Requirements: 15.1, 15.2, 15.3, 15.5_
 
-- [ ] 22. Create abilities component placeholder
+- [x] 22. Create abilities component placeholder
   - Create DelveDeepAbilitiesComponent.h and .cpp
   - Inherit from UDelveDeepCharacterComponent
   - Add Abilities TArray for storing ability references

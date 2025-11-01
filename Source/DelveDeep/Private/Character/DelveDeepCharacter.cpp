@@ -392,6 +392,26 @@ void ADelveDeepCharacter::Respawn()
 	UE_LOG(LogDelveDeepCharacter, Display, TEXT("%s respawned"), *GetName());
 }
 
+float ADelveDeepCharacter::GetCurrentHealth() const
+{
+	return StatsComponent ? StatsComponent->GetCurrentHealth() : 0.0f;
+}
+
+float ADelveDeepCharacter::GetMaxHealth() const
+{
+	return StatsComponent ? StatsComponent->GetMaxHealth() : 0.0f;
+}
+
+float ADelveDeepCharacter::GetCurrentResource() const
+{
+	return StatsComponent ? StatsComponent->GetCurrentResource() : 0.0f;
+}
+
+float ADelveDeepCharacter::GetMaxResource() const
+{
+	return StatsComponent ? StatsComponent->GetMaxResource() : 0.0f;
+}
+
 void ADelveDeepCharacter::BroadcastDamageEvent(float DamageAmount, AActor* DamageSource)
 {
 	if (UGameInstance* GameInstance = GetGameInstance())
@@ -404,6 +424,19 @@ void ADelveDeepCharacter::BroadcastDamageEvent(float DamageAmount, AActor* Damag
 			Payload.DamageAmount = DamageAmount;
 			Payload.DamageSource = DamageSource;
 			Payload.Instigator = DamageSource;
+
+			// Validate payload before broadcasting
+			FValidationContext Context;
+			Context.SystemName = TEXT("Character");
+			Context.OperationName = TEXT("BroadcastDamageEvent");
+
+			if (!Payload.Validate(Context))
+			{
+				UE_LOG(LogDelveDeepCharacter, Warning,
+					TEXT("Damage event payload validation failed: %s"),
+					*Context.GetReport());
+				// Continue broadcasting despite validation warnings
+			}
 
 			EventSubsystem->BroadcastEvent(Payload);
 		}
@@ -424,6 +457,19 @@ void ADelveDeepCharacter::BroadcastHealEvent(float HealAmount)
 			Payload.MaxHealth = StatsComponent ? StatsComponent->GetMaxHealth() : 0.0f;
 			Payload.Instigator = this;
 
+			// Validate payload before broadcasting
+			FValidationContext Context;
+			Context.SystemName = TEXT("Character");
+			Context.OperationName = TEXT("BroadcastHealEvent");
+
+			if (!Payload.Validate(Context))
+			{
+				UE_LOG(LogDelveDeepCharacter, Warning,
+					TEXT("Heal event payload validation failed: %s"),
+					*Context.GetReport());
+				// Continue broadcasting despite validation warnings
+			}
+
 			EventSubsystem->BroadcastEvent(Payload);
 		}
 	}
@@ -441,6 +487,19 @@ void ADelveDeepCharacter::BroadcastDeathEvent(AActor* Killer)
 			Payload.Killer = Killer;
 			Payload.DeathLocation = GetActorLocation();
 			Payload.Instigator = Killer;
+
+			// Validate payload before broadcasting
+			FValidationContext Context;
+			Context.SystemName = TEXT("Character");
+			Context.OperationName = TEXT("BroadcastDeathEvent");
+
+			if (!Payload.Validate(Context))
+			{
+				UE_LOG(LogDelveDeepCharacter, Warning,
+					TEXT("Death event payload validation failed: %s"),
+					*Context.GetReport());
+				// Continue broadcasting despite validation warnings
+			}
 
 			EventSubsystem->BroadcastEvent(Payload);
 		}
