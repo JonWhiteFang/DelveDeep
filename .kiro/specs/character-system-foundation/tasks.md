@@ -14,7 +14,7 @@
   - Add DELVEDEEP_API macro and proper Blueprint specifiers
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
 
-- [ ] 2. Create base character actor class
+- [x] 2. Create base character actor class
   - Create DelveDeepCharacter.h and .cpp in Source/DelveDeep/Public/Character/
   - Inherit from APaperCharacter for 2D sprite support
   - Add CharacterClassName property for data asset lookup
@@ -24,7 +24,7 @@
   - Add Blueprint specifiers (BlueprintType, Blueprintable)
   - _Requirements: 1.1, 1.2, 1.4_
 
-- [ ] 3. Implement character data loading
+- [x] 3. Implement character data loading
   - Implement InitializeFromData() method in ADelveDeepCharacter
   - Query UDelveDeepConfigurationManager for character data using CharacterClassName
   - Implement ValidateCharacterData() using FValidationContext
@@ -33,7 +33,7 @@
   - Call InitializeComponents() after data validation
   - _Requirements: 1.3, 5.1, 5.5, 17.1, 17.5_
 
-- [ ] 4. Implement stats component structure
+- [x] 4. Implement stats component structure
   - Create DelveDeepStatsComponent.h and .cpp
   - Inherit from UDelveDeepCharacterComponent
   - Add properties for BaseHealth, BaseResource, BaseDamage, BaseMoveSpeed
