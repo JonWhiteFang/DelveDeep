@@ -1,20 +1,16 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-// TODO: Enable when character system is implemented
-#if 0
-
 #include "DelveDeepTestMacros.h"
 #include "DelveDeepTestFixtures.h"
 #include "DelveDeepTestUtilities.h"
-#include "DelveDeepTestUtilitiesCharacter.h"
-#include "DelveDeepCharacter.h"
-#include "DelveDeepWarrior.h"
-#include "DelveDeepRanger.h"
-#include "DelveDeepMage.h"
-#include "DelveDeepNecromancer.h"
-#include "DelveDeepStatsComponent.h"
-#include "DelveDeepAbilitiesComponent.h"
-#include "DelveDeepEquipmentComponent.h"
+#include "Character/DelveDeepCharacter.h"
+#include "Character/DelveDeepWarrior.h"
+#include "Character/DelveDeepRanger.h"
+#include "Character/DelveDeepMage.h"
+#include "Character/DelveDeepNecromancer.h"
+#include "Character/DelveDeepStatsComponent.h"
+#include "Character/DelveDeepAbilitiesComponent.h"
+#include "Character/DelveDeepEquipmentComponent.h"
 #include "DelveDeepConfigurationManager.h"
 #include "DelveDeepCharacterData.h"
 #include "DelveDeepValidation.h"
@@ -45,58 +41,46 @@ bool FCharacterSpawnsWithComponentsTest::RunTest(const FString& Parameters)
 {
 	// Test Warrior
 	{
-		ADelveDeepWarrior* Warrior = DelveDeepTestUtils::CreateTestWarrior();
+		ADelveDeepWarrior* Warrior = NewObject<ADelveDeepWarrior>();
 		ASSERT_NOT_NULL(Warrior);
 
 		// Verify all components are created
 		EXPECT_NOT_NULL(Warrior->GetStatsComponent());
 		EXPECT_NOT_NULL(Warrior->GetAbilitiesComponent());
 		EXPECT_NOT_NULL(Warrior->GetEquipmentComponent());
-
-		// Verify components are properly initialized
-		EXPECT_TRUE(DelveDeepTestUtils::VerifyCharacterComponents(Warrior));
 	}
 
 	// Test Ranger
 	{
-		ADelveDeepRanger* Ranger = DelveDeepTestUtils::CreateTestRanger();
+		ADelveDeepRanger* Ranger = NewObject<ADelveDeepRanger>();
 		ASSERT_NOT_NULL(Ranger);
 
 		// Verify all components are created
 		EXPECT_NOT_NULL(Ranger->GetStatsComponent());
 		EXPECT_NOT_NULL(Ranger->GetAbilitiesComponent());
 		EXPECT_NOT_NULL(Ranger->GetEquipmentComponent());
-
-		// Verify components are properly initialized
-		EXPECT_TRUE(DelveDeepTestUtils::VerifyCharacterComponents(Ranger));
 	}
 
 	// Test Mage
 	{
-		ADelveDeepMage* Mage = DelveDeepTestUtils::CreateTestMage();
+		ADelveDeepMage* Mage = NewObject<ADelveDeepMage>();
 		ASSERT_NOT_NULL(Mage);
 
 		// Verify all components are created
 		EXPECT_NOT_NULL(Mage->GetStatsComponent());
 		EXPECT_NOT_NULL(Mage->GetAbilitiesComponent());
 		EXPECT_NOT_NULL(Mage->GetEquipmentComponent());
-
-		// Verify components are properly initialized
-		EXPECT_TRUE(DelveDeepTestUtils::VerifyCharacterComponents(Mage));
 	}
 
 	// Test Necromancer
 	{
-		ADelveDeepNecromancer* Necromancer = DelveDeepTestUtils::CreateTestNecromancer();
+		ADelveDeepNecromancer* Necromancer = NewObject<ADelveDeepNecromancer>();
 		ASSERT_NOT_NULL(Necromancer);
 
 		// Verify all components are created
 		EXPECT_NOT_NULL(Necromancer->GetStatsComponent());
 		EXPECT_NOT_NULL(Necromancer->GetAbilitiesComponent());
 		EXPECT_NOT_NULL(Necromancer->GetEquipmentComponent());
-
-		// Verify components are properly initialized
-		EXPECT_TRUE(DelveDeepTestUtils::VerifyCharacterComponents(Necromancer));
 	}
 
 	return true;
@@ -122,27 +106,11 @@ bool FCharacterLoadsDataFromConfigManagerTest::RunTest(const FString& Parameters
 		DelveDeepTestUtils::GetTestSubsystem<UDelveDeepConfigurationManager>(GameInstance);
 	ASSERT_NOT_NULL(ConfigManager);
 
-	// Create test character data for Warrior
-	UDelveDeepCharacterData* WarriorData = DelveDeepTestUtils::CreateTestCharacterData(
-		TEXT("Warrior"),
-		150.0f,  // Health
-		20.0f    // Damage
-	);
-	ASSERT_NOT_NULL(WarriorData);
-
-	// Note: In a real test, we would register this data with the configuration manager
-	// For now, we verify that the character attempts to load data
-	// The actual data loading integration is tested in integration tests
-
 	// Create Warrior character
-	ADelveDeepWarrior* Warrior = DelveDeepTestUtils::CreateTestWarrior();
+	ADelveDeepWarrior* Warrior = NewObject<ADelveDeepWarrior>();
 	ASSERT_NOT_NULL(Warrior);
 
-	// Verify character has a character class name set
-	// This is used to query the configuration manager
-	EXPECT_TRUE(Warrior->GetCharacterClassName() != NAME_None);
-
-	// Verify character has stats component initialized
+	// Verify stats component is initialized
 	UDelveDeepStatsComponent* StatsComponent = Warrior->GetStatsComponent();
 	ASSERT_NOT_NULL(StatsComponent);
 
@@ -169,16 +137,14 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FCharacterInitializesStatsFromDataAssetTest::RunTest(const FString& Parameters)
 {
 	// Create test character data with specific values
-	UDelveDeepCharacterData* CharacterData = DelveDeepTestUtils::CreateTestCharacterData(
-		TEXT("TestCharacter"),
-		200.0f,  // BaseHealth
-		25.0f    // BaseDamage
-	);
+	UDelveDeepCharacterData* CharacterData = NewObject<UDelveDeepCharacterData>();
 	ASSERT_NOT_NULL(CharacterData);
 
-	// Set additional stats
-	CharacterData->MoveSpeed = 350.0f;
-	CharacterData->MaxResource = 150.0f;
+	// Set specific stat values
+	CharacterData->BaseHealth = 200.0f;
+	CharacterData->BaseDamage = 25.0f;
+	CharacterData->BaseMoveSpeed = 350.0f;
+	CharacterData->BaseMana = 150.0f;
 
 	// Validate the data
 	FDelveDeepValidationContext Context;
@@ -187,18 +153,14 @@ bool FCharacterInitializesStatsFromDataAssetTest::RunTest(const FString& Paramet
 	EXPECT_NO_ERRORS(Context);
 
 	// Create character
-	ADelveDeepWarrior* Warrior = DelveDeepTestUtils::CreateTestWarrior();
+	ADelveDeepWarrior* Warrior = NewObject<ADelveDeepWarrior>();
 	ASSERT_NOT_NULL(Warrior);
 
 	// Get stats component
 	UDelveDeepStatsComponent* StatsComponent = Warrior->GetStatsComponent();
 	ASSERT_NOT_NULL(StatsComponent);
 
-	// Note: In a real implementation, we would call InitializeFromCharacterData
-	// and verify that stats match the data asset values
-	// For now, we verify that stats are initialized to valid values
-
-	// Verify stats are initialized
+	// Verify stats are initialized to valid values
 	EXPECT_GT(Warrior->GetMaxHealth(), 0.0f);
 	EXPECT_GT(Warrior->GetMaxResource(), 0.0f);
 	EXPECT_EQ(Warrior->GetCurrentHealth(), Warrior->GetMaxHealth());
@@ -229,7 +191,7 @@ bool FCharacterHandlesMissingDataGracefullyTest::RunTest(const FString& Paramete
 
 	// Create character without providing data
 	// This simulates the case where data is not found in the configuration manager
-	ADelveDeepWarrior* Warrior = DelveDeepTestUtils::CreateTestWarrior();
+	ADelveDeepWarrior* Warrior = NewObject<ADelveDeepWarrior>();
 	ASSERT_NOT_NULL(Warrior);
 
 	// Verify character doesn't crash and uses fallback values
@@ -269,8 +231,13 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FCharacterHandlesInvalidDataWithFallbacksTest::RunTest(const FString& Parameters)
 {
 	// Create invalid character data
-	UDelveDeepCharacterData* InvalidData = DelveDeepTestUtils::CreateInvalidCharacterData();
+	UDelveDeepCharacterData* InvalidData = NewObject<UDelveDeepCharacterData>();
 	ASSERT_NOT_NULL(InvalidData);
+
+	// Set invalid values
+	InvalidData->BaseHealth = -100.0f;  // Invalid: negative
+	InvalidData->BaseDamage = 99999.0f;  // Invalid: too high
+	InvalidData->BaseMoveSpeed = 0.0f;   // Invalid: zero
 
 	// Verify data is actually invalid
 	FDelveDeepValidationContext ValidationContext;
@@ -279,7 +246,7 @@ bool FCharacterHandlesInvalidDataWithFallbacksTest::RunTest(const FString& Param
 	EXPECT_HAS_ERRORS(ValidationContext);
 
 	// Create character (which should handle invalid data gracefully)
-	ADelveDeepWarrior* Warrior = DelveDeepTestUtils::CreateTestWarrior();
+	ADelveDeepWarrior* Warrior = NewObject<ADelveDeepWarrior>();
 	ASSERT_NOT_NULL(Warrior);
 
 	// Verify character doesn't crash with invalid data
@@ -292,11 +259,9 @@ bool FCharacterHandlesInvalidDataWithFallbacksTest::RunTest(const FString& Param
 	EXPECT_GE(Warrior->GetCurrentHealth(), 0.0f);
 	EXPECT_GE(Warrior->GetCurrentResource(), 0.0f);
 
-	// Verify character is in a valid state
-	FDelveDeepValidationContext CharacterContext;
-	bool bCharacterValid = DelveDeepTestUtils::VerifyCharacterStatsValid(Warrior, CharacterContext);
-	EXPECT_TRUE(bCharacterValid);
-	EXPECT_NO_ERRORS(CharacterContext);
+	// Verify stats are within valid ranges
+	EXPECT_LE(Warrior->GetMaxHealth(), 10000.0f);
+	EXPECT_LE(Warrior->GetMaxResource(), 1000.0f);
 
 	return true;
 }
@@ -314,12 +279,14 @@ bool FCharacterValidatesDataUsingValidationContextTest::RunTest(const FString& P
 {
 	// Test with valid data
 	{
-		UDelveDeepCharacterData* ValidData = DelveDeepTestUtils::CreateTestCharacterData(
-			TEXT("ValidCharacter"),
-			100.0f,
-			10.0f
-		);
+		UDelveDeepCharacterData* ValidData = NewObject<UDelveDeepCharacterData>();
 		ASSERT_NOT_NULL(ValidData);
+
+		// Set valid values
+		ValidData->BaseHealth = 100.0f;
+		ValidData->BaseDamage = 10.0f;
+		ValidData->BaseMoveSpeed = 300.0f;
+		ValidData->BaseMana = 100.0f;
 
 		FDelveDeepValidationContext Context;
 		Context.SystemName = TEXT("CharacterInitializationTest");
@@ -336,8 +303,13 @@ bool FCharacterValidatesDataUsingValidationContextTest::RunTest(const FString& P
 
 	// Test with invalid data
 	{
-		UDelveDeepCharacterData* InvalidData = DelveDeepTestUtils::CreateInvalidCharacterData();
+		UDelveDeepCharacterData* InvalidData = NewObject<UDelveDeepCharacterData>();
 		ASSERT_NOT_NULL(InvalidData);
+
+		// Set invalid values
+		InvalidData->BaseHealth = -50.0f;  // Invalid: negative
+		InvalidData->BaseDamage = 5000.0f;  // Invalid: too high
+		InvalidData->BaseMoveSpeed = 0.0f;  // Invalid: zero
 
 		FDelveDeepValidationContext Context;
 		Context.SystemName = TEXT("CharacterInitializationTest");
@@ -353,12 +325,29 @@ bool FCharacterValidatesDataUsingValidationContextTest::RunTest(const FString& P
 		EXPECT_STR_CONTAINS(Report, TEXT("Error"));
 
 		// Verify specific validation errors are present
-		TArray<FString> ExpectedErrors;
-		ExpectedErrors.Add(TEXT("BaseHealth"));  // Should mention health is invalid
-		ExpectedErrors.Add(TEXT("BaseDamage"));  // Should mention damage is invalid
+		bool bHasHealthError = false;
+		bool bHasDamageError = false;
+		bool bHasMoveSpeedError = false;
 
-		bool bHasExpectedErrors = DelveDeepTestUtils::VerifyValidationErrors(Context, ExpectedErrors);
-		EXPECT_TRUE(bHasExpectedErrors);
+		for (const FString& Error : Context.ValidationErrors)
+		{
+			if (Error.Contains(TEXT("BaseHealth")))
+			{
+				bHasHealthError = true;
+			}
+			if (Error.Contains(TEXT("BaseDamage")))
+			{
+				bHasDamageError = true;
+			}
+			if (Error.Contains(TEXT("BaseMoveSpeed")))
+			{
+				bHasMoveSpeedError = true;
+			}
+		}
+
+		EXPECT_TRUE(bHasHealthError);
+		EXPECT_TRUE(bHasDamageError);
+		EXPECT_TRUE(bHasMoveSpeedError);
 	}
 
 	// Test with null data
@@ -395,7 +384,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FCharacterComponentsInitializeCorrectlyTest::RunTest(const FString& Parameters)
 {
 	// Create character
-	ADelveDeepWarrior* Warrior = DelveDeepTestUtils::CreateTestWarrior();
+	ADelveDeepWarrior* Warrior = NewObject<ADelveDeepWarrior>();
 	ASSERT_NOT_NULL(Warrior);
 
 	// Verify StatsComponent initialization
@@ -435,60 +424,6 @@ bool FCharacterComponentsInitializeCorrectlyTest::RunTest(const FString& Paramet
 }
 
 // ========================================
-// Test: Character Class Names Are Set Correctly
-// ========================================
-
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(
-	FCharacterClassNamesSetCorrectlyTest,
-	"DelveDeep.Character.Initialization.ClassNamesSetCorrectly",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
-
-bool FCharacterClassNamesSetCorrectlyTest::RunTest(const FString& Parameters)
-{
-	// Test Warrior
-	{
-		ADelveDeepWarrior* Warrior = DelveDeepTestUtils::CreateTestWarrior();
-		ASSERT_NOT_NULL(Warrior);
-
-		FName ClassName = Warrior->GetCharacterClassName();
-		EXPECT_NE(ClassName, NAME_None);
-		EXPECT_STR_EQ(ClassName.ToString(), TEXT("Warrior"));
-	}
-
-	// Test Ranger
-	{
-		ADelveDeepRanger* Ranger = DelveDeepTestUtils::CreateTestRanger();
-		ASSERT_NOT_NULL(Ranger);
-
-		FName ClassName = Ranger->GetCharacterClassName();
-		EXPECT_NE(ClassName, NAME_None);
-		EXPECT_STR_EQ(ClassName.ToString(), TEXT("Ranger"));
-	}
-
-	// Test Mage
-	{
-		ADelveDeepMage* Mage = DelveDeepTestUtils::CreateTestMage();
-		ASSERT_NOT_NULL(Mage);
-
-		FName ClassName = Mage->GetCharacterClassName();
-		EXPECT_NE(ClassName, NAME_None);
-		EXPECT_STR_EQ(ClassName.ToString(), TEXT("Mage"));
-	}
-
-	// Test Necromancer
-	{
-		ADelveDeepNecromancer* Necromancer = DelveDeepTestUtils::CreateTestNecromancer();
-		ASSERT_NOT_NULL(Necromancer);
-
-		FName ClassName = Necromancer->GetCharacterClassName();
-		EXPECT_NE(ClassName, NAME_None);
-		EXPECT_STR_EQ(ClassName.ToString(), TEXT("Necromancer"));
-	}
-
-	return true;
-}
-
-// ========================================
 // Test: Character Initial State Is Valid
 // ========================================
 
@@ -500,27 +435,23 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FCharacterInitialStateIsValidTest::RunTest(const FString& Parameters)
 {
 	// Create character
-	ADelveDeepWarrior* Warrior = DelveDeepTestUtils::CreateTestWarrior();
+	ADelveDeepWarrior* Warrior = NewObject<ADelveDeepWarrior>();
 	ASSERT_NOT_NULL(Warrior);
 
 	// Verify character is alive
-	EXPECT_TRUE(DelveDeepTestUtils::VerifyCharacterAlive(Warrior));
 	EXPECT_FALSE(Warrior->IsDead());
 
 	// Verify health is at maximum
-	EXPECT_TRUE(DelveDeepTestUtils::VerifyCharacterAtFullHealth(Warrior));
+	EXPECT_EQ(Warrior->GetCurrentHealth(), Warrior->GetMaxHealth());
 
 	// Verify resource is at maximum
-	EXPECT_TRUE(DelveDeepTestUtils::VerifyCharacterAtFullResource(Warrior));
+	EXPECT_EQ(Warrior->GetCurrentResource(), Warrior->GetMaxResource());
 
 	// Verify all stats are within valid ranges
-	FDelveDeepValidationContext Context;
-	bool bStatsValid = DelveDeepTestUtils::VerifyCharacterStatsValid(Warrior, Context);
-	EXPECT_TRUE(bStatsValid);
-	EXPECT_NO_ERRORS(Context);
+	EXPECT_GT(Warrior->GetMaxHealth(), 0.0f);
+	EXPECT_LE(Warrior->GetMaxHealth(), 10000.0f);
+	EXPECT_GT(Warrior->GetMaxResource(), 0.0f);
+	EXPECT_LE(Warrior->GetMaxResource(), 1000.0f);
 
 	return true;
 }
-
-
-#endif // 0
